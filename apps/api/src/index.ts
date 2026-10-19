@@ -139,3 +139,25 @@ app.post('/api/accusation', (req, res) => {
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
 app.listen(port, () => process.stdout.write('CASEFILES API listening on '+port+' mode='+configuredMode()+'\n'));
+
+if (process.env.CASEFILES_RUNTIME_PROBE === 'yes') {
+  void (async () => {
+    const first = await aiReply({
+      personId: 'martin',
+      question: 'Разкажете какво правихте от 00:30 до 02:00.',
+      disclosedEvidenceIds: [],
+      history: []
+    });
+    process.stdout.write('CASEFILES_RUNTIME_AI_TEST first=' + (first ? 'PASS' : 'FAIL') + '\n');
+    if (first) {
+      const second = await aiReply({
+        personId: 'martin',
+        question: 'Защо ви е писал Никола за оригиналните фактури?',
+        presentedEvidenceId: 'E04',
+        disclosedEvidenceIds: ['E04'],
+        history: [{ role: 'player', text: 'Разкажете какво правихте от 00:30 до 02:00.' }, { role: 'npc', text: first }]
+      });
+      process.stdout.write('CASEFILES_RUNTIME_AI_TEST evidence=' + (second ? 'PASS' : 'FAIL') + '\n');
+    }
+  })();
+}
