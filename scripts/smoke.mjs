@@ -47,10 +47,20 @@ try {
   assert.equal(invalidInterview.status, 400);
   const blocked = await request('/interview', 'POST', { personId: 'martin', message: 'Защо?', evidenceId: 'E05' }, token);
   assert.equal(blocked.status, 403);
-  for (const id of ['E04', 'E05', 'E08']) {
+  for (const id of ['E04', 'E05', 'E08', 'E09', 'E06']) {
     const clue = await request('/discover/' + id, 'POST', {}, token);
     assert.equal(clue.status, 200);
   }
+  const linked = await request('/deductions', 'POST', { firstId: 'E04', secondId: 'E09' }, token);
+  assert.equal(linked.status, 200);
+  assert.equal(linked.json.deduction.id, 'D01');
+  const impossible = await request('/deductions', 'POST', { firstId: 'E04', secondId: 'E08' }, token);
+  assert.equal(impossible.status, 422);
+  const discoveredLinks = await request('/deductions','GET',undefined,token);
+  assert.equal(discoveredLinks.status, 200);
+  assert.equal(discoveredLinks.json[0].id,'D01');
+  const sessionState = await request('/session','GET',undefined,token);
+  assert.deepEqual(sessionState.json.links,['D01']);
   const interview = await request('/interview', 'POST', { personId: 'martin', message: 'Къде бяхте?', evidenceId: 'E04' }, token);
   assert.equal(interview.status, 200);
   assert.ok(interview.json.reply);
