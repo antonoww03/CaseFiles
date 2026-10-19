@@ -1,15 +1,17 @@
 # CASEFILES
 
-A browser-based detective investigation game with a fictional, fixed case, free-form interviews and evidence-driven accusations.
+A browser-based detective investigation game, built with React/Vite and Node/Express.
 
-## Live test environment
+- [Playable demo](https://casefiles-game.onrender.com)
+- [API status](https://casefiles-api-9wz5.onrender.com/api/health)
 
-- Game: https://casefiles-game.onrender.com
-- API health: https://casefiles-api-9wz5.onrender.com/api/health
+## Case #001: Последното обаждане
 
-The demo has twelve pieces of evidence and three suspects. All case content is fictional. Development case rules and some story details are present in this public repository; this is not spoiler-safe distribution.
+A fictional investigation set in Sofia. Players can inspect an interactive crime scene, examine forensic reports, interview three suspects, organize a clue timeline, form deductions by linking evidence and file an accusation supported by evidence and reasoning.
 
-## Development
+The final verdict is decided by deterministic server rules. AI does not decide who is responsible, create evidence or alter the case's chronology.
+
+## Local development
 
 Requires Node.js 20.19+ and npm 10+.
 
@@ -27,24 +29,54 @@ npm test
 npm run build
 ```
 
-The API build also runs an offline end-to-end smoke test with a temporary test server.
+The API build runs unit tests and an offline HTTP smoke test. Real AI diagnostics are opt-in only; regular builds never need the OpenAI API and do not incur API usage.
 
-## Optional live AI interviews
+## AI interviews
 
-The game works without an API key. In that case, interview responses use a deterministic, scripted demonstration. If a backend `OPENAI_API_KEY` is configured, the server generates character replies using OpenAI Responses API with structured output. The server controls evidence discovery, character context, conversation history and the final verdict. The model does not determine the murderer, the evidence or the result. AI-generated dialogue is probabilistic and may still make mistakes.
+Without `OPENAI_API_KEY`, interviews use deterministic scripted replies. With a key present, requests are sent to the OpenAI Responses API and can fall back to scripted dialogue on failure.
 
-For local development, copy `apps/api/.env.example` to `apps/api/.env`. Set `OPENAI_API_KEY` there if required. The local API reads this file on startup.
+To enable:
+1. Create a valid API key in the OpenAI Platform dashboard. API usage is billed separately from ChatGPT subscriptions.
+2. In the **casefiles-api** Render service, set `OPENAI_API_KEY` in Environment to the unquoted key value, without a `Bearer ` prefix.
+3. Optionally set `OPENAI_MODEL` (default `gpt-4.1-mini`).
+4. Save and redeploy; do not put the key in Vite/frontend configuration or this repository.
+5. Set a conservative API project budget and usage alerts.
 
-For the Render test deployment, add `OPENAI_API_KEY` under the **casefiles-api** service's Environment settings, not the static website, not Vite build variables, and never in source control. Optionally set `OPENAI_MODEL` (default: `gpt-4.1-mini`). Restart or deploy the service so it picks up changes.
+`GET /api/health` returns `ai-configured` when a key is present, **not** confirmation that the provider accepted it. Successful interview responses carry `mode: ai-live`; provider failures return `mode: scripted-demo`. Provider diagnostics log only HTTP status and a sanitized error code. `401 invalid_api_key` means the configured key must be corrected or replaced, not that the application needs a new model.
 
-`GET /api/health` reports `ai-live` only when an API key is configured; actual failed requests fall back to scripted replies and are marked `scripted-demo` in the API response and the UI. The backend limits AI requests to 25 per session, 60 per IP per hour, and 300 per server process per day. These are temporary in-memory protections, not billing guarantees; set a strict project budget and usage alerts in the OpenAI API dashboard before enabling a publicly accessible instance. API usage is billed separately from ChatGPT subscriptions.
+The server limits AI usage to 25 attempted requests per session, 60 per IP per hour and 300 globally per server process per day. These in-memory limits are not a billing guarantee.
+
+## Persistent sessions
+
+The backend includes optional PostgreSQL persistence for collected evidence, deductions, interview history and interrogation counters. It works in `memory` mode until `DATABASE_URL` is configured.
+
+A separate **casefiles-db** free-tier PostgreSQL instance exists in Render. Its free service currently expires **2026-11-18**; move or upgrade the data before then if you want lasting saves.
+
+To connect it securely:
+1. Open the Render dashboard for **casefiles-db**, then **Connect** and copy its **Internal Database URL**. Do not share it in chat.
+2. Open **casefiles-api** → **Environment** and set `DATABASE_URL` to that complete internal connection string.
+3. Save and redeploy.
+4. Confirm `GET /api/health` reports `storage: postgres`. The API will initialize a private `casefiles.sessions` table automatically.
+
+Render and Supabase/fitness-tracker data are isolated; CASEFILES does not use any FitnessTracker tables.
+
+Without `DATABASE_URL`, sessions remain in process memory and are lost on restart or redeploy. Sessions expire after 14 days of inactivity in the current implementation, including when persistence is enabled.
+
+## Tests and diagnostic switches
+
+- `npm run test -w apps/api`: unit tests
+- `npm run build`: build and offline API smoke checks
+- `node scripts/live-interview-check.mjs`: two real API requests, only when an API key is configured. May incur usage charges.
+- `CASEFILES_RUN_LIVE_TEST=yes`: optional live check during the API build; always return to `no` after the one-off check.
+- `CASEFILES_RUNTIME_PROBE=yes`: optional live test on API startup; always return to `no` immediately afterward.
+
+Do not enable either diagnostic switch permanently.
 
 ## Current limitations
 
-- Case sessions, interview history and request quotas are stored in RAM and are lost on a server restart or cold redeployment.
-- AI dialogues are grounded by character instructions and evidence access, but still require adversarial evaluation; do not claim perfect factual consistency.
-- There is no authentication, user accounts, persistent database or private unpublished scenario engine yet.
-- Only one case exists and the final verdict uses deterministic server-side criteria.
-- The production Render free service may have cold-start delays.
-
-This repository is a development vertical slice, not a production-ready game.
+- The story and correct suspect can be inspected in this public repository. Future production content should move into a private content service.
+- AI roleplay can produce factual inconsistencies despite controlled prompts; additional evaluations are needed.
+- The crime scene is currently a stylized 2D exploration panel rather than a finished illustrated environment.
+- Sessions are anonymous bearer tokens without player accounts; account-based saves and multi-device sync are not implemented.
+- The free database has a limited lifespan. Implement backups before using it for important data.
+- Current deduction and accusation rules are designed for this first case and need further balancing.
