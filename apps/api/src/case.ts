@@ -41,7 +41,7 @@ export const messageSchema = z.object({
   message: z.string().trim().min(1).max(600),
   evidenceId: z.string().optional()
 });
-export function evaluate(suspectId: string, ids: string[], motive: string, timeline: string) {
+export function evaluate(suspectId: string, ids: string[], motive: string, timeline: string, links: string[] = []) {
   const selected = new Set(ids);
   const evidenceGroups = [
     ['E04', 'E09'],
@@ -49,10 +49,11 @@ export function evaluate(suspectId: string, ids: string[], motive: string, timel
     ['E02', 'E07', 'E08']
   ];
   const hasGroups = evidenceGroups.every(group => group.some(id => selected.has(id)));
-  const grounded = motive.length >= 12 && timeline.length >= 12;
+  const grounded = motive.trim().length >= 12 && timeline.trim().length >= 12;
+  const hasReasoning = links.includes('D01') && ['D02','D03','D05'].some(id => links.includes(id));
   return suspectId !== 'martin'
     ? { status: 'incorrect', title: 'Неправилно обвинение', explanation: 'Избраните доказателства не установяват вина на посочения човек.' }
-    : !hasGroups || !grounded
-      ? { status: 'insufficient', title: 'Недостатъчна обосновка', explanation: 'Нужни са доказателства за мотив, присъствие и времева последователност от независими източници.' }
+    : !hasGroups || !grounded || !hasReasoning
+      ? { status: 'insufficient', title: 'Недостатъчна обосновка', explanation: 'Нужни са доказателства, обяснения и поне две установени връзки в дъската — за мотив и хронология.' }
       : { status: 'solved', title: 'Случаят е разрешен', explanation: 'Доказателствата подкрепят финансовия мотив, присъствието и ключовите времеви събития.' };
 }
