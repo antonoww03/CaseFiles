@@ -6,12 +6,14 @@ type Person = { id: string; name: string; role: string; initial: string; opening
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
-type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'timeline' | 'interview' | 'accusation';
+type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string,string] };
+type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation';
 const tabs: { id: View; name: string; icon: string }[] = [
   { id: 'briefing', name: 'Досие', icon: '▤' },
   { id: 'scene', name: 'Апартамент 407', icon: '⌖' },
   { id: 'lab', name: 'Криминалистика', icon: '◈' },
   { id: 'evidence', name: 'Доказателства', icon: '▦' },
+  { id: 'board', name: 'Връзки', icon: '⥈' },
   { id: 'timeline', name: 'Хронология', icon: '◷' },
   { id: 'interview', name: 'Разпити', icon: '◎' },
   { id: 'accusation', name: 'Обвинение', icon: '⚖' }
@@ -33,15 +35,15 @@ const allEvidence: Evidence[] = [
   ['E12','Показания на Петър','Протокол','Петър посочва приблизително време на шума, но не е сигурен за минутата.','◈']
 ].map(([id,title,type,detail,icon])=>({id,title,type,detail,icon}));
 const timeline = [
-  ['00:42','Съобщение за оригинални фактури'],
-  ['01:09','Временен код отваря входа'],
-  ['01:12','Камера засича фигура в асансьора'],
-  ['01:17','Последният разговор на Никола'],
-  ['≈ 01:20–01:25','Приблизителен интервал на смъртта'],
-  ['01:28','Автоматично заключване'],
-  ['01:29','Фигура напуска сградата'],
-  ['02:37','Откриване на тялото']
-];
+  ['00:42','Съобщение за оригинални фактури','E04'],
+  ['01:09','Временен код отваря входа','E05'],
+  ['01:12','Камера засича фигура в асансьора','E06'],
+  ['01:17','Последният разговор на Никола','E03'],
+  ['≈ 01:20–01:25','Приблизителен интервал на смъртта','E02'],
+  ['01:28','Автоматично заключване','E08'],
+  ['01:29','Фигура напуска сградата','E07'],
+  ['02:37','Откриване на тялото','E01']
+] as const;
 const storageKey = 'casefiles-demo-session';
 async function call<T>(path: string, method='GET', body?: unknown, session?: string): Promise<T> {
   const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api' + path,{method,headers:{'Content-Type':'application/json',...(session?{'x-case-session':session}:{})},body:body===undefined?undefined:JSON.stringify(body)});
@@ -55,6 +57,10 @@ function App(){
  const [session,setSession]=useState('');
  const [found,setFound]=useState<string[]>([]);
  const [messages,setMessages]=useState<Record<string,Chat[]>>({});
+ const [deductions,setDeductions]=useState<Deduction[]>([]);
+ const [linkA,setLinkA]=useState('');
+ const [linkB,setLinkB]=useState('');
+ const [linkNotice,setLinkNotice]=useState('');
  const [activePerson,setActivePerson]=useState('martin');
  const [selected,setSelected]=useState<Evidence|null>(null);
  const [question,setQuestion]=useState('');
@@ -71,11 +77,12 @@ function App(){
   call<CaseInfo>('/case').then(setInfo).catch(e=>setError(String(e)));
   call<{mode:'ai-live'|'scripted-demo'}>('/health').then(data=>setAiMode(data.mode)).catch(()=>setAiMode('scripted-demo'));
   const old=localStorage.getItem(storageKey);
-  if(old) call<{found:string[];messages:Record<string,Chat[]>}>('/session','GET',undefined,old).then(s=>{setSession(old);setFound(s.found);setMessages(s.messages)}).catch(()=>localStorage.removeItem(storageKey));
+  if(old) call<{found:string[];links:string[];messages:Record<string,Chat[]>}>('/session','GET',undefined,old).then(s=>{setSession(old);setFound(s.found);setMessages(s.messages);void call<Deduction[]>('/deductions','GET',undefined,old).then(setDeductions).catch(()=>setDeductions([]))}).catch(()=>localStorage.removeItem(storageKey));
  },[]);
- const start=async()=>{setBusy(true);setError('');try{const data=await call<{sessionId:string;found:string[]}>('/session','POST');localStorage.setItem(storageKey,data.sessionId);setSession(data.sessionId);setFound([]);setMessages({});setChecked([]);setVerdict(null);setView('scene')}catch(e){setError(String(e))}finally{setBusy(false)}};
+ const start=async()=>{setBusy(true);setError('');try{const data=await call<{sessionId:string;found:string[]}>('/session','POST');localStorage.setItem(storageKey,data.sessionId);setSession(data.sessionId);setFound([]);setMessages({});setDeductions([]);setLinkA('');setLinkB('');setLinkNotice('');setChecked([]);setVerdict(null);setView('scene')}catch(e){setError(String(e))}finally{setBusy(false)}};
  const discover=async(e:Evidence)=>{setSelected(e);if(!session||found.includes(e.id))return;setBusy(true);try{const data=await call<{found:string[]}>('/discover/'+e.id,'POST',{},session);setFound(data.found)}catch(e){setError(String(e))}finally{setBusy(false)}};
  const send=async()=>{if(!question.trim()||busy||!session)return;const text=question.trim();setBusy(true);setError('');try{const data=await call<{reply:string;found:string[];mode:'ai-live'|'scripted-demo'}>('/interview','POST',{personId:activePerson,message:text,...(present?{evidenceId:present}:{})},session);setMessages(m=>({...m,[activePerson]:[...(m[activePerson]||[]),{role:'player',text},{role:'npc',text:data.reply}]}));setFound(data.found);setAiMode(data.mode);setQuestion('');setPresent('')}catch(e){setError(String(e))}finally{setBusy(false)}};
+ const connect=async()=>{if(!session||busy||!linkA||!linkB||linkA===linkB)return;setBusy(true);setLinkNotice('');try{const data=await call<{deduction:Deduction;links:string[]}>('/deductions','POST',{firstId:linkA,secondId:linkB},session);setDeductions(current=>current.some(x=>x.id===data.deduction.id)?current:[...current,data.deduction]);setLinkNotice('Открита връзка: '+data.deduction.title)}catch(e){setLinkNotice(e instanceof Error?e.message:String(e))}finally{setBusy(false)}};
  const accuse=async()=>{setBusy(true);setError('');try{setVerdict(await call('/accusation','POST',{suspectId:suspect,motive,timeline:sequence,evidenceIds:checked},session))}catch(e){setError(String(e))}finally{setBusy(false)}};
  const person=info?.people.find(p=>p.id===activePerson);
  const list=(ids:string[])=> <div className="cardgrid">{ids.map(id=>{const e=allEvidence.find(x=>x.id===id)!;return <button key={e.id} className={'e-card '+(found.includes(id)?'collected':'')} onClick={()=>discover(e)}><span className="e-symbol">{e.icon}</span><span className="mono gold">{e.id} {found.includes(id)?'· ОТКРИТО':'· ЗА ОГЛЕД'}</span><strong>{e.title}</strong><span className="muted small">{e.type}</span></button>})}</div>;
@@ -85,7 +92,8 @@ function App(){
  {view==='scene'&&<><h1>Апартамент 407</h1><p className="muted">Прегледай предметите и документите. Избирай улики, за да ги добавиш в досието.</p><div className="scene"><span className="mono scene-label">02:37 / ПЪРВОНАЧАЛЕН ОГЛЕД</span><div className="scene-room"><div className="sofa"/><div className="tablepiece"/><div className="deskpiece"/><div className="rug"/></div><span className="scene-bottom">ОБЕКТ / 407 · ЧЕТВЪРТИ ЕТАЖ</span></div>{list(sceneIds)}</>}
  {view==='lab'&&<><h1>Криминалистично бюро</h1><p className="muted">Вече изготвените анализи са достъпни за преглед в досието.</p>{list(labIds)}</>}
  {view==='evidence'&&<><h1>Доказателства</h1><p className="muted">Само откритите улики могат да бъдат представяни при разпит или приложени към обвинението.</p>{found.length?list(found):<p className="empty">Още няма събрани доказателства. Започни с огледа.</p>}</>}
- {view==='timeline'&&<><h1>Хронология</h1><p className="muted">Времеви точки за проверка. Част от тях предстои да потвърдиш с доказателства.</p><div className="timeline">{timeline.map(([time,txt],i)=><div className="time-item" key={i}><span className="mono gold">{time}</span><p>{txt}</p></div>)}</div></>}
+ {view==='board'&&<><h1>Дъска на доказателствата</h1><p className="muted">Избери две събрани улики и провери дали между тях има логическа връзка. Не всяка комбинация води до заключение.</p><div className="formpanel"><label htmlFor="board-first">ПЪРВА УЛИКА</label><select id="board-first" value={linkA} onChange={e=>setLinkA(e.target.value)}><option value="">Избери доказателство</option>{allEvidence.filter(e=>found.includes(e.id)).map(e=><option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><label htmlFor="board-second">ВТОРА УЛИКА</label><select id="board-second" value={linkB} onChange={e=>setLinkB(e.target.value)}><option value="">Избери доказателство</option>{allEvidence.filter(e=>found.includes(e.id)).map(e=><option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><button className="primary" onClick={connect} disabled={!session||busy||!linkA||!linkB||linkA===linkB}>Свържи уликите →</button>{linkNotice&&<p role="status" className="muted">{linkNotice}</p>}</div><h2>Установени връзки — {deductions.length}</h2>{deductions.length===0?<p className="empty">Все още няма установени връзки. Изследвай уликите и намери противоречия.</p>:<div className="board-list">{deductions.map(d=><article key={d.id} className="board-card"><span className="mono gold">{d.id} · {d.evidenceIds.join(' + ')}</span><h3>{d.title}</h3><p>{d.explanation}</p></article>)}</div>}</>}
+ {view==='timeline'&&<><h1>Хронология</h1><p className="muted">Показват се само времеви точки, подкрепени от вече открити улики.</p><div className="timeline">{timeline.filter(([, ,id])=>found.includes(id)).map(([time,txt,id])=><div className="time-item" key={id}><span className="mono gold">{time}</span><p>{txt}</p></div>)}</div>{!timeline.some(([, ,id])=>found.includes(id))&&<p className="empty">Все още няма потвърдени събития в хронологията.</p>}</>}
  {view==='interview'&&<><h1>Стая за разпити</h1><p className="muted">Задавай свободни въпроси и представяй откритите улики. {aiMode==='ai-live'?'Разпитът използва AI, като фактите остават ограничени от досието.':'Разпитите работят в демонстрационен режим до активиране на AI ключ в сървъра.'}</p><div className="people">{info?.people.map(p=><button key={p.id} className={'person '+(activePerson===p.id?'selected':'')} onClick={()=>setActivePerson(p.id)}><span className="avatar">{p.initial}</span><strong>{p.name}</strong><small>{p.role}</small></button>)}</div><div className="interview"><div className="interview-head"><span className="avatar large">{person?.initial}</span><div><strong>{person?.name}</strong><p className="muted small">{person?.role} · РАЗПИТ</p></div></div><div className="chat" aria-live="polite"><div className="bubble"><span className="mono gold">{person?.name}</span><p>{person?.opening}</p></div>{(messages[activePerson]||[]).map((m,i)=><div key={i} className={'bubble '+(m.role==='player'?'player':'')}><span className="mono gold">{m.role==='player'?'ДЕТЕКТИВ':person?.name}</span><p>{m.text}</p></div>)}</div><label className="small muted" htmlFor="present">Предяви доказателство (по избор)</label><select id="present" value={present} onChange={e=>setPresent(e.target.value)}><option value="">Без доказателство</option>{allEvidence.filter(e=>found.includes(e.id)).map(e=><option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><form className="composer" onSubmit={e=>{e.preventDefault();send()}}><input maxLength={600} value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Задай въпрос..." aria-label="Въпрос към заподозрения"/><button className="primary" disabled={!session||busy||!question.trim()}>Изпрати ↗</button></form></div></>}
  {view==='accusation'&&<><h1>Финално обвинение</h1><p className="muted">Използвай само потвърдени улики. Извършителят сам по себе си не е достатъчен за доказано обвинение.</p><div className="formpanel"><label htmlFor="suspect">ЗАПОДОЗРЯН</label><select id="suspect" value={suspect} onChange={e=>setSuspect(e.target.value)}>{info?.people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><label>ПРИЛОЖЕНИ ДОКАЗАТЕЛСТВА · МИНИМУМ 3</label><div className="checks">{allEvidence.filter(e=>found.includes(e.id)).map(e=><label key={e.id} className="check"><input type="checkbox" checked={checked.includes(e.id)} onChange={x=>setChecked(prev=>x.target.checked?[...prev,e.id]:prev.filter(id=>id!==e.id))}/>{e.id} · {e.title}</label>)}</div><label htmlFor="motive">МОТИВ</label><textarea id="motive" value={motive} onChange={e=>setMotive(e.target.value)} placeholder="Обоснови предполагаемия мотив..." maxLength={1200}/><label htmlFor="sequence">ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ</label><textarea id="sequence" value={sequence} onChange={e=>setSequence(e.target.value)} placeholder="Свържи събитията по време..." maxLength={1200}/><button className="primary" disabled={!session||busy||checked.length<3||motive.trim().length<12||sequence.trim().length<12} onClick={accuse}>Предай заключението →</button>{verdict&&<div className={'verdict '+verdict.status} role="status"><strong>{verdict.title}</strong><p>{verdict.explanation}</p></div>}</div></>}
  </main><section className="inspector"><span className="mono gold">ПОЛЕВО ДОСИЕ</span><h3>Инспектор</h3><div className="inspector-art">{selected?.icon||'⌖'}</div><div className="mono gold">{selected?.id||'НЕИЗБРАН ОБЕКТ'}</div><h2>{selected?.title||'Избери улика'}</h2><p className="muted">{selected?.detail||'Прегледай обектите в апартамент 407 или в криминалистичното бюро.'}</p><div className="inspector-foot"><span>СТАТУС</span><strong>{selected?(found.includes(selected.id)?'ОТКРИТО':'НЕОТКРИТО'):'—'}</strong></div>{selected&&<button className="secondary" onClick={()=>{setView('interview');setPresent(selected.id)}} disabled={!found.includes(selected.id)}>Предяви при разпит ↗</button>}</section></div></>;
