@@ -115,18 +115,32 @@ export async function aiReply(context: InterviewContext): Promise<string | null>
         text: { format: { type: 'json_schema', name: 'interview_reply', strict: true, schema } }
       })
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({})) as { error?: { code?: string; type?: string } };
+      const rawCode = errorData.error?.code || errorData.error?.type || 'unknown';
+      const code = /^[a-z_]{1,55}$/i.test(rawCode) ? rawCode : 'unrecognized';
+      process.stderr.write('AI_PROVIDER_ERROR status=' + response.status + ' code=' + code + '\\n');
+      return null;
+    }
     const result = await response.json() as {
       status?: string;
       output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }>;
     };
-    if (result.status !== 'completed') return null;
+    if (result.status !== 'completed') {
+      process.stderr.write('AI_PROVIDER_RESULT incomplete_or_unexpected\\n');
+      return null;
+    }
     const raw = result.output?.flatMap(item => item.content || [])
       .find(part => part.type === 'output_text')?.text;
-    if (!raw) return null;
+    if (!raw) {
+      process.stderr.write('AI_PROVIDER_RESULT missing_output_text\\n');
+      return null;
+    }
     const parsed = generatedSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) process.stderr.write('AI_PROVIDER_RESULT invalid_reply_schema\\n');
     return parsed.success ? parsed.data.reply : null;
-  } catch {
+  } catch (err) {
+    process.stderr.write('AI_PROVIDER_EXCEPTION ' + (err instanceof Error && err.name === 'AbortError' ? 'timeout' : 'request_or_parse_error') + '\\n');
     return null;
   } finally {
     clearTimeout(timeout);
