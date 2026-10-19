@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { publicCase, evidence, accusationSchema, messageSchema, evaluate } from './case.js';
 import { aiReply, configuredMode, scriptedReply, type InterviewLine } from './interview.js';
 
@@ -14,6 +15,7 @@ type Session = {
   aiCalls: number;
   interviewBusy: boolean;
 };
+if (existsSync('apps/api/.env')) process.loadEnvFile('apps/api/.env');
 const sessions = new Map<string, Session>();
 const quotas = new Map<string, { start: number; count: number }>();
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
