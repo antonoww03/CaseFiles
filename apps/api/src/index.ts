@@ -5,22 +5,13 @@ import { existsSync } from 'node:fs';
 import { publicCase, evidence, accusationSchema, messageSchema, evaluate } from './case.js';
 import { aiReply, configuredMode, scriptedReply, type InterviewLine } from './interview.js';
 import { deductions, findDeduction } from './deductions.js';
+import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
-type Session = {
-  id: string;
-  found: Set<string>;
-  links: Set<string>;
-  messages: Record<string, InterviewLine[]>;
-  disclosed: Record<string, string[]>;
-  lastActive: number;
-  interviewCount: number;
-  aiCalls: number;
-  interviewBusy: boolean;
-};
+type Session = StoredSession;
 if (existsSync('apps/api/.env')) process.loadEnvFile('apps/api/.env');
 const sessions = new Map<string, Session>();
 const quotas = new Map<string, { start: number; count: number }>();
-const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 function useQuota(key: string, limit: number, durationMs: number): boolean {
   const now = Date.now();
@@ -44,6 +35,17 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(cors({ origin: process.env.WEB_ORIGIN || 'http://localhost:5173' }));
 app.use(express.json({ limit: '16kb' }));
+app.use('/api', async (req, res, next) => {
+  const id = req.header('x-case-session');
+  if (!id || sessions.has(id) || !persistentStorageEnabled()) return void next();
+  try {
+    const saved = await restoreSession(id);
+    if (saved) sessions.set(id, saved);
+    next();
+  } catch {
+    res.status(503).json({ error: 'Временно не можем да възстановим сесията.' });
+  }
+});
 
 function getSession(req: express.Request, res: express.Response): Session | undefined {
   const id = req.header('x-case-session');
@@ -59,7 +61,7 @@ function getSession(req: express.Request, res: express.Response): Session | unde
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, mode: configuredMode() }));
 app.get('/api/case', (_req, res) => res.json(publicCase));
-app.post('/api/session', (req, res) => {
+app.post('/api/session', async (req, res) => {
   cleanExpired();
   if (sessions.size >= 500 || !useQuota('new-session:' + req.ip, 10, 60 * 60 * 1000)) {
     return void res.status(429).json({ error: 'Твърде много нови сесии. Опитай по-късно.' });
@@ -69,6 +71,10 @@ app.post('/api/session', (req, res) => {
     id, found: new Set(), links: new Set(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
+  try { await saveSession(sessions.get(id)!); } catch {
+    sessions.delete(id);
+    return void res.status(503).json({ error: 'Сесията не можа да бъде записана.' });
+  }
   res.status(201).json({ sessionId: id, found: [] });
 });
 app.get('/api/session', (req, res) => {
@@ -80,13 +86,14 @@ app.get('/api/evidence', (req, res) => {
   if (!session) return;
   res.json(evidence.filter(item => session.found.has(item.id)));
 });
-app.post('/api/discover/:id', (req, res) => {
+app.post('/api/discover/:id', async (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
   const item = evidence.find(item => item.id === req.params.id);
   if (!item) return void res.status(404).json({ error: 'Неизвестна улика.' });
   if (item.source === 'interview') return void res.status(403).json({ error: 'Тази улика се придобива чрез разпит.' });
   session.found.add(item.id);
+  try { await saveSession(session); } catch { return void res.status(503).json({ error: 'Неуспешно запазване на уликата.' }); }
   res.json({ evidence: item, found: [...session.found] });
 });
 app.get('/api/deductions', (req, res) => {
@@ -95,7 +102,7 @@ app.get('/api/deductions', (req, res) => {
   res.json(deductions.filter(item => session.links.has(item.id)));
 });
 
-app.post('/api/deductions', (req, res) => {
+app.post('/api/deductions', async (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
   const first = typeof req.body?.firstId === 'string' ? req.body.firstId : '';
@@ -106,6 +113,7 @@ app.post('/api/deductions', (req, res) => {
   const deduction = findDeduction(first, second);
   if (!deduction) return void res.status(422).json({ error: 'Няма доказуема връзка между тези две улики.' });
   session.links.add(deduction.id);
+  try { await saveSession(session); } catch { return void res.status(503).json({ error: 'Неуспешно запазване на логическата връзка.' }); }
   res.json({ deduction, links: [...session.links] });
 });
 
@@ -144,7 +152,10 @@ app.post('/api/interview', async (req, res) => {
     session.interviewCount++;
     if (personId === 'elena') session.found.add('E11');
     if (personId === 'petar') session.found.add('E12');
+    await saveSession(session);
     res.json({ reply, found: [...session.found], mode });
+  } catch {
+    res.status(503).json({ error: 'Разпитът не можа да бъде запазен.' });
   } finally {
     session.interviewBusy = false;
   }
@@ -160,7 +171,12 @@ app.post('/api/accusation', (req, res) => {
 });
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
-app.listen(port, () => process.stdout.write('CASEFILES API listening on '+port+' mode='+configuredMode()+'\n'));
+initializeStorage().then(storageMode => {
+  app.listen(port, () => process.stdout.write('CASEFILES API listening on '+port+' mode='+configuredMode()+' storage='+storageMode+'\n'));
+}).catch(() => {
+  process.stderr.write('CASEFILES_STORAGE_INIT_FAILED\n');
+  process.exitCode = 1;
+});
 
 if (process.env.CASEFILES_RUNTIME_PROBE === 'yes') {
   void (async () => {
