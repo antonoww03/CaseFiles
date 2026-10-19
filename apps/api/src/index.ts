@@ -116,7 +116,8 @@ app.post('/api/interview', async (req, res) => {
     }
     const mode = reply ? 'ai-live' : 'scripted-demo';
     reply ??= scriptedReply(personId, message, disclosed);
-    session.messages[personId] = [...history, { role: 'player', text: message }, { role: 'npc', text: reply }].slice(-40);
+    const updatedHistory: InterviewLine[] = [...history, { role: 'player', text: message }, { role: 'npc', text: reply }];
+    session.messages[personId] = updatedHistory.slice(-40);
     session.disclosed[personId] = disclosed;
     session.interviewCount++;
     if (personId === 'elena') session.found.add('E11');
