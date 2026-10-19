@@ -59,7 +59,7 @@ function getSession(req: express.Request, res: express.Response): Session | unde
   return session;
 }
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, mode: configuredMode() }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, mode: configuredMode() === 'ai-live' ? 'ai-configured' : 'scripted-demo', storage: persistentStorageEnabled() ? 'postgres' : 'memory' }));
 app.get('/api/case', (_req, res) => res.json(publicCase));
 app.post('/api/session', async (req, res) => {
   cleanExpired();
