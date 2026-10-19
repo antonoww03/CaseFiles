@@ -44,7 +44,7 @@ const timeline = [
 ];
 const storageKey = 'casefiles-demo-session';
 async function call<T>(path: string, method='GET', body?: unknown, session?: string): Promise<T> {
-  const res = await fetch('/api'+path,{method,headers:{'Content-Type':'application/json',...(session?{'x-case-session':session}:{})},body:body===undefined?undefined:JSON.stringify(body)});
+  const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api' + path,{method,headers:{'Content-Type':'application/json',...(session?{'x-case-session':session}:{})},body:body===undefined?undefined:JSON.stringify(body)});
   const data = await res.json();
   if(!res.ok) throw new Error(data.error || 'Връзката със сървъра е прекъсната.');
   return data;
