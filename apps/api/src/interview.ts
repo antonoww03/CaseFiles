@@ -119,7 +119,7 @@ export async function aiReply(context: InterviewContext): Promise<string | null>
       const errorData = await response.json().catch(() => ({})) as { error?: { code?: string; type?: string } };
       const rawCode = errorData.error?.code || errorData.error?.type || 'unknown';
       const code = /^[a-z_]{1,55}$/i.test(rawCode) ? rawCode : 'unrecognized';
-      process.stderr.write('AI_PROVIDER_ERROR status=' + response.status + ' code=' + code + '\\n');
+      process.stderr.write('AI_PROVIDER_ERROR status=' + response.status + ' code=' + code + '\n');
       return null;
     }
     const result = await response.json() as {
@@ -127,20 +127,24 @@ export async function aiReply(context: InterviewContext): Promise<string | null>
       output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }>;
     };
     if (result.status !== 'completed') {
-      process.stderr.write('AI_PROVIDER_RESULT incomplete_or_unexpected\\n');
+      process.stderr.write('AI_PROVIDER_RESULT incomplete_or_unexpected\n');
       return null;
     }
     const raw = result.output?.flatMap(item => item.content || [])
       .find(part => part.type === 'output_text')?.text;
     if (!raw) {
-      process.stderr.write('AI_PROVIDER_RESULT missing_output_text\\n');
+      process.stderr.write('AI_PROVIDER_RESULT missing_output_text\n');
       return null;
     }
     const parsed = generatedSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) process.stderr.write('AI_PROVIDER_RESULT invalid_reply_schema\\n');
+    if (!parsed.success) process.stderr.write('AI_PROVIDER_RESULT invalid_reply_schema\n');
     return parsed.success ? parsed.data.reply : null;
   } catch (err) {
-    process.stderr.write('AI_PROVIDER_EXCEPTION ' + (err instanceof Error && err.name === 'AbortError' ? 'timeout' : 'request_or_parse_error') + '\\n');
+    const errorName = err instanceof Error && /^[a-z]{1,32}$/i.test(err.name) ? err.name : 'unknown';
+    const cause = err instanceof Error ? (err as Error & { cause?: { code?: unknown } }).cause : undefined;
+    const rawCauseCode = cause && typeof cause.code === 'string' ? cause.code : 'none';
+    const causeCode = /^[A-Z_0-9]{1,40}$/.test(rawCauseCode) ? rawCauseCode : 'other';
+    process.stderr.write('AI_PROVIDER_EXCEPTION name=' + errorName + ' cause=' + causeCode + '\n');
     return null;
   } finally {
     clearTimeout(timeout);
