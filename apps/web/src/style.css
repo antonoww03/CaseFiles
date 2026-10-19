@@ -4,3 +4,9 @@
 .board-card h3{margin:12px 0 6px;font-size:17px}
 .board-card p{font-size:13px;color:#bac5cc;line-height:1.75;margin:0}
 @media(max-width:690px){.board-list{grid-template-columns:1fr}}
+
+.scene-hotspot{position:absolute;z-index:5;width:31px;height:31px;border-radius:50%;background:#d5a76e;color:#151819;border:2px solid #ffe1b1;font-size:21px;font-weight:700;box-shadow:0 0 0 7px #d5a76e2c,0 0 22px #d5a76eaa;display:grid;place-items:center;transition:transform .15s ease}
+.scene-hotspot:hover,.scene-hotspot:focus-visible{transform:scale(1.16);outline:2px solid #fff;outline-offset:5px}
+.scene-hotspot.examined{background:#45564f;color:#b8e5c7;border-color:#80a98f;box-shadow:none}
+.hotspot-0{left:14%;top:64%}.hotspot-1{left:61%;top:58%}.hotspot-2{left:52%;top:38%}.hotspot-3{left:85%;top:70%}.hotspot-4{left:30%;top:35%}
+@media(prefers-reduced-motion:reduce){.scene-hotspot{transition:none}}
