@@ -138,4 +138,4 @@ app.post('/api/accusation', (req, res) => {
 });
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
-app.listen(port, () => process.stdout.write('CASEFILES API listening on '+port+'\n'));
+app.listen(port, () => process.stdout.write('CASEFILES API listening on '+port+' mode='+configuredMode()+'\n'));
