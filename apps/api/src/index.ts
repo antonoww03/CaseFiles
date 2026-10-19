@@ -4,10 +4,12 @@ import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { publicCase, evidence, accusationSchema, messageSchema, evaluate } from './case.js';
 import { aiReply, configuredMode, scriptedReply, type InterviewLine } from './interview.js';
+import { deductions, findDeduction } from './deductions.js';
 
 type Session = {
   id: string;
   found: Set<string>;
+  links: Set<string>;
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   lastActive: number;
@@ -64,14 +66,14 @@ app.post('/api/session', (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   res.status(201).json({ sessionId: id, found: [] });
 });
 app.get('/api/session', (req, res) => {
   const session = getSession(req, res);
-  if (session) res.json({ found: [...session.found], messages: session.messages });
+  if (session) res.json({ found: [...session.found], links: [...session.links], messages: session.messages });
 });
 app.get('/api/evidence', (req, res) => {
   const session = getSession(req, res);
@@ -87,6 +89,26 @@ app.post('/api/discover/:id', (req, res) => {
   session.found.add(item.id);
   res.json({ evidence: item, found: [...session.found] });
 });
+app.get('/api/deductions', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  res.json(deductions.filter(item => session.links.has(item.id)));
+});
+
+app.post('/api/deductions', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const first = typeof req.body?.firstId === 'string' ? req.body.firstId : '';
+  const second = typeof req.body?.secondId === 'string' ? req.body.secondId : '';
+  if (!session.found.has(first) || !session.found.has(second)) {
+    return void res.status(403).json({ error: 'Можеш да свързваш само вече открити доказателства.' });
+  }
+  const deduction = findDeduction(first, second);
+  if (!deduction) return void res.status(422).json({ error: 'Няма доказуема връзка между тези две улики.' });
+  session.links.add(deduction.id);
+  res.json({ deduction, links: [...session.links] });
+});
+
 app.post('/api/interview', async (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
