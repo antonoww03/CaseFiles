@@ -34,7 +34,7 @@ async function ready() {
 }
 try {
   const health = await ready();
-  assert.equal(health.mode, 'ai-live', 'Expected configured AI mode');
+  assert.equal(health.mode, 'ai-configured', 'Expected configured AI key');
   const created = await request('/session','POST');
   assert.equal(created.status,201);
   const token = created.data.sessionId;
