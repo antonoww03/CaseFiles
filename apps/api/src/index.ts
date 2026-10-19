@@ -167,7 +167,7 @@ app.post('/api/accusation', (req, res) => {
   if (!parsed.success) return void res.status(400).json({ error: 'Попълни заподозрян, мотив, хронология и поне три улики.' });
   const { suspectId, motive, timeline, evidenceIds } = parsed.data;
   if (evidenceIds.some(id => !session.found.has(id))) return void res.status(403).json({ error: 'Можеш да използваш само открити улики.' });
-  res.json(evaluate(suspectId, evidenceIds, motive, timeline));
+  res.json(evaluate(suspectId, evidenceIds, motive, timeline, [...session.links]));
 });
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
