@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const port = 39677;
+const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
 const origin = 'http://127.0.0.1:' + port;
 const child = spawn(process.execPath, ['apps/api/dist/index.js'], {
-  cwd: process.cwd(),
+  cwd: repositoryRoot,
   env: { ...process.env, PORT: String(port), WEB_ORIGIN: 'http://localhost:5173' },
   stdio: 'ignore'
 });
