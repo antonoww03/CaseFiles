@@ -43,6 +43,11 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const detectiveInitial=await request('/detective13/case-001','GET',undefined,token);
+  assert.equal(detectiveInitial.status,200);
+  assert.equal(detectiveInitial.json.progress.solved,0);
+  assert.equal(detectiveInitial.json.challenges.every(x=>!x.available&&x.prompt===null),true);
+  assert.equal((await request('/detective13/case-001/action','POST',{id:'access',answer:'code'},token)).status,403);
   const directorInitial=await request('/director12/case-001','GET',undefined,token);
   assert.equal(directorInitial.status,200);
   assert.equal(directorInitial.json.beats[0].id,'arrival407');
@@ -85,6 +90,14 @@ try {
   assert.equal(case2First.json.clues[0].description,null);
   assert.equal((await request('/living/case/action','POST',{caseId:'case-002',action:'discover',id:'C4'},token)).status,403);
   for(const id of ['C1','C2','C3','C4','C6'])assert.equal((await request('/living/case/action','POST',{caseId:'case-002',action:'discover',id},token)).status,200);
+  const detectiveCase2=await request('/detective13/case-002','GET',undefined,token);
+  assert.equal(detectiveCase2.status,200);
+  assert.ok(detectiveCase2.json.challenges.find(x=>x.id==='archiveaccess').available);
+  assert.equal((await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C1'},token)).status,422);
+  const detectivePass=await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C3'},token);
+  assert.equal(detectivePass.status,200);
+  assert.ok(detectivePass.json.progress.challenges.find(x=>x.id==='archiveaccess').completed);
+  assert.equal((await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C3'},token)).status,409);
   const caseInterview=await request('/living/case/action','POST',{caseId:'case-002',action:'interview',id:'raya'},token);
   assert.equal(caseInterview.status,200);
   assert.match(caseInterview.json.message,/ателие/);
@@ -247,6 +260,9 @@ try {
   const unlockedDraft = await request('/forensics/documents/draft/inspect','POST',{pageId:'signature'},token);
   assert.equal(unlockedDraft.status,200);
   assert.ok(unlockedDraft.json.found.includes('E09'));
+  const detectiveFinancial=await request('/detective13/case-001/action','POST',{id:'financial',answer:'invoices'},token);
+  assert.equal(detectiveFinancial.status,200);
+  assert.equal(detectiveFinancial.json.progress.progress.solved,1);
   const boardProof=await request('/experience11/action','POST',{kind:'board',first:'E04',second:'E09'},token);
   assert.equal(boardProof.status,200);
   assert.ok(boardProof.json.world.board.some(x=>x.id==='D01'));
@@ -443,6 +459,10 @@ try {
   const restoredDirector=await request('/director12/case-001','GET',undefined,restoredToken);
   assert.ok(restoredDirector.json.decisions.find(x=>x.id==='preserve-phone')?.chosen);
   assert.equal((await request('/director12/case-001/action','POST',{kind:'choose',id:'question-phone'},restoredToken)).status,409);
+  const restoredDetective=await request('/detective13/case-002','GET',undefined,restoredToken);
+  assert.equal(restoredDetective.status,200);
+  assert.ok(restoredDetective.json.challenges.find(x=>x.id==='archiveaccess').completed);
+  assert.equal(restoredDetective.json.progress.wrongAttempts,1);
   const restoredRelease=await request('/release10','GET',undefined,restoredToken);
   assert.equal(restoredRelease.status,200);
   assert.equal(restoredRelease.json.case2.puzzles.find(x=>x.id==='archive-lock').solved,true);
