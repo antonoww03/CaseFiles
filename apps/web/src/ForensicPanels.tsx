@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, CircleHelp, Clapperboard, Clock3, FileSearch, Files, Fingerprint, FolderOpen, LockKeyhole, Microscope, Play, RotateCcw, ScanSearch, ShieldCheck, Video } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, CircleHelp, Clapperboard, Clock3, FileSearch, Files, Fingerprint, FolderOpen, LockKeyhole, Microscope, Play, ScanSearch, ShieldCheck, Video } from 'lucide-react';
 import './forensic.css';
 
 export type ForensicClip = { id:string; title:string; place:string; start:string; end:string; duration:number; analyzed:boolean };
