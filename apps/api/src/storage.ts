@@ -81,7 +81,6 @@ export async function initializeStorage(): Promise<'postgres'|'memory'> {
       PRIMARY KEY(kind,id)
     )`);
     await instance.query('CREATE INDEX IF NOT EXISTS casefiles_community_recent ON casefiles.community_records(kind,updated_at DESC)');
-    await instance.query("DELETE FROM casefiles.community_records WHERE kind='room' AND updated_at < now() - interval '30 days'");
     pool = instance;
     return 'postgres';
   } catch (error) {
