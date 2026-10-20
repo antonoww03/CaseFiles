@@ -148,6 +148,32 @@ Case #002 receives six selectable narrative locations, original archive art, thr
 
 **Storage:** Database connection settings remain **unchanged**, as requested. Render may continue using in-memory sessions and browser-local autosave until PostgreSQL is connected separately. Local data does not automatically synchronize across devices. No AI key or GitHub comments are required by the new features.
 
+## CASEFILES 1.1 — Living Crime Scene / Interactive Gameplay
+
+This version adds **15 connected visual/gameplay improvements**, based on the 1.0 default cinematic game screen. All prior classic tools remain available:
+
+1. **Distinct environments** — ten individually authored SVG room illustrations at \`apps/web/public/art/rooms/\`, including a living room, study, entrance, medical area, archive reading room, server room, security desk, hall, elevator and restoration studio.
+2. **Use items directly in the scene** — investigate hotspots, find the brass key and apply it directly to the drawer; combine magnifier with the negative, or UV lamp with hidden writing. Each action is checked by the backend.
+3. **More expressive conversations** — visual suspect portraits, typewriter-style answers, choices tied to evidence; case 002 now exposes irreversible story decisions alongside its interrogation.
+4. **Investigation wall** — place movable evidence cards on a corkboard, choose two records, submit their relationship for server validation and display string lines for confirmed conclusions.
+5. **Object inspector** — rotate, zoom, flip and examine physical evidence; unseen back-side details and instrument prerequisites are verified by the API.
+6. **Evidence discoveries** — on-screen discovery feedback and gentle animation after game actions.
+7. **Investigation journal** — combined clue, archive, interrogation and important game-event entries derived from the current session.
+8. **Persistent consequences** — meaningful case-one and archive choice flags from earlier versions now exposed directly where they affect interrogation.
+9. **Story events** — contextual reveals and an event notification that responds to investigation progress.
+10. **Crime reconstruction** — draggable-equivalent reorderable chronological event cards (keyboard-accessible move buttons), playback highlighting and authoritative chronology check.
+11. **Adaptive hints** — advice based on unresolved available puzzles, with added prompt after an extended period without new progress.
+12. **Branch-dependent endings** — the prior 1.0 conclusion routes remain tied to discovered evidence and earlier mistakes.
+13. **Voice notes** — unlocked fictional narratives can be spoken by the browser through the local Speech Synthesis API. These are synthesized summaries, **not actual witness recordings**.
+14. **Forensic tools** — key, magnifier and UV applied through a unified on-scene interface; existing fingerprint, CCTV and forensic labs remain accessible in the same game.
+15. **Travel map** — location-based scene selection with prerequisite checks and scene-specific art.
+
+Server endpoints \`GET /api/experience11\` and \`POST /api/experience11/action\` surface derived, non-spoiler game state and enforce possession, prior discoveries, evidence custody and valid in-world deduction links. Existing session fields and portable save files contain the required state: **no schema or database connection changes were made**.
+
+**Important representation:** the scenes are original vector illustrations, **not photorealistic 3D rooms**. Rotating a clue is a stylized 2.5D simulation, not a scanned 3D object. The archive/audio and NPC content remains scripted rather than dynamically acted or recorded, and browser Speech Synthesis voice quality depends on available system voices. The complete game's fiction is not a real police archive. Some legacy mini-games and rich document viewers continue to use their existing UI within the unified game.
+
+**Regression validation:** added unit tests for locked clue interactions, key/UV tool use, verification of deduction links, protected audio text and location gates, extended end-to-end API smoke, and Playwright tests covering real keyboard/mouse/touch-style interactions in the case-one and case-two flow.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
