@@ -20,3 +20,18 @@
 .im-stage-heading,.im-stage-footer{z-index:3}
 @media(max-width:650px){.r10-hotspot .cf-object-art,.x11-hotspot .cf-object-art,.im-hotspot .cf-object-art,.g9-hotspot .cf-object-art{width:clamp(44px,12vw,66px);height:clamp(44px,12vw,66px)}.r10-hotspot>span,.x11-hotspot>span,.im-hotspot>small,.g9-hotspot>span{font-size:9px;max-width:86px;padding:3px 5px}.r10-scene-art,.x11-scene,.im-stage,.g9-room{aspect-ratio:16/9;min-height:220px!important}.r10-hotspot,.x11-hotspot{max-width:90px}}
 @media(prefers-reduced-motion:reduce){.cf-object-art{transition:none}}
+
+/* The original evidence-tab scene now shares the same physical room artworks. */
+.v03-room{aspect-ratio:16/9;height:auto!important;min-height:0;background-size:100% 100%!important;background-position:center!important}
+.v03-room-geometry{display:none}
+.v03-point{width:auto!important;height:auto!important;min-width:0!important;max-width:140px;display:flex;flex-direction:column;align-items:center;gap:2px;border:none!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;color:#f4dfb7!important;padding:0!important;transform:translate(-50%,-50%)}
+.v03-point .cf-object-art{width:clamp(64px,8vw,114px);height:clamp(64px,8vw,114px)}
+.v03-point>svg{width:20px;height:20px;position:relative;margin-top:-14px;border:1px solid #ffdeb1;border-radius:50%;background:#d8ad72;color:#201b14;padding:3px}
+.v03-point.found>svg{background:#4e7c60;color:#ddffe5}
+.v03-point small{font-size:10px;line-height:1.3;max-width:128px;text-shadow:0 2px 4px #080d13;background:#0e1b23ee;padding:5px;border:1px solid #a98c61;border-radius:5px;color:#efdac0}
+.v03-point:hover .cf-object-art,.v03-point:focus-visible .cf-object-art{transform:scale(1.13);filter:drop-shadow(0 0 18px #eed0a0)}
+.v03-point:focus-visible{outline:2px solid #f2d092;outline-offset:3px}
+.cin-portrait .d12-portrait{width:100%;height:100%;max-height:none;aspect-ratio:auto;border:0;border-radius:0}
+.cin-portrait.large .d12-portrait{height:100%}
+.v03-dossier-hero>.d12-portrait{height:122px;max-height:122px;aspect-ratio:auto}
+@media(max-width:650px){.v03-point .cf-object-art{width:48px;height:48px}.v03-point small{font-size:9px;max-width:76px;padding:3px}.v03-room{min-height:215px}}
