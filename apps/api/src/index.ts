@@ -9,6 +9,7 @@ import { suspects, contradictions, noteSchema, availableContradictions, scoreCas
 import { clipObservations, documents, observationSchema, frameFor, verifyObservation, documentPage, hintLevels, actualCaseTimeline } from './forensics.js';
 import { initialProgress, puzzles, actionSchema, unlocks, witnesses, classificationTargets, timelineItems, tutorial, difficultySchema, canEnter, achievements, outcome } from './expansion.js';
 import { exportBackup, applyBackup } from './backup.js';
+import { newImmersiveState, immersiveSnapshot, interactionSchema, interaction, dialogueSchema, chooseDialogue, searchSchema, searchRecords } from './immersive.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -73,7 +74,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -108,6 +109,43 @@ const expansionView = (session:Session) => {
   timelineSolved:timelineItems.every(x=>!session.found.has(x.requires)||progress.placements[x.id]===x.time)
  };
 };
+app.get('/api/immersive', (req,res) => {
+  const s = getSession(req,res);
+  if (s) res.json(immersiveSnapshot(s.immersive, s.found));
+});
+app.post('/api/immersive/action',async(req,res)=>{
+  const s=getSession(req,res); if(!s)return;
+  if(!useQuota('immersive:'+req.ip,180,60*60*1000))return void res.status(429).json({error:'Твърде много действия.'});
+  const parsed=interactionSchema.safeParse(req.body);
+  if(!parsed.success)return void res.status(400).json({error:'Невалидно взаимодействие.'});
+  const prior=structuredClone(s.immersive);
+  const result=interaction(s.immersive,s.found,parsed.data);
+  if(result.status!==200)return void res.status(result.status).json({error:result.message});
+  try{await saveSession(s);}catch{s.immersive=prior;return void res.status(503).json({error:'Неуспешно запазване.'});}
+  res.json({message:result.message,progress:immersiveSnapshot(s.immersive,s.found)});
+});
+app.post('/api/immersive/dialogue',async(req,res)=>{
+  const s=getSession(req,res);if(!s)return;
+  const parsed=dialogueSchema.safeParse(req.body);
+  if(!parsed.success)return void res.status(400).json({error:'Невалиден избор.'});
+  const prior=structuredClone(s.immersive);
+  const result=chooseDialogue(s.immersive,s.found,parsed.data.choiceId);
+  if(result.status!==200)return void res.status(result.status).json({error:result.message});
+  try{await saveSession(s);}catch{s.immersive=prior;return void res.status(503).json({error:'Неуспешно запазване.'});}
+  res.json({reply:result.message,progress:immersiveSnapshot(s.immersive,s.found)});
+});
+app.post('/api/immersive/computer/search',async(req,res)=>{
+  const s=getSession(req,res);if(!s)return;
+  if(!useQuota('computer:'+req.ip,100,60*60*1000))return void res.status(429).json({error:'Превишен лимит за търсене.'});
+  const parsed=searchSchema.safeParse(req.body);
+  if(!parsed.success)return void res.status(400).json({error:'Въведи поне два символа, максимум 80.'});
+  const results=searchRecords(s.found,parsed.data.query);
+  const before=s.immersive.terminalSearches;
+  s.immersive.terminalSearches=Math.min(before+1,9999);
+  try{await saveSession(s);}catch{s.immersive.terminalSearches=before;return void res.status(503).json({error:'Неуспешно запазване.'});}
+  res.json({results,total:results.length,searches:s.immersive.terminalSearches});
+});
+
 app.get('/api/backup',(req,res)=>{
  const s=getSession(req,res);
  if(!s)return;
