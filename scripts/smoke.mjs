@@ -43,6 +43,44 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const cases=await request('/cases');
+  assert.equal(cases.status,200);
+  assert.equal(cases.json.length,2);
+  const case2First=await request('/living/case/case-002','GET',undefined,token);
+  assert.equal(case2First.status,200);
+  assert.equal(case2First.json.clues.length,6);
+  assert.equal(case2First.json.ending,null);
+  assert.equal(case2First.json.clues[0].description,null);
+  assert.equal((await request('/living/case/action','POST',{caseId:'case-002',action:'discover',id:'C4'},token)).status,403);
+  for(const id of ['C1','C2','C3','C4','C6'])assert.equal((await request('/living/case/action','POST',{caseId:'case-002',action:'discover',id},token)).status,200);
+  const caseInterview=await request('/living/case/action','POST',{caseId:'case-002',action:'interview',id:'raya'},token);
+  assert.equal(caseInterview.status,200);
+  assert.match(caseInterview.json.message,/ателие/);
+  const caseBad=await request('/living/case/action','POST',{caseId:'case-002',action:'accuse',id:'raya',evidenceIds:['C2','C3','C4','C6']},token);
+  assert.equal(caseBad.json.story.verdict,'incorrect');
+  const caseWin=await request('/living/case/action','POST',{caseId:'case-002',action:'accuse',id:'boris',evidenceIds:['C2','C3','C4','C6']},token);
+  assert.equal(caseWin.status,200);
+  assert.equal(caseWin.json.story.verdict,'solved');
+  assert.match(caseWin.json.story.ending,/Борис/);
+  const custom={
+   id:'custom-probe',title:'Тайната на смяната',setting:'Измислен хотел във Варна',
+   briefing:'След изчезването на договор трима служители се опитват да прикрият какво се е случило през нощната смяна.',
+   suspects:[
+    {id:'ina',name:'Ина Петрова',alibi:'Бях на рецепцията по време на инцидента.'},
+    {id:'misho',name:'Михаил Георгиев',alibi:'Проверявах склада през цялата вечер.'},
+    {id:'nora',name:'Нора Иванова',alibi:'Бях в административния офис през нощта.'}
+   ],
+   clues:[1,2,3,4,5].map(i=>({id:'C'+i,title:'Документ '+i,description:'Фиктивен архивен запис с номер '+i+' за този случай.',location:'Архив'})),
+   solution:{suspectId:'misho',clueIds:['C1','C2','C3'],explanation:'В тази измислена история проверените протоколи подкрепят обвинението срещу Михаил.'}
+  };
+  const savedCustom=await request('/living/case/editor','POST',custom,token);
+  assert.equal(savedCustom.status,201);
+  for(const id of ['C1','C2','C3'])assert.equal((await request('/living/case/action','POST',{caseId:'custom-probe',action:'discover',id},token)).status,200);
+  const customWin=await request('/living/case/action','POST',{caseId:'custom-probe',action:'accuse',id:'misho',evidenceIds:['C1','C2','C3']},token);
+  assert.equal(customWin.json.story.verdict,'solved');
+  const livingStart=await request('/living','GET',undefined,token);
+  assert.ok(livingStart.json.events.length>=2);
+  assert.equal(livingStart.json.warrants.find(w=>w.id==='office').eligible,false);
   const immersiveInitial = await request('/immersive','GET',undefined,token);
   assert.equal(immersiveInitial.status,200);
   assert.equal(immersiveInitial.json.inventory.length,0);
@@ -137,6 +175,27 @@ try {
   const unlockedDraft = await request('/forensics/documents/draft/inspect','POST',{pageId:'signature'},token);
   assert.equal(unlockedDraft.status,200);
   assert.ok(unlockedDraft.json.found.includes('E09'));
+  const priorWarrant=await request('/living','GET',undefined,token);
+  assert.equal(priorWarrant.json.warrants.find(w=>w.id==='office').eligible,true);
+  const warrant=await request('/living/action','POST',{kind:'warrant',id:'office'},token);
+  assert.equal(warrant.status,200);
+  assert.ok(warrant.json.progress.warrants.find(w=>w.id==='office').approved);
+  const costReport=await request('/living/action','POST',{kind:'finance',id:'T02'},token);
+  assert.equal(costReport.status,200);
+  assert.ok(costReport.json.progress.transactions.find(t=>t.id==='T02').flag);
+  const expertRequest=await request('/living/action','POST',{kind:'expert',id:'financial'},token);
+  assert.equal(expertRequest.status,200);
+  const expertReady=await request('/living/action','POST',{kind:'expert',id:'financial'},token);
+  assert.equal(expertReady.status,200);
+  assert.ok(expertReady.json.progress.experts.find(e=>e.id==='financial').ready);
+  const confront=await request('/living/action','POST',{kind:'confront',id:'invoices'},token);
+  assert.equal(confront.status,200);
+  assert.ok(confront.json.progress.secrets.find(s=>s.id==='martin').unlocked);
+  const policy=await request('/living/action','POST',{kind:'policy',choice:'respect'},token);
+  assert.equal(policy.status,200);
+  assert.ok(policy.json.progress.reputation>60);
+  assert.equal((await request('/living/action','POST',{kind:'finance',id:'fake'},token)).status,400);
+
   const terminal = await request('/immersive/computer/search','POST',{query:'фактури'},token);
   assert.equal(terminal.status,200);
   assert.equal(terminal.json.total,1);
@@ -169,6 +228,12 @@ try {
   const exit = await request('/forensics/clips/exit/analyze','POST',{second:120,detail:'презрамка'},token);
   assert.equal(exit.status,200);
   assert.ok(exit.json.found.includes('E07'));
+  const trial=await request('/living/action','POST',{kind:'court',route:'financial',evidenceIds:['E04','E09','E05','E06']},token);
+  assert.equal(trial.status,200);
+  assert.equal(trial.json.progress.court.outcome,'Приети доказателства');
+  assert.ok(trial.json.progress.chain.some(x=>x.id==='E09'&&x.lawful));
+  assert.equal((await request('/living/action','POST',{kind:'confront',id:'invoices'},token)).status,409);
+
   const medical = await request('/discover/E02','POST',{},token);
   assert.equal(medical.status,200);
   const help = await request('/hints','GET',undefined,token);
@@ -239,6 +304,10 @@ try {
   assert.equal(portable.status,200);
   assert.equal(portable.json.format,'casefiles-backup-v1');
   assert.equal(portable.json.solved,true);
+  assert.equal(portable.json.living.case2.verdict,'solved');
+  assert.ok(portable.json.living.warrants.includes('office'));
+  assert.ok(portable.json.living.chain.some(x=>x.id==='E09'));
+
   assert.equal(portable.json.immersive.inventory.length,5);
   assert.ok(portable.json.immersive.solved.includes('safe_dial'));
   assert.ok(portable.json.immersive.dialogue.some(d=>d.choiceId==='martin_intro'));
@@ -258,6 +327,13 @@ try {
   assert.equal(restoredExpansion.json.difficulty,'expert');
   assert.equal(restoredExpansion.json.suspicions.martin,75);
   assert.equal(restoredExpansion.json.attempts.length,1);
+  const restoredLiving=await request('/living','GET',undefined,restoredToken);
+  assert.equal(restoredLiving.status,200);
+  assert.ok(restoredLiving.json.warrants.find(w=>w.id==='office').approved);
+  const restoredCase=await request('/living/case/case-002','GET',undefined,restoredToken);
+  assert.equal(restoredCase.json.verdict,'solved');
+  const restoredCustom=await request('/living/case/custom-probe','GET',undefined,restoredToken);
+  assert.equal(restoredCustom.status,200);
   const restoredImmersive = await request('/immersive','GET',undefined,restoredToken);
   assert.equal(restoredImmersive.status,200);
   assert.equal(restoredImmersive.json.inventory.length,5);
