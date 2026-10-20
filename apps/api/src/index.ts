@@ -337,18 +337,20 @@ app.post('/api/forensics/documents/:id/inspect', async (req, res) => {
 app.get('/api/hints', (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
-  res.json({ used: session.hintsUsed, max: hintLevels.length, nextLevel: session.hintsUsed < hintLevels.length ? session.hintsUsed + 1 : null, lastHint: session.hintsUsed ? hintLevels[session.hintsUsed - 1] : null });
+  const max = { rookie: 3, detective: 2, expert: 1 }[session.expansion.difficulty];
+  res.json({ used: session.hintsUsed, max, nextLevel: session.hintsUsed < max ? session.hintsUsed + 1 : null, lastHint: session.hintsUsed ? hintLevels[session.hintsUsed - 1] : null });
 });
 
 app.post('/api/hints', async (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
-  const hint = hintLevels[session.hintsUsed];
+  const max = { rookie: 3, detective: 2, expert: 1 }[session.expansion.difficulty];
+  const hint = session.hintsUsed < max ? hintLevels[session.hintsUsed] : undefined;
   if (!hint) return void res.status(429).json({ error: 'Всички подсказки вече са използвани.' });
   session.hintsUsed++;
   try { await saveSession(session); }
   catch { session.hintsUsed--; return void res.status(503).json({ error: 'Неуспешно запазване.' }); }
-  res.json({ hint, used: session.hintsUsed, remaining: hintLevels.length - session.hintsUsed });
+  res.json({ hint, used: session.hintsUsed, remaining: max - session.hintsUsed });
 });
 
 app.get('/api/report', (req, res) => {
@@ -459,7 +461,8 @@ app.post('/api/accusation', async (req, res) => {
   session.expansion.attempts.push({at:new Date().toISOString(),result:verdict.status,selected:suspectId});
   session.expansion.attempts=session.expansion.attempts.slice(-30);
   logDecision(session,'accusation','Обвинение: '+verdict.status);
-  const deduction = Math.min(20, session.hintsUsed * 4 + Math.max(0, session.accusationCount - 1) * 3);
+  const difficultyPenalty = { rookie: 2, detective: 4, expert: 6 }[session.expansion.difficulty];
+  const deduction = Math.min(20, session.hintsUsed * difficultyPenalty + Math.max(0, session.accusationCount - 1) * 3);
   const finalScore = { ...score, total: Math.max(0, score.total - deduction), penalty: deduction };
   if (verdict.status === 'solved') {
     session.finalReport = {
