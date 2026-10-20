@@ -303,3 +303,18 @@ To connect it using Render's dashboard: open the existing \`casefiles-db\` datab
 - \`apps/api/src/community.test.ts\` verifies random-case structure, clue gating, concealed solution and supported verdict logic.
 - \`scripts/smoke.mjs\` verifies profile XP, invite/join, membership protection, shared evidence, procedural rooms and public-story publishing using **in-memory test data**; \`DATABASE_URL\` is deliberately unset in the smoke child process to prevent test fixtures from reaching production PostgreSQL.
 - \`apps/web/tests/community.spec.ts\` provides Playwright Chromium UI coverage of community navigation, co-op code joining, shared clue refresh, profile creation and publishing. A passing Render build does **not** establish a passing Playwright run.
+
+
+## CASEFILES 1.4 — Investigation Desk (profiling, news and case archive)
+
+The primary CASEFILES 1.x game adds **Следствено бюро** next to Detective Mode. This feature complements the already implemented 0.5–1.3 evidence timeline, forensic mini-games, scripted branching interviews, gated victim phone, schematic investigation maps, witness trust, consequences, achievements, alternate endings, court review and visual case creator; those earlier features are not duplicated.
+
+- **Evidence-based profiling:** profiles for all six suspects across the two authored cases. Each requires both independent, currently discovered clues before a conclusion is shown. One discovered supporting clue may be submitted to verify the fully unlocked profile. The text distinguishes motives, contradictions and timelines from proof of guilt. It does not purport to make psychiatric diagnoses.
+- **Fictional newsroom:** article teasers unlock as each case advances. A story describing a resolved case is not visible until the server records a solved verdict. After the verdict, the player selects one irreversible editorial stance: factual reporting (+5 reputation), witness privacy (+3) or sensationalism (-12). The chosen headline and effect are saved server-side.
+- **Investigation archive:** current progress, clues and accusation attempts for both cases and any custom case are shown together. Existing Detective Mode, New Game+ replay, simulated courtroom and case editor can be opened from this new screen.
+- **Live game events:** pre-existing evidence-gated story developments now appear alongside the newsroom.
+- **Persistence and recovery:** confirmed profiles and editorial choices reuse the existing capped server-side \`game09.events\` history, serialized in sessions and portable backups. This avoids a destructive database migration and preserves existing saves. Permanent cloud persistence **still requires** a valid PostgreSQL \`DATABASE_URL\` on the Render API; local snapshot recovery is not cloud synchronization.
+- **Routes:** \`GET /api/desk14/:caseId\` and \`POST /api/desk14/:caseId/action\`, both require an existing session. Input and evidence ownership are validated server-side, requests are rate-limited, and mutations are rolled back if a database save fails.
+- **Checks:** \`apps/api/src/desk14.test.ts\` covers spoiler prevention, evidence gating, immutable editorial choice, reputation and independent progress for the two cases. Run \`npm run typecheck && npm test && npm run build\`, plus the Playwright suite, before releasing.
+
+New cases and profile rules remain manually authored, not automatically validated real-world forensics or AI-generated facts.

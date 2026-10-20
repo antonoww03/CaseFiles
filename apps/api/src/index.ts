@@ -17,6 +17,7 @@ import { snapshot10, releaseActionSchema, evaluateRelease10 } from './release10.
 import {worldSnapshot,examineSchema,executeWorld} from './experience11.js';
 import {directorView,directorSchema,applyDirector} from './director12.js';
 import {detective13View,detective13Schema,submitDetective13} from './detective13.js';
+import { deskView, deskActionSchema, performDeskAction, type DeskCaseId } from './desk14.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 import communityRouter from './community.js';
 
@@ -213,6 +214,27 @@ app.post('/api/game09/action',async(req,res)=>{
 app.get('/api/cinematic',(req,res)=>{
  const s=getSession(req,res);if(s)res.json(cinematicOverview(s));
 });
+const validDeskCase = (id:string):id is DeskCaseId => id==='case-001'||id==='case-002';
+app.get('/api/desk14/:caseId',(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ if(!validDeskCase(req.params.caseId))return void res.status(404).json({error:'Непознато досие.'});
+ res.json(deskView(s,req.params.caseId));
+});
+app.post('/api/desk14/:caseId/action',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ if(!validDeskCase(req.params.caseId))return void res.status(404).json({error:'Непознато досие.'});
+ if(!useQuota('desk14:'+req.ip,80,60*60*1000))return void res.status(429).json({error:'Твърде много действия.'});
+ const parsed=deskActionSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно действие.'});
+ const beforeEvents=s.game09.events.map(e=>({...e}));
+ const beforeReputation=s.living.reputation;
+ const out=performDeskAction(s,req.params.caseId,parsed.data);
+ if(out.status!==200)return void res.status(out.status).json({error:out.message});
+ try{await saveSession(s);}
+ catch{s.game09.events=beforeEvents;s.living.reputation=beforeReputation;return void res.status(503).json({error:'Промяната не можа да бъде запазена.'});}
+ res.json({message:out.message,desk:deskView(s,req.params.caseId)});
+});
+
 app.get('/api/profile',(req,res)=>{
  const s=getSession(req,res);if(s)res.json(profileSnapshot(s));
 });

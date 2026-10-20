@@ -71,7 +71,7 @@ export function CommunityHub(){
     setView('room');setNotice('Свързан си със стая '+data.room.id+'.');
   }
   async function newRoom(kind:'case-002'|'random'|'community',storyId?:string){
-    await perform(()=>request<{memberToken:string;room:Room}>('/rooms','POST',{kind,storyId,name:nickname,profileId}),enterRoom);
+    await perform(()=>request<{memberToken:string;room:Room}>('/rooms','POST',{kind,storyId,name:nickname,...(profileId?{profileId}:{})}),enterRoom);
   }
   async function joinRoom(){
     await perform(()=>request<{memberToken:string;room:Room}>('/rooms/'+joinCode.trim().toUpperCase()+'/join','POST',{name:nickname}),enterRoom);
