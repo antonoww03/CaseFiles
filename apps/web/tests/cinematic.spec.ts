@@ -3,6 +3,7 @@ import {expect,test} from '@playwright/test';
 test('2.5D scene has navigable rooms and controls',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');
+ await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Кинематографичен свят/}).click();
  await expect(page.getByRole('heading',{name:'Местопрестъпление 407'})).toBeVisible();
  await page.getByRole('button',{name:'Приближи'}).click();
@@ -27,6 +28,7 @@ test('cinematic phone gates records and detective profile shows server progress'
 test('case 002 chapters and visual story creator open on mobile',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto('/');
+ await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Отвори навигацията/}).click();
  await page.getByRole('button',{name:/Кинематографичен свят/}).click();
  await page.getByRole('button',{name:/Изчезналият архив/}).click();
