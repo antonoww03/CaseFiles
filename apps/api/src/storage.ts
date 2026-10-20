@@ -90,6 +90,8 @@ export async function initializeStorage(): Promise<'postgres'|'memory'> {
   }
 }
 
+export function storagePool(): Pool | undefined { return pool; }
+
 export function persistentStorageEnabled(): boolean {
   return pool !== undefined;
 }
