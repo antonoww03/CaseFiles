@@ -189,6 +189,23 @@ The **1.0 main menu is intentionally preserved**. Director's Cut changes the inv
 
 **Boundaries:** This is a narrative/visual upgrade to a stylized 2D browser game, **not** full-motion 3D, film-quality animation, a professionally recorded soundtrack or a complete rewrite of the mystery. The new director mechanics cover pivotal beats rather than replacing every line of existing story dialogue. No database schema or Render database configuration was changed, as requested.
 
+## CASEFILES 1.3 — Detective's Instinct
+
+The **cinematic main menu remains unchanged**. The game now includes a first-class **Детективски режим** tab and a contextual active-investigation objective strip shared by both stories.
+
+- **Point-and-click continuity:** Existing clearly illustrated room objects and inventory tools are still selectable directly. The new active objective points to the relevant scene/action; players do not have to search through technical tools to advance.
+- **Evidence-based reasoning:** Five new server-verified exercises per case: a factual logic question, interrogation contradiction, evidence comparisons and a theory. Every answer is validated against the current session's actually discovered clues, and unavailable questions do **not** leak answer options or story text.
+- **Side-by-side comparison:** Select two *discovered* clues, view their artwork and grounded descriptions, then choose an evidence-based conclusion. Two images are a viewing aid, not automatic proof of the answer.
+- **Contradiction challenges:** Present the telephone log against Elena's denial or the signed spare-key record against Boris's alibi. Wrong assertions give feedback and are recorded, but do not automatically end the case.
+- **Theory building and revision:** Distinguish proven events from hypotheses and avoid unsupported claims of identity. Errors count in the journal; the correct explanation is revealed only after a verified answer.
+- **Five chapter milestones:** Thematic investigation progression with a concise location-aware objective and short optional tutorial steps. These are **progress-based**, not elapsed-time timers.
+- **Case Review:** After an existing case is genuinely solved, an epilogue shows confirmed and missed challenges, mistakes and consequential branch choices. Until then it remains locked.
+- **Replayability:** New Game+ is unlocked through the already implemented API, never by mutating a result from the browser.
+- **Visual regression:** Desktop and narrow-screen Playwright flows exercise every game tab, attach Chromium screenshots to GitHub Actions artifacts and assert images load and navigation works. Screenshot collection is **not** golden-image pixel-diff baseline testing; human art-direction review is still useful.
+- **Compatibility:** Progress for these ten challenges uses existing, capped `expansion.actions` records and is restored through the already supported portable backup format. No database, persistent session schema or AI integration changed.
+
+Technical sources: `apps/api/src/detective13.ts`, `apps/web/src/Detective13.tsx`, `apps/web/tests/detective13.spec.ts`.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
