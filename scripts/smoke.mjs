@@ -43,6 +43,12 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const initial09=await request('/game09','GET',undefined,token);
+  assert.equal(initial09.status,200);
+  assert.equal(initial09.json.puzzles.length,6);
+  assert.equal(initial09.json.missionCompleted,0);
+  assert.equal((await request('/game09/action','POST',{kind:'puzzle',id:'torn',answer:'guess'},token)).status,403);
+  assert.equal((await request('/game09/action','POST',{kind:'focus',id:'laboratory'},token)).status,403);
   const initialCinematic=await request('/cinematic','GET',undefined,token);
   assert.equal(initialCinematic.status,200);
   assert.equal(initialCinematic.json.phone.length,6);
@@ -327,10 +333,34 @@ try {
   assert.equal(completedExpansion.json.achievements.find(x=>x.id==='perfect').done,true);
   assert.equal(completedExpansion.json.settings.reducedMotion,true);
   assert.ok(completedExpansion.json.actions.some(x=>x.kind==='puzzle'));
+  const room09=await request('/game09/action','POST',{kind:'room',id:'study'},token);
+  assert.equal(room09.status,200);
+  assert.equal(room09.json.progress.selectedRoom,'study');
+  assert.equal((await request('/game09/action','POST',{kind:'room',id:'unknown'},token)).status,400);
+  const vision09=await request('/game09/action','POST',{kind:'vision',id:'doormat'},token);
+  assert.equal(vision09.status,200);
+  assert.equal((await request('/game09/action','POST',{kind:'puzzle',id:'fingerprint',answer:'A:90'},token)).status,422);
+  assert.equal((await request('/game09/action','POST',{kind:'puzzle',id:'fingerprint',answer:'B:0'},token)).status,422);
+  const hinted09=await request('/game09','GET',undefined,token);
+  assert.equal(hinted09.json.hints.find(x=>x.id==='fingerprint').unlocked,true);
+  for(const [id,answer] of [
+   ['fingerprint','B:90'],['torn','провери-оригиналните-фактури'],
+   ['cctv','120:strap'],['cipher','371'],['testimony','call-denial'],
+   ['reconstruct','E05>E06>E03>E08']
+  ]){const result=await request('/game09/action','POST',{kind:'puzzle',id,answer},token);assert.equal(result.status,200,id);}
+  const extra=await request('/game09/action','POST',{kind:'newGamePlus'},token);
+  assert.equal(extra.status,200);
+  assert.equal(extra.json.progress.puzzles.length,7);
+  const bonus=await request('/game09/action','POST',{kind:'puzzle',id:'bonus',answer:'E01+E04'},token);
+  assert.equal(bonus.status,200);
+  assert.equal(bonus.json.progress.solved.length,7);
   const portable = await request('/backup','GET',undefined,token);
   assert.equal(portable.status,200);
   assert.equal(portable.json.format,'casefiles-backup-v1');
   assert.equal(portable.json.solved,true);
+  assert.equal(portable.json.game09.selectedRoom,'study');
+  assert.ok(portable.json.game09.solved.includes('bonus'));
+
   assert.ok(portable.json.cinematic.opened.includes('sms-martin'));
   assert.ok(portable.json.cinematic.chapterVisits.includes('lift'));
 
@@ -357,6 +387,11 @@ try {
   assert.equal(restoredExpansion.json.difficulty,'expert');
   assert.equal(restoredExpansion.json.suspicions.martin,75);
   assert.equal(restoredExpansion.json.attempts.length,1);
+  const restored09=await request('/game09','GET',undefined,restoredToken);
+  assert.equal(restored09.status,200);
+  assert.equal(restored09.json.selectedRoom,'study');
+  assert.equal(restored09.json.newGamePlus,true);
+  assert.ok(restored09.json.solved.includes('bonus'));
   const restoredCinematic=await request('/cinematic','GET',undefined,restoredToken);
   assert.equal(restoredCinematic.status,200);
   assert.equal(restoredCinematic.json.recovered,true);
