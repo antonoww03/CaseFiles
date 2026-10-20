@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState,type DragEvent} from 'react';
-import {ArrowLeft,ArrowRight,AudioLines,BookOpen,Camera,Check,ChevronDown,ChevronLeft,ChevronRight,ClipboardList,Clock3,DoorOpen,Eye,FileText,Fingerprint,Flashlight,FolderOpen,Gavel,Headphones,KeyRound,LockKeyhole,Map as MapIcon,MapPin,Maximize2,MessageSquare,Minus,Move3D,Pause,Play,Plus,RotateCcw,ScanEye,Search,ShieldCheck,Smartphone,Sparkles,Volume2,VolumeX,X} from 'lucide-react';
+import {ArrowRight,AudioLines,BookOpen,Camera,Check,ChevronRight,ClipboardList,DoorOpen,Eye,FileText,Fingerprint,FolderOpen,Gavel,KeyRound,LockKeyhole,Map as MapIcon,MapPin,Maximize2,MessageSquare,Minus,Move3D,Plus,RotateCcw,ScanEye,Search,ShieldCheck,Smartphone,Sparkles,Volume2,VolumeX,X} from 'lucide-react';
 import './experience09.css';
 
 type SceneObject={id:string;room:string;title:string;summary:string;x:number;y:number;inspected:boolean;locked:boolean;requiresItem:string|null};
@@ -19,7 +19,6 @@ const roomNames:{[key:string]:string}={hall:'Антре',living:'Всекидн�
 const nextDoor:{[key:string]:string}={hall:'living',living:'study',study:'hall'};
 const apps=[['messages','Съобщения'],['mail','Имейл'],['calls','Обаждания'],['photos','Снимки'],['notes','Бележки']] as const;
 const parts=[{id:'fakturi',text:'фактури'},{id:'proveri',text:'Провери'},{id:'originali',text:'оригиналните'}];
-const order=['E05','E06','E03','E08'];
 const endingLabels:Record<string,string>={ongoing:'Разследването продължава',proven:'Доказано обвинение',fractured:'Истината с цената на доверието',controversial:'Оспорено разследване','double-resolution':'Два разрешени случая'};
 const cacheKey='casefiles09-prefs';
 async function req<T>(token:string,path:string,method='GET',body?:unknown):Promise<T>{
