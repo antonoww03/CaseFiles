@@ -1,4 +1,5 @@
 import {DirectorPortrait} from './Director12';
+import {ObjectArt,roomAsset} from './sceneArt';
 import { useEffect, useRef, useState } from 'react';
 import { Award, BellRing, BookOpen, Camera, CheckCircle2, ChevronRight, FileImage, FolderOpen, Headphones, LockKeyhole, Mail, MapPin, MessageCircle, Mic2, Minus, Phone, Plus, Search, Smartphone, Sparkles, Star, UserRound, Volume2, VolumeX, X } from 'lucide-react';
 import './cinematic.css';
@@ -63,16 +64,20 @@ function AmbientControls(){
 }
 function Scene25D(){
  const [room,setRoom]=useState(0),[zoom,setZoom]=useState(1),[tilt,setTilt]=useState({x:0,y:0}),[selected,setSelected]=useState('');
- const rooms=[{title:'Всекидневна',sub:'Мястото на първия оглед',points:['Телефон на масата','Прозорец към двора','Оставена папка']},{title:'Кабинет',sub:'Служебни материали и бележки',points:['Заключено чекмедже','Разпилени листове','Настолна лампа']},{title:'Антре',sub:'Вход и следи от придвижване',points:['Изтривалка','Входна врата','Ключалка']}];
+ const rooms=[
+  {id:'living',title:'Всекидневна',sub:'Мястото на първия оглед',points:[{name:'Телефон на масата',asset:'phone',x:67,y:75},{name:'Прозорец към двора',asset:'',x:20,y:37},{name:'Оставена папка',asset:'papers',x:46,y:74}]},
+  {id:'desk',title:'Кабинет',sub:'Служебни материали и бележки',points:[{name:'Заключено чекмедже',asset:'drawer',x:76,y:72},{name:'Разпилени листове',asset:'papers',x:50,y:70},{name:'Настолна лампа',asset:'lamp',x:66,y:44}]},
+  {id:'entrance',title:'Антре',sub:'Вход и следи от придвижване',points:[{name:'Изтривалка',asset:'doormat',x:49,y:82},{name:'Входна врата',asset:'',x:50,y:35},{name:'Ключалка',asset:'terminal',x:64,y:49}]}
+ ];
  const active=rooms[room];
  return <div className="cin-world">
   <div className="cin-scene-tabs">{rooms.map((r,i)=><button className={room===i?'active':''} key={i} onClick={()=>{setRoom(i);setSelected('');}} type="button"><MapPin size={15}/><strong>{r.title}</strong><small>{r.sub}</small></button>)}</div>
-  <div className="cin-stage" onPointerMove={e=>{if(e.pointerType==='mouse'){const r=e.currentTarget.getBoundingClientRect();setTilt({x:((e.clientX-r.left)/r.width-.5)*17,y:((e.clientY-r.top)/r.height-.5)*11});}}} onPointerLeave={()=>setTilt({x:0,y:0})}>
+  <div className="cin-stage" style={{backgroundImage:'url('+roomAsset(active.id)+')'}} onPointerMove={e=>{if(e.pointerType==='mouse'){const r=e.currentTarget.getBoundingClientRect();setTilt({x:((e.clientX-r.left)/r.width-.5)*17,y:((e.clientY-r.top)/r.height-.5)*11});}}} onPointerLeave={()=>setTilt({x:0,y:0})}>
     <div className="cin-stage-top"><span><Camera size={14}/> SCENE 407 / {active.title}</span><span>2.5D · {zoom.toFixed(1)}×</span></div>
     <div className={'cin-depth room-'+room} style={{transform:'perspective(900px) rotateX('+(14-tilt.y/2)+'deg) rotateY('+tilt.x+'deg) scale('+zoom+')'}}>
      <div className="cin-depth-wall"/><div className="cin-depth-floor"/><div className="cin-depth-window"/><div className="cin-depth-furn a"/><div className="cin-depth-furn b"/><div className="cin-depth-furn c"/><div className="cin-depth-furn d"/>
     </div>
-    <div className="cin-stage-points">{active.points.map((p,i)=><button type="button" className={selected===p?'active':''} style={{left:(20+i*29)+'%',top:(34+(i%2)*26)+'%'}} key={p} onClick={()=>setSelected(p)} aria-label={'Огледай '+p}><Search size={15}/><span>{p}</span></button>)}</div>
+    <div className="cin-stage-points">{active.points.map(p=><button type="button" className={selected===p.name?'active':''} style={{left:p.x+'%',top:p.y+'%'}} key={p.name} onClick={()=>setSelected(p.name)} aria-label={'Огледай '+p.name}>{p.asset?<ObjectArt asset={p.asset} alt={p.name}/>:<Search size={15}/>}<span>{p.name}</span></button>)}</div>
     <div className="cin-stage-bottom"><div>{selected?<><CheckCircle2 size={15}/>{selected} — използвай основния оглед за събиране на улики</>:<><Sparkles size={15}/> Движи показалеца, приближавай и оглеждай средата</>}</div><div className="cin-zoom"><button type="button" onClick={()=>setZoom(v=>Math.max(.85,+(v-.1).toFixed(2)))} aria-label="Отдалечи"><Minus size={16}/></button><button type="button" onClick={()=>setZoom(v=>Math.min(1.45,+(v+.1).toFixed(2)))} aria-label="Приближи"><Plus size={16}/></button></div></div>
   </div>
   <AmbientControls/>
