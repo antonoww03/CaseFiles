@@ -42,7 +42,25 @@ function AmbientControls(){
    audio.current={ctx,noise,gain,timer:null};setRunning(true);
   }catch{setRunning(false);}
  };
- return <div className="cin-audio"><div><Headphones size={18}/><span><strong>Атмосфера: дъжд</strong><small>Генериран звуков фон, без външни файлове</small></span></div><div className="cin-audio-actions"><input type="range" aria-label="Сила на дъжда" min="0" max="100" value={level} onChange={e=>setLevel(Number(e.target.value))}/><button type="button" onClick={()=>void play()} aria-label={running?'Спри звука':'Пусни дъжда'}>{running?<VolumeX size={18}/>:<Volume2 size={18}/>} {running?'Спри':'Пусни'}</button></div></div>;
+ const cue=(kind:'step'|'door'|'phone'|'tension')=>{
+  try{
+   const ctx=new AudioContext(),start=ctx.currentTime;
+   const tone=(frequency:number,when:number,duration:number,volume:number,shape:OscillatorType='sine')=>{
+    const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+    oscillator.type=shape;oscillator.frequency.setValueAtTime(frequency,start+when);
+    gain.gain.setValueAtTime(.0001,start+when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume*(level/100)),start+when+.015);
+    gain.gain.exponentialRampToValueAtTime(.0001,start+when+duration);
+    oscillator.connect(gain).connect(ctx.destination);oscillator.start(start+when);oscillator.stop(start+when+duration+.02);
+   };
+   if(kind==='step'){tone(85,0,.16,.18,'triangle');tone(69,.34,.19,.22,'triangle');}
+   if(kind==='door'){tone(117,0,.42,.15,'sawtooth');tone(75,.2,.31,.12,'triangle');}
+   if(kind==='phone'){for(let i=0;i<3;i++){tone(630,i*.35,.19,.12);tone(790,i*.35+.18,.15,.1);}}
+   if(kind==='tension'){tone(78,0,1.4,.09,'sawtooth');tone(83,.18,1.1,.07,'sine');}
+   window.setTimeout(()=>void ctx.close(),2200);
+  }catch{}
+ };
+  return <div className="cin-audio"><div><Headphones size={18}/><span><strong>Атмосфера: дъжд</strong><small>Генериран звуков фон, без външни файлове</small></span></div><div className="cin-audio-actions"><input type="range" aria-label="Сила на дъжда" min="0" max="100" value={level} onChange={e=>setLevel(Number(e.target.value))}/><button type="button" onClick={()=>void play()} aria-label={running?'Спри звука':'Пусни дъжда'}>{running?<VolumeX size={18}/>:<Volume2 size={18}/>} {running?'Спри':'Пусни'}</button></div><div className="cin-cues"><span>СЦЕНИЧНИ ЕФЕКТИ</span><button type="button" onClick={()=>cue('step')}>Стъпки</button><button type="button" onClick={()=>cue('door')}>Врата</button><button type="button" onClick={()=>cue('phone')}>Телефон</button><button type="button" onClick={()=>cue('tension')}>Напрежение</button></div></div>;
 }
 function Scene25D(){
  const [room,setRoom]=useState(0),[zoom,setZoom]=useState(1),[tilt,setTilt]=useState({x:0,y:0}),[selected,setSelected]=useState('');
