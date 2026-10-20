@@ -197,6 +197,28 @@ try {
   assert.equal(completedExpansion.json.achievements.find(x=>x.id==='perfect').done,true);
   assert.equal(completedExpansion.json.settings.reducedMotion,true);
   assert.ok(completedExpansion.json.actions.some(x=>x.kind==='puzzle'));
+  const portable = await request('/backup','GET',undefined,token);
+  assert.equal(portable.status,200);
+  assert.equal(portable.json.format,'casefiles-backup-v1');
+  assert.equal(portable.json.solved,true);
+  const restoredSession = await request('/session','POST');
+  assert.equal(restoredSession.status,201);
+  const restoredToken=restoredSession.json.sessionId;
+  const restoredBackup = await request('/backup/restore','POST',portable.json,restoredToken);
+  assert.equal(restoredBackup.status,200);
+  assert.equal(restoredBackup.json.aiEnabled,false);
+  const restoredState = await request('/session','GET',undefined,restoredToken);
+  assert.ok(restoredState.json.found.includes('E09'));
+  assert.deepEqual(restoredState.json.links,['D01','D02']);
+  const restoredReport = await request('/report','GET',undefined,restoredToken);
+  assert.equal(restoredReport.status,200);
+  const restoredExpansion = await request('/expansion','GET',undefined,restoredToken);
+  assert.equal(restoredExpansion.json.difficulty,'expert');
+  assert.equal(restoredExpansion.json.suspicions.martin,75);
+  assert.equal(restoredExpansion.json.attempts.length,1);
+  const invalidRestore = await request('/backup/restore','POST',{format:'bad'},restoredToken);
+  assert.equal(invalidRestore.status,409);
+
   const wrong = await request('/accusation', 'POST', { ...accusation, suspectId: 'elena' }, token);
   assert.equal(wrong.json.status, 'incorrect');
   process.stdout.write('CaseFiles API smoke test passed\n');
