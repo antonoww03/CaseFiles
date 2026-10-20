@@ -54,6 +54,8 @@ export function ImmersiveInvestigation({session,found}:{session:string;found:str
   const [room,setRoom]=useState('hall');
   const [selected,setSelected]=useState<string[]>([]);
   const [digits,setDigits]=useState([0,0,0]);
+  const [photoZoom,setPhotoZoom]=useState(100);
+  const [uvIntensity,setUvIntensity]=useState(0);
   const [person,setPerson]=useState('martin');
   const [search,setSearch]=useState('');
   const [results,setResults]=useState<SearchResult[]|null>(null);
@@ -139,6 +141,31 @@ export function ImmersiveInvestigation({session,found}:{session:string;found:str
       <div className="im-puzzle-layout">
         <div className="im-dial-frame"><div className="im-dial-top"><LockKeyhole size={26}/><span>SECURE / MODEL 407</span></div><div className="im-dials">{digits.map((digit,i)=><div key={i} className="im-dial"><button aria-label={'Увеличи цифра '+(i+1)} type="button" disabled={data.dial.solved} onClick={()=>setDigits(a=>a.map((v,j)=>i===j?(v+1)%10:v))}><Plus size={19}/></button><strong>{digit}</strong><button aria-label={'Намали цифра '+(i+1)} type="button" disabled={data.dial.solved} onClick={()=>setDigits(a=>a.map((v,j)=>i===j?(v+9)%10:v))}><Minus size={19}/></button></div>)}</div><button className="primary" type="button" disabled={!data.dial.unlocked||data.dial.solved||busy} onClick={()=>void act('puzzle',{puzzleId:'safe_dial',digits})}>{data.dial.solved?'Кутията е отворена':'Опитай комбинацията'} <KeyRound size={16}/></button></div>
         <div className="im-puzzle-help"><span className="im-kicker">ОТКРИТИ РЕЗУЛТАТИ</span><h3>Записки по задачата</h3><p>{data.dial.hint}</p>{data.combinations.map(c=><article key={c.id}><Check size={15}/><div><strong>{c.title}</strong><p>{c.result}</p></div></article>)}{!data.combinations.length&&<div className="im-placeholder">Нямаш още съвместени предмети. Върни се при инвентара.</div>}</div>
+      </div>
+      <div className="im-optic-grid">
+        <div className="im-optic-card">
+          <div className="im-optic-head"><Eye size={18}/><strong>Оптичен анализ</strong><span>1.0–3.0×</span></div>
+          <div className="im-optic-view negative">
+            <div className="im-photo-subject" style={{transform:'scale('+(photoZoom/100)+')'}}><span className="im-photo-line"/><span className="im-photo-folder"/></div>
+            <span className="im-optic-watermark">PHOTO NEGATIVE / CASE 001</span>
+          </div>
+          <label className="im-optic-control">Увеличение: {(photoZoom/100).toFixed(1)}×
+            <input type="range" min="100" max="300" step="25" value={photoZoom} onChange={e=>setPhotoZoom(Number(e.target.value))}/>
+          </label>
+          <p>{data.combinations.some(v=>v.id==='photo_detail') && photoZoom>=175 ? 'Вижда се папка върху бюро; снимката не идентифицира човека в помещението.' : 'Комбинирай лупата с негатива и увеличи изображението, за да изследваш детайла.'}</p>
+        </div>
+        <div className="im-optic-card">
+          <div className="im-optic-head"><LampDesk size={18}/><strong>Ултравиолетов оглед</strong><span>UV / 365 NM</span></div>
+          <div className="im-optic-view ultraviolet">
+            <div className="im-uv-beam" style={{opacity:uvIntensity/100}}/>
+            <span className="im-uv-glyph">{data.combinations.some(v=>v.id==='uv_marker') && uvIntensity>=65?'3 · 7 · 1':'···'}</span>
+            <span className="im-optic-watermark">INVISIBLE INK SCAN</span>
+          </div>
+          <label className="im-optic-control">Интензитет: {uvIntensity}%
+            <input type="range" min="0" max="100" step="5" value={uvIntensity} onChange={e=>setUvIntensity(Number(e.target.value))}/>
+          </label>
+          <p>{data.combinations.some(v=>v.id==='uv_marker') && uvIntensity>=65 ? 'Скритите знаци вече могат да се разчетат и приложат върху циферблатите.' : 'Комбинирай UV фенера с хартиената лента и увеличи интензитета на светлината.'}</p>
+        </div>
       </div>
     </div>}
     {section==='dialogue'&&<div className="im-column">
