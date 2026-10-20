@@ -3,7 +3,7 @@ import type {StoredSession} from './storage.js';
 import {sceneObjects} from './immersive.js';
 
 export type Game09State={
-  solved:string[];attempts:Record<string,number>;selectedRoom:string;
+  solved:string[];attempts:Record<string,number>;selectedRoom:'hall'|'living'|'study';
   discovered:string[];missionsDone:string[];newGamePlus:boolean;
   focus:string;events:{name:string;at:string}[];
 };
