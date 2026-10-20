@@ -43,6 +43,14 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const directorInitial=await request('/director12/case-001','GET',undefined,token);
+  assert.equal(directorInitial.status,200);
+  assert.equal(directorInitial.json.beats[0].id,'arrival407');
+  assert.equal(directorInitial.json.decisions.length,0);
+  assert.equal((await request('/director12/case-001/action','POST',{kind:'scene',id:'invoice-shadow'},token)).status,403);
+  assert.equal((await request('/director12/case-001/action','POST',{kind:'scene',id:'arrival407'},token)).status,200);
+  assert.equal((await request('/director12/case-001/action','POST',{kind:'scene',id:'arrival407'},token)).status,409);
+
   const firstWorld=await request('/experience11','GET',undefined,token);
   assert.equal(firstWorld.status,200);
   assert.equal(firstWorld.json.locations.length,10);
@@ -200,6 +208,12 @@ try {
     assert.equal(clue.status, 200);
   }
   assert.equal((await request('/discover/E08','POST',{},token)).status,200);
+  const directorPhone=await request('/director12/case-001','GET',undefined,token);
+  assert.ok(directorPhone.json.decisions.find(x=>x.id==='preserve-phone')?.available);
+  const directorChoice=await request('/director12/case-001/action','POST',{kind:'choose',id:'preserve-phone'},token);
+  assert.equal(directorChoice.status,200);
+  assert.equal((await request('/director12/case-001/action','POST',{kind:'choose',id:'question-phone'},token)).status,409);
+
   const phoneEntry=await request('/cinematic/action','POST',{kind:'phone',id:'sms-martin'},token);
   assert.equal(phoneEntry.status,200);
   assert.match(phoneEntry.json.message,/фактури/);
@@ -391,6 +405,8 @@ try {
   assert.equal(portable.status,200);
   assert.equal(portable.json.format,'casefiles-backup-v1');
   assert.equal(portable.json.solved,true);
+  assert.ok(portable.json.game09.events.some(x=>x.name==='d12:preserve-phone'));
+
   assert.ok(portable.json.game09.missionsDone.includes('v1:archive-lock'));
   assert.ok(portable.json.game09.missionsDone.includes('v1:archive-film'));
 
@@ -423,6 +439,10 @@ try {
   assert.equal(restoredExpansion.json.difficulty,'expert');
   assert.equal(restoredExpansion.json.suspicions.martin,75);
   assert.equal(restoredExpansion.json.attempts.length,1);
+
+  const restoredDirector=await request('/director12/case-001','GET',undefined,restoredToken);
+  assert.ok(restoredDirector.json.decisions.find(x=>x.id==='preserve-phone')?.chosen);
+  assert.equal((await request('/director12/case-001/action','POST',{kind:'choose',id:'question-phone'},restoredToken)).status,409);
   const restoredRelease=await request('/release10','GET',undefined,restoredToken);
   assert.equal(restoredRelease.status,200);
   assert.equal(restoredRelease.json.case2.puzzles.find(x=>x.id==='archive-lock').solved,true);
