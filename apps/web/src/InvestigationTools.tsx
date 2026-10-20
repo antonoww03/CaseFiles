@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, CircleDot, Crosshair, DoorOpen, Eye, FileSearch, FolderOpen, Link2, Lock, MapPin, Plus, Radar, ScanSearch, Sparkles, type LucideIcon } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, CircleDot, Crosshair, DoorOpen, Eye, FileSearch, FolderOpen, Link2, Lock, MapPin, Plus, Radar, ScanSearch, Sparkles, type LucideIcon } from 'lucide-react';
 
-type Clue = { id: string; title: string; type: string; detail: string };
+type Clue = { id: string; title: string; type: string; detail: string; icon: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string,string] };
 
 const zones: { id: string; name: string; sub: string; icon: LucideIcon; clueIds: string[]; hotspots: { id: string; x: number; y: number; name: string }[] }[] = [
