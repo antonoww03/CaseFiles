@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { publicCase, evidence, accusationSchema, messageSchema, evaluate } from './case.js';
 import { aiReply, configuredMode, scriptedReply, type InterviewLine } from './interview.js';
 import { deductions, findDeduction } from './deductions.js';
+import { suspects, contradictions, noteSchema, availableContradictions, scoreCase } from './gameplay.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -68,7 +69,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -79,8 +80,85 @@ app.post('/api/session', async (req, res) => {
 });
 app.get('/api/session', (req, res) => {
   const session = getSession(req, res);
-  if (session) res.json({ found: [...session.found], links: [...session.links], messages: session.messages });
+  if (session) res.json({ found: [...session.found], links: [...session.links], notes: session.notes, verified: [...session.verified], messages: session.messages });
 });
+app.get('/api/suspects', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  res.json(suspects.map(person => ({
+    ...person,
+    relevantIds: person.relevantIds.filter(id => session.found.has(id)),
+    interviewCount: Math.floor((session.messages[person.id] || []).length / 2)
+  })));
+});
+
+app.get('/api/notes', (req, res) => {
+  const session = getSession(req, res);
+  if (session) res.json(session.notes);
+});
+
+app.post('/api/notes', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const parsed = noteSchema.safeParse(req.body);
+  if (!parsed.success) return void res.status(400).json({ error: 'Бележката е невалидна или прекалено дълга.' });
+  if (session.notes.length >= 35) return void res.status(429).json({ error: 'Лимит от 35 бележки.' });
+  const note = { ...parsed.data, id: randomUUID(), updatedAt: new Date().toISOString() };
+  session.notes.push(note);
+  try { await saveSession(session); }
+  catch { session.notes.pop(); return void res.status(503).json({ error: 'Неуспешно запазване.' }); }
+  res.status(201).json({ note, notes: session.notes });
+});
+
+app.put('/api/notes/:id', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const parsed = noteSchema.safeParse(req.body);
+  if (!parsed.success) return void res.status(400).json({ error: 'Невалидна бележка.' });
+  const index = session.notes.findIndex(n => n.id === req.params.id);
+  if (index < 0) return void res.status(404).json({ error: 'Бележката липсва.' });
+  const previous = session.notes[index];
+  session.notes[index] = { ...parsed.data, id: previous.id, updatedAt: new Date().toISOString() };
+  try { await saveSession(session); }
+  catch { session.notes[index] = previous; return void res.status(503).json({ error: 'Неуспешно запазване.' }); }
+  res.json({ note: session.notes[index], notes: session.notes });
+});
+
+app.delete('/api/notes/:id', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const index = session.notes.findIndex(n => n.id === req.params.id);
+  if (index < 0) return void res.status(404).json({ error: 'Бележката липсва.' });
+  const previous = [...session.notes];
+  session.notes.splice(index, 1);
+  try { await saveSession(session); }
+  catch { session.notes = previous; return void res.status(503).json({ error: 'Неуспешно изтриване.' }); }
+  res.json({ notes: session.notes });
+});
+
+app.get('/api/contradictions', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  res.json(availableContradictions(session.found).map(c => ({
+    ...c, verified: session.verified.has(c.id),
+    finding: session.verified.has(c.id) ? c.finding : null
+  })));
+});
+
+app.post('/api/contradictions/:id', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const match = contradictions.find(c => c.id === req.params.id);
+  if (!match) return void res.status(404).json({ error: 'Неизвестно противоречие.' });
+  if (match.evidenceIds.some(id => !session.found.has(id))) {
+    return void res.status(403).json({ error: 'Необходими са всички подкрепящи улики.' });
+  }
+  session.verified.add(match.id);
+  try { await saveSession(session); }
+  catch { session.verified.delete(match.id); return void res.status(503).json({ error: 'Неуспешно запазване.' }); }
+  res.json({ finding: match, verified: [...session.verified] });
+});
+
 app.get('/api/evidence', (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
@@ -167,7 +245,9 @@ app.post('/api/accusation', (req, res) => {
   if (!parsed.success) return void res.status(400).json({ error: 'Попълни заподозрян, мотив, хронология и поне три улики.' });
   const { suspectId, motive, timeline, evidenceIds } = parsed.data;
   if (evidenceIds.some(id => !session.found.has(id))) return void res.status(403).json({ error: 'Можеш да използваш само открити улики.' });
-  res.json(evaluate(suspectId, evidenceIds, motive, timeline, [...session.links]));
+  const verdict = evaluate(suspectId, evidenceIds, motive, timeline, [...session.links]);
+  const score = scoreCase({ found: session.found, links: session.links, interviews: session.messages, verified: session.verified, verdict: verdict.status });
+  res.json({ ...verdict, score });
 });
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
