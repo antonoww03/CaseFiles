@@ -23,12 +23,12 @@ export const tools = [
   { id: 'cipher_strip', title: 'Хартиена лента', detail: 'Откъснат фрагмент с незабележими знаци.', icon: 'file' }
 ] as const;
 export const sceneObjects = [
-  { id: 'doormat', room: 'hall', title: 'Изтривалка', summary: 'Повдигни ъгъла ѝ.', item: 'brass_key', prerequisite: '', requiresItem: '', x: 32, y: 74 },
-  { id: 'bookshelf', room: 'living', title: 'Библиотека', summary: 'Огледай предметите по рафтовете.', item: 'magnifier', prerequisite: '', requiresItem: '', x: 18, y: 39 },
-  { id: 'lamp', room: 'living', title: 'Работна лампа', summary: 'Провери стария фенер до фотьойла.', item: 'uv_lamp', prerequisite: '', requiresItem: '', x: 78, y: 36 },
-  { id: 'drawer', room: 'study', title: 'Заключено чекмедже', summary: 'Ключалката изглежда запазена.', item: 'negative', prerequisite: '', requiresItem: 'brass_key', x: 67, y: 58 },
-  { id: 'papers', room: 'study', title: 'Разпилени бележки', summary: 'Има откъснати листове от документ.', item: 'cipher_strip', prerequisite: 'E04', requiresItem: '', x: 33, y: 40 },
-  { id: 'safe', room: 'study', title: 'Метална кутия', summary: 'Отворът има механичен цифров циферблат.', item: '', prerequisite: '', requiresItem: '', x: 83, y: 79 }
+  { id: 'doormat', room: 'hall', title: 'Изтривалка', summary: 'Повдигни ъгъла ѝ.', item: 'brass_key', prerequisite: '', requiresItem: '', x: 49, y: 82 },
+  { id: 'bookshelf', room: 'living', title: 'Библиотека', summary: 'Огледай предметите по рафтовете.', item: 'magnifier', prerequisite: '', requiresItem: '', x: 20, y: 44 },
+  { id: 'lamp', room: 'living', title: 'Работна лампа', summary: 'Провери стария фенер до фотьойла.', item: 'uv_lamp', prerequisite: '', requiresItem: '', x: 76, y: 65 },
+  { id: 'drawer', room: 'study', title: 'Заключено чекмедже', summary: 'Ключалката изглежда запазена.', item: 'negative', prerequisite: '', requiresItem: 'brass_key', x: 76, y: 72 },
+  { id: 'papers', room: 'study', title: 'Разпилени бележки', summary: 'Има откъснати листове от документ.', item: 'cipher_strip', prerequisite: 'E04', requiresItem: '', x: 50, y: 70 },
+  { id: 'safe', room: 'study', title: 'Метална кутия', summary: 'Отворът има механичен цифров циферблат.', item: '', prerequisite: '', requiresItem: '', x: 85, y: 41 }
 ] as const;
 export const rooms = [
   { id: 'hall', title: 'Антре', subtitle: 'Зона на влизане' },
