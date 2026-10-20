@@ -8,6 +8,7 @@ import { deductions, findDeduction } from './deductions.js';
 import { suspects, contradictions, noteSchema, availableContradictions, scoreCase } from './gameplay.js';
 import { clipObservations, documents, observationSchema, frameFor, verifyObservation, documentPage, hintLevels, actualCaseTimeline } from './forensics.js';
 import { initialProgress, puzzles, actionSchema, unlocks, witnesses, classificationTargets, timelineItems, tutorial, difficultySchema, canEnter, achievements, outcome } from './expansion.js';
+import { exportBackup, applyBackup } from './backup.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -37,6 +38,7 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(cors({ origin: process.env.WEB_ORIGIN || 'http://localhost:5173' }));
+app.use('/api/backup/restore', express.json({ limit: '128kb' }));
 app.use(express.json({ limit: '16kb' }));
 app.use('/api', async (req, res, next) => {
   const id = req.header('x-case-session');
@@ -106,6 +108,25 @@ const expansionView = (session:Session) => {
   timelineSolved:timelineItems.every(x=>!session.found.has(x.requires)||progress.placements[x.id]===x.time)
  };
 };
+app.get('/api/backup',(req,res)=>{
+ const s=getSession(req,res);
+ if(!s)return;
+ res.setHeader('Cache-Control','no-store');
+ res.json(exportBackup(s));
+});
+app.post('/api/backup/restore',async(req,res)=>{
+ if(!useQuota('restore-ip:'+req.ip,5,60*60*1000))return void res.status(429).json({error:'Твърде много опити за възстановяване.'});
+ const s=getSession(req,res);
+ if(!s)return;
+ if(s.found.size||s.notes.length||s.interviewCount||s.expansion.actions.length)return void res.status(409).json({error:'Архив се импортира само в нова празна сесия.'});
+ const previous=structuredClone(s);
+ try{applyBackup(s,req.body);}
+ catch{return void res.status(400).json({error:'Невалиден или повреден архив на CASEFILES.'});}
+ try{await saveSession(s);}
+ catch{Object.assign(s,previous);return void res.status(503).json({error:'Неуспешно запазване на възстановения прогрес.'});}
+ res.json({found:[...s.found],notes:s.notes.length,links:[...s.links],interviews:s.interviewCount,aiEnabled:false});
+});
+
 app.get('/api/expansion',(req,res)=>{
  const s=getSession(req,res);if(s)res.json(expansionView(s));
 });
