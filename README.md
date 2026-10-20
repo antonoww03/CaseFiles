@@ -11,6 +11,20 @@ A fictional investigation set in Sofia. Players can inspect an interactive crime
 
 The final verdict is decided by deterministic server rules. AI does not decide who is responsible, create evidence or alter the case's chronology.
 
+## CASEFILES 0.3 features
+
+- **Notebook**: create, edit, search and delete up to 35 notes per session. Categories include hypotheses, leads and questions.
+- **Suspect dossiers**: biographies, initial alibis, relations with the victim, linked discovered evidence and interview counts.
+- **Alibi verification**: server-verified findings require all named evidence, with an explicit distinction between established contradictions and leads that only warrant additional investigation.
+- **Three-room scene**: living room, work area and entrance, with five interactive scene evidence hotspots.
+- **Visual Evidence Board**: view collected evidence on an investigation board, connect cards with drag-and-drop or click selection; connections and confirmed deductions are validated server-side.
+- **Detective score**: the final accusation response includes a reproducible score with categories for evidence, deductions, interviews, verified alibis and resolution. Incorrect or insufficient outcomes are capped below 50.
+- **Progress storage**: notebook entries and verified checks are included in the existing optional PostgreSQL session serialization.
+
+No new API keys, paid services or accounts are needed for these features. The existing **OpenAI API integration is optional**; scripted interviews work without it. New content uses existing evidence and does not generate new clues or alter the solution.
+
+**Known limitation:** In the current deployment, `/api/health` still reports `storage: memory` until `DATABASE_URL` is configured. All server-side progress, including notes and checked contradictions, can therefore be lost when the backend restarts.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
