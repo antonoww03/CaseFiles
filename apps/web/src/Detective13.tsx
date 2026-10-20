@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react';
-import {ArrowRight,BookOpen,BrainCircuit,CheckCircle2,ChevronRight,Clock3,Compass,Eye,FileCheck2,Files,HelpCircle,LockKeyhole,RotateCcw,Scale,ScanSearch,ShieldAlert,Sparkles,Target,X} from 'lucide-react';
+import {ArrowRight,BookOpen,BrainCircuit,CheckCircle2,ChevronRight,Clock3,Compass,Eye,FileCheck2,Files,LockKeyhole,RotateCcw,Scale,ScanSearch,ShieldAlert,Target} from 'lucide-react';
 import './detective13.css';
 type CaseId='case-001'|'case-002';
 type Category='reason'|'challenge'|'compare'|'theory';
