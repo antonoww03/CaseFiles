@@ -153,7 +153,7 @@ export function HintStation({session}:{session:string}) {
  const [hint,setHint]=useState<{level:number;title:string;text:string}|null>(null);
  const [error,setError]=useState('');
  const [busy,setBusy]=useState(false);
- useEffect(()=>{if(!session){setUsed(0);setHint(null);return;}void request<{used:number}>(session,'/hints').then(data=>setUsed(data.used)).catch(()=>{});},[session]);
+ useEffect(()=>{if(!session){setUsed(0);setHint(null);return;}void request<{used:number;lastHint:{level:number;title:string;text:string}|null}>(session,'/hints').then(data=>{setUsed(data.used);setHint(data.lastHint);}).catch(()=>{});},[session]);
  async function take(){
    setBusy(true);setError('');
    try{const data=await request<{hint:{level:number;title:string;text:string};used:number}>(session,'/hints','POST',{});setHint(data.hint);setUsed(data.used);}
