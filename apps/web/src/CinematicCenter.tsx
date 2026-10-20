@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, ArrowLeft, ArrowRight, Award, BellRing, BookOpen, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock3, FileImage, FolderOpen, Headphones, LockKeyhole, Mail, MapPin, MessageCircle, Mic2, Minus, Music2, Pause, Phone, Play, Plus, Search, ShieldCheck, Smartphone, Sparkles, Star, UserRound, Volume2, VolumeX, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Award, BellRing, BookOpen, Camera, CheckCircle2, ChevronRight, FileImage, FolderOpen, Headphones, LockKeyhole, Mail, MapPin, MessageCircle, Mic2, Minus, Phone, Plus, Search, Smartphone, Sparkles, Star, UserRound, Volume2, VolumeX, X } from 'lucide-react';
 import './cinematic.css';
 type RecordEntry={id:string;app:string;from:string;time:string;title:string;preview:string;available:boolean;opened:boolean;detail:string|null};
 type Persona={id:string;name:string;role:string;initials:string;tint:string;mood:string};
