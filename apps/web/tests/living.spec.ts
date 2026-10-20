@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test('CASEFILES 0.7 warrants and forensic clock are gated by evidence',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Живо разследване/}).click();
  await expect(page.getByRole('heading',{name:'Разрешения за обиск'})).toBeVisible();
@@ -13,6 +14,7 @@ test('CASEFILES 0.7 warrants and forensic clock are gated by evidence',async({pa
 
 test('CASEFILES 0.7 playable second case has independent evidence',async({page})=>{
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Живо разследване/}).click();
  await page.getByRole('button',{name:/Библиотека със случаи/}).click();
@@ -26,6 +28,7 @@ test('CASEFILES 0.7 playable second case has independent evidence',async({page})
 test('CASEFILES 0.7 mobile navigation provides editor and library',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Отвори навигацията/}).click();
  await page.getByRole('button',{name:/Живо разследване/}).click();
  await expect(page.getByRole('heading',{name:'Живо разследване'})).toBeVisible();
