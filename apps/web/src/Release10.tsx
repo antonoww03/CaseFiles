@@ -1,5 +1,5 @@
-import React,{useEffect,useMemo,useRef,useState} from 'react';
-import { ArrowLeft, ArrowRight, Award, BookOpen, BriefcaseBusiness, Camera, Check, CheckCircle2, ChevronRight, CircleHelp, ClipboardList, DoorOpen, Eye, FileCheck2, Fingerprint, FolderOpen, Headphones, KeyRound, Lock, MapPin, Menu, MessageCircle, Microscope, Moon, Phone, Play, Save, ScanEye, Search, Settings2, ShieldCheck, SkipForward, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
+import {useEffect,useRef,useState} from 'react';
+import { ArrowLeft, ArrowRight, Award, BookOpen, Check, CheckCircle2, ClipboardList, FileCheck2, Fingerprint, FolderOpen, KeyRound, Lock, MapPin, Menu, MessageCircle, Microscope, Phone, Play, Save, ScanEye, Search, Settings2, SkipForward, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
 import './release10.css';
 
 type CaseId='case-001'|'case-002';
@@ -67,7 +67,7 @@ function useSfx(){
 export function Home10({session,busy,onStart,onContinue,onLegacy}:{session:string;busy:boolean;onStart:(id:CaseId)=>void;onContinue:()=>void;onLegacy:()=>void}){
  const [selected,setSelected]=useState<CaseId>('case-001');
  const [menu,setMenu]=useState<'cases'|'settings'|'none'>('none');
- const [skipIntro,setSkipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
+ const [skipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
  const [noMotion,setNoMotion]=useState(()=>localStorage.getItem('cf10-reduce-motion')==='true');
  return <div className={'r10-home '+(noMotion?'r10-still':'')}>
   <div className="r10-home-bg" style={{backgroundImage:'url('+caseMeta[selected].image+')'}}/>
@@ -101,7 +101,8 @@ export function FullGame10({session,caseId,found,onFound,onHome,onLegacy}:{sessi
  const sound=useSfx();
  const meta=caseMeta[caseId],isFirst=caseId==='case-001';
  const clueIds=isFirst?found:data?.case2.found||[];
- const activeScene=isFirst?scene1.find(x=>x.id===scene)||scene1[0]:data?.case2.scenes.find(x=>x.id===scene)||data?.case2.scenes[0];
+ const archiveScene=data?.case2.scenes.find(x=>x.id===scene)||data?.case2.scenes[0];
+ const activeScene=isFirst?scene1.find(x=>x.id===scene)||scene1[0]:archiveScene;
  const beats=data?.beats[caseId]||[];
  async function refresh(){
   if(!session)return;
@@ -173,7 +174,7 @@ export function FullGame10({session,caseId,found,onFound,onHome,onLegacy}:{sessi
     <div className="r10-room-select">{isFirst?scene1.map(r=><button className={activeScene?.id===r.id?'active':''} type="button" onClick={()=>{setScene(r.id);setFocus('');}} key={r.id}>{r.title}</button>):data?.case2.scenes.map(r=><button className={activeScene?.id===r.id?'active':''} type="button" disabled={!r.available} onClick={()=>{setScene(r.id);setFocus('');}} key={r.id}>{r.title}{!r.available?' 🔒':''}</button>)}</div>
     <div className={'r10-scene-art '+(isFirst?'apartment':'archive')} style={{backgroundImage:'url('+meta.image+')'}}>
      <div className="r10-scene-shade"/><span className="r10-scene-clock">{isFirst?'02:37':'23:47'} / NIGHT SHIFT</span>
-     {isFirst?(scene1.find(x=>x.id===activeScene?.id)?.clues||[]).map((id,i)=><button type="button" key={id} className={'r10-hotspot '+(found.includes(id)?'collected':'')} onClick={()=>{setFocus(id);sound(audio,510);}} style={{left:(24+i*42)+'%',top:(46+i*22)+'%'}} aria-label={'Изследвай '+id}>{found.includes(id)?<Check size={18}/>:<Search size={18}/>}<span>{evidenceCatalog.find(x=>x.id===id)?.title}</span></button>):<button type="button" className={'r10-hotspot '+(activeScene?.found?'collected':'')} style={{left:'52%',top:'58%'}} onClick={()=>setFocus(activeScene?.clueId||'')} aria-label={'Изследвай '+activeScene?.title}>{activeScene?.found?<Check size={20}/>:<Search size={20}/>}<span>{activeScene?.clueTitle}</span></button>}
+     {isFirst?(scene1.find(x=>x.id===activeScene?.id)?.clues||[]).map((id,i)=><button type="button" key={id} className={'r10-hotspot '+(found.includes(id)?'collected':'')} onClick={()=>{setFocus(id);sound(audio,510);}} style={{left:(24+i*42)+'%',top:(46+i*22)+'%'}} aria-label={'Изследвай '+id}>{found.includes(id)?<Check size={18}/>:<Search size={18}/>}<span>{evidenceCatalog.find(x=>x.id===id)?.title}</span></button>):<button type="button" className={'r10-hotspot '+(archiveScene?.found?'collected':'')} style={{left:'52%',top:'58%'}} onClick={()=>setFocus(archiveScene?.clueId||'')} aria-label={'Изследвай '+activeScene?.title}>{archiveScene?.found?<Check size={20}/>:<Search size={20}/>}<span>{archiveScene?.clueTitle}</span></button>}
      <div className="r10-scene-caption"><MapPin size={15}/>{activeScene?.title}</div>
     </div>
     <div className="r10-scene-info"><div><h3>{activeScene?.title}</h3><p>{activeScene?.subtitle}</p><small>{focus?(isFirst?evidenceCatalog.find(x=>x.id===focus)?.detail:data?.case2.scenes.find(x=>x.clueId===focus)?.detail||'Материалът ще бъде разкрит след изследване.'):'Избери активния маркер в сцената.'}</small></div><div className="r10-scene-actions">{focus&&<button className="r10-gold" type="button" disabled={busy||clueIds.includes(focus)} onClick={()=>void findClue(focus)}><FileCheck2 size={17}/>{clueIds.includes(focus)?'Открито':'Събери улика'}</button>}{isFirst&&<button className="r10-outline" onClick={()=>onLegacy('game09')}><KeyRound size={16}/> Интерактивен инвентар</button>}</div></div>
