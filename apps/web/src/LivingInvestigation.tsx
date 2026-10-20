@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  Activity, Archive, ArrowRight, Award, BookOpen, Check, CheckCircle,
+  Activity, Archive, ArrowRight, BookOpen, Check, CheckCircle,
   Clock3, FileCheck2, FileSearch, Files, Fingerprint, FolderLock,
-  Gavel, Handshake, Landmark, Lock, Scale, ScrollText, Search,
-  ShieldAlert, ShieldCheck, Sparkles, Timer, UserRound, Wallet, X
+  Gavel, Handshake, Lock, Scale,
+  ShieldAlert, ShieldCheck, Timer, UserRound, Wallet, X
 } from 'lucide-react';
 import './living.css';
 
