@@ -9,13 +9,14 @@ import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
 import { ForensicWorkbench, FinalReport, HintStation, type FinalReportData } from './ForensicPanels';
 import { InvestigationExpansion } from './ExpansionPanel';
 import { ImmersiveInvestigation } from './ImmersiveInvestigation';
+import { LivingInvestigation } from './LivingInvestigation';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive';
+type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
@@ -23,6 +24,7 @@ const tabs: Tab[] = [
   { id: 'briefing', name: 'Досие', hint: 'Обща информация', icon: FolderOpen },
   { id: 'scene', name: 'Местопрестъпление', hint: 'Апартамент 407', icon: ScanSearch },
   { id: 'immersive', name: 'Интерактивно разследване', hint: 'Инвентар и терминал', icon: LockKeyhole },
+  { id: 'living', name: 'Живо разследване', hint: 'Правосъдие и нови случаи', icon: Scale },
   { id: 'lab', name: 'Криминалистика', hint: 'Анализи и материали', icon: Microscope },
   { id: 'evidence', name: 'Доказателства', hint: 'Събрани улики', icon: Files },
   { id: 'notebook', name: 'Бележник', hint: 'Лични хипотези', icon: BookOpen },
@@ -308,7 +310,7 @@ function App() {
         <div className="sidebar-case-meta"><MapPin size={12} /> СОФИЯ <span className="meta-separator">/</span> #001</div>
       </div>
 
-      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 14</span></div>
+      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 15</span></div>
       <nav className="main-nav" aria-label="Навигация по разследването">
         {tabs.map(t => {
           const Icon = t.icon;
@@ -387,6 +389,10 @@ function App() {
               <SectionHeader kicker="CASEFILES 0.6 / IMMERSIVE INVESTIGATION" title="Интерактивно разследване" description="Потърси скрити предмети, комбинирай инвентара, отключи сейфа, провеждай разклонени разговори и проучвай полицейските архиви." extra={<span className="tag"><LockKeyhole size={13}/> СЛЕДСТВЕНИ ИНСТРУМЕНТИ</span>} />
               <ImmersiveInvestigation session={session} found={found}/>
             </>}
+            {view === 'living' && <>
+              <SectionHeader kicker="CASEFILES 0.7 / LIVING INVESTIGATION" title="Живо разследване" description="Разрешения за обиск, проверка на доказателства, експертизи, събития и последствия, финансови следи, съдебен процес и нови криминални случаи." extra={<span className="tag"><Scale size={13}/> CASE #001 + #002</span>} />
+              <LivingInvestigation session={session} found={found}/>
+            </>}
             {view === 'lab' && <>
               <SectionHeader kicker="ЛАБОРАТОРИЯ / АНАЛИЗИ" title="Криминалистика" description="Превъртай записа кадър по кадър и изследвай страници от документи. Само потвърдените наблюдения отключват нови улики." extra={<span className="tag"><FlaskConical size={13}/> FORENSIC UPDATE 0.4</span>}/>
               <ForensicWorkbench session={session} onFound={ids=>{setFound(ids);refreshClues(session);}}/>
@@ -464,7 +470,7 @@ function App() {
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.6</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.7</span></div>
         </main>
 
         <aside className="inspector">
