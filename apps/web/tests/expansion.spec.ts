@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 
 test('detective workflow opens the expanded investigation tools',async({page})=>{
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await expect(page.getByRole('heading',{name:'Последното обаждане'}).first()).toBeVisible();
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Детективски инструменти/}).click();
@@ -18,6 +19,7 @@ test('detective workflow opens the expanded investigation tools',async({page})=>
 test('responsive sidebar provides access to the expansion on mobile',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Отвори навигацията/}).click();
  await page.getByRole('button',{name:/Детективски инструменти/}).click();
  await expect(page.getByRole('heading',{name:'Детективски център'})).toBeVisible();
