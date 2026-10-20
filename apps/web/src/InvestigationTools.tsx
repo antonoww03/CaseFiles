@@ -1,3 +1,4 @@
+import {ObjectArt,visualForClue,roomAsset} from './sceneArt';
 import { useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, CircleDot, Crosshair, DoorOpen, Eye, FileSearch, FolderOpen, Link2, Lock, MapPin, Plus, Radar, ScanSearch, Sparkles, type LucideIcon } from 'lucide-react';
 
@@ -36,7 +37,7 @@ export function ExpandedScene({ found, clues, loading, onDiscover, onView }: {
       return <button type="button" className={z.id===zoneId?'active':''} key={z.id} onClick={()=>{setZoneId(z.id);setInspected(null);}}><span className="v03-zone-icon"><Icon size={19}/></span><span><strong>{z.name}</strong><small>{z.sub}</small></span><span className="v03-zone-count">{count}/{z.clueIds.length}</span></button>;
     })}</div>
     <div className="v03-scene-title"><span><Radar size={17} /> {zone.name.toLocaleUpperCase('bg')} / ИНТЕРАКТИВЕН ОГЛЕД</span><span><CircleDot size={12}/> ЗОНА {zones.findIndex(z=>z.id===zoneId)+1} / 3</span></div>
-    <div className={'v03-room v03-room-'+zone.id}>
+    <div className={'v03-room v03-room-'+zone.id} style={{backgroundImage:'url('+roomAsset(zone.id==='study'?'desk':zone.id)+')'}}>
       <span className="v03-room-corner">CASE #001 / APARTMENT 407</span>
       <div className="v03-room-geometry">
         <div className="v03-room-floor"/><div className="v03-room-edge top"/><div className="v03-room-edge left"/>
@@ -44,7 +45,7 @@ export function ExpandedScene({ found, clues, loading, onDiscover, onView }: {
         {zone.id==='study'&&<><div className="v03-furniture desk"/><div className="v03-furniture papers"/><div className="v03-furniture cabinet"/><div className="v03-furniture office-chair"/><div className="v03-furniture monitor"/></>}
         {zone.id==='entrance'&&<><div className="v03-furniture doorway"/><div className="v03-furniture hallway"/><div className="v03-furniture shelf"/><div className="v03-furniture mat"/><div className="v03-furniture switch"/></>}
       </div>
-      {zone.hotspots.map(h=>{const done=found.includes(h.id);return <button key={h.id} style={{left:h.x+'%',top:h.y+'%'}} className={'v03-point '+(done?'found':'')} type="button" disabled={loading} onClick={()=>void inspect(h.id)} aria-label={'Разгледай: '+h.name} title={h.name}>{done?<Check size={18}/>:<Plus size={18}/>}</button>})}
+      {zone.hotspots.map(h=>{const done=found.includes(h.id),visual=visualForClue(h.id,zone.id==='study'?'desk':zone.id);return <button key={h.id} style={{left:(visual?.x??h.x)+'%',top:(visual?.y??h.y)+'%'}} className={'v03-point '+(done?'found':'')} type="button" disabled={loading} onClick={()=>void inspect(h.id)} aria-label={'Разгледай: '+h.name} title={h.name}><ObjectArt asset={visual?.asset||'evidence'} alt={h.name}/>{done?<Check size={18}/>:<Plus size={18}/>}<small>{h.name}</small></button>})}
       <div className="v03-room-bottom"><span><Crosshair size={13}/> ПОСОЧИ МАРКЕР ЗА ОГЛЕД</span><span>ЕКСПЕРТЕН РЕЖИМ / 02:37</span></div>
     </div>
     <div className="v03-scene-footer"><div><strong><ScanSearch size={15}/> ОБХОД НА АПАРТАМЕНТА</strong><span>{sceneFound.length}/4 открити улики · {zone.clueIds.filter(id=>found.includes(id)).length}/{zone.clueIds.length} в тази стая</span></div><div className="v03-zone-nav"><button type="button" aria-label="Предишна стая" onClick={()=>{setZoneId(zones[(zones.findIndex(z=>z.id===zoneId)+2)%3].id);setInspected(null);}}><ChevronLeft size={17}/></button><button type="button" aria-label="Следваща стая" onClick={()=>{setZoneId(zones[(zones.findIndex(z=>z.id===zoneId)+1)%3].id);setInspected(null);}}><ChevronRight size={17}/></button></div></div>
