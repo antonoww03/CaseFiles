@@ -43,6 +43,13 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const firstWorld=await request('/experience11','GET',undefined,token);
+  assert.equal(firstWorld.status,200);
+  assert.equal(firstWorld.json.locations.length,10);
+  assert.equal(firstWorld.json.inventory.length,0);
+  assert.equal(firstWorld.json.recordings.every(r=>r.voice===null),true);
+  assert.equal((await request('/experience11/action','POST',{kind:'use',item:'brass_key',target:'drawer'},token)).status,403);
+  assert.equal((await request('/experience11/action','POST',{kind:'observe',target:'doormat',side:'back',rotation:0},token)).status,422);
   const firstRelease=await request('/release10','GET',undefined,token);
   assert.equal(firstRelease.status,200);
   assert.equal(firstRelease.json.case2.puzzles.length,3);
@@ -123,6 +130,9 @@ try {
   const key = await request('/immersive/action','POST',{kind:'inspect',objectId:'doormat'},token);
   assert.equal(key.status,200);
   assert.ok(key.json.progress.inventory.some(x=>x.id==='brass_key'));
+  const usedKey=await request('/experience11/action','POST',{kind:'use',item:'brass_key',target:'drawer'},token);
+  assert.equal(usedKey.status,200);
+  assert.ok(usedKey.json.world.inventory.some(x=>x.id==='negative'));
   const drawer = await request('/immersive/action','POST',{kind:'inspect',objectId:'drawer'},token);
   assert.equal(drawer.status,200);
   assert.ok(drawer.json.progress.inventory.some(x=>x.id==='negative'));
@@ -223,6 +233,12 @@ try {
   const unlockedDraft = await request('/forensics/documents/draft/inspect','POST',{pageId:'signature'},token);
   assert.equal(unlockedDraft.status,200);
   assert.ok(unlockedDraft.json.found.includes('E09'));
+  const boardProof=await request('/experience11/action','POST',{kind:'board',first:'E04',second:'E09'},token);
+  assert.equal(boardProof.status,200);
+  assert.ok(boardProof.json.world.board.some(x=>x.id==='D01'));
+  const audioWorld=await request('/experience11','GET',undefined,token);
+  assert.ok(audioWorld.json.recordings.some(x=>x.id==='nikola-draft'&&x.available));
+  assert.equal((await request('/experience11/action','POST',{kind:'board',first:'E04',second:'C1'},token)).status,403);
   const unlockedMail=await request('/cinematic/action','POST',{kind:'phone',id:'email-report'},token);
   assert.equal(unlockedMail.status,200);
   const priorWarrant=await request('/living','GET',undefined,token);
@@ -418,6 +434,9 @@ try {
   assert.ok(restored09.json.solved.includes('bonus'));
   const restoredCinematic=await request('/cinematic','GET',undefined,restoredToken);
   assert.equal(restoredCinematic.status,200);
+  const restoredWorld=await request('/experience11','GET',undefined,restoredToken);
+  assert.ok(restoredWorld.json.board.some(x=>x.id==='D01'));
+  assert.ok(restoredWorld.json.inventory.some(x=>x.id==='brass_key'));
   assert.equal(restoredCinematic.json.recovered,true);
   assert.equal(restoredCinematic.json.phone.find(x=>x.id==='sms-martin').opened,true);
   assert.equal(restoredCinematic.json.case2.locations.find(x=>x.id==='lift').visited,true);
