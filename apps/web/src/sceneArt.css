@@ -35,3 +35,12 @@
 .cin-portrait.large .d12-portrait{height:100%}
 .v03-dossier-hero>.d12-portrait{height:122px;max-height:122px;aspect-ratio:auto}
 @media(max-width:650px){.v03-point .cf-object-art{width:48px;height:48px}.v03-point small{font-size:9px;max-width:76px;padding:3px}.v03-room{min-height:215px}}
+
+.cin-stage{aspect-ratio:16/9;height:auto!important;min-height:220px;background-size:100% 100%!important;background-position:center!important}
+.cin-stage>.cin-depth{display:none}
+.cin-stage-points button{display:flex;flex-direction:column;align-items:center;max-width:150px;z-index:6}
+.cin-stage-points .cf-object-art{width:clamp(65px,8vw,115px);height:clamp(65px,8vw,115px)}
+.cin-stage-points button:has(.cf-object-art)>svg{display:none}
+.cin-stage-points button:hover .cf-object-art{transform:scale(1.1);filter:drop-shadow(0 0 14px #f7d79c)}
+.cin-stage-points button.active .cf-object-art{filter:drop-shadow(0 0 15px #89dcc1)}
+@media(max-width:650px){.cin-stage-points .cf-object-art{width:48px;height:48px}.cin-stage-points button span{font-size:9px;max-width:82px;padding:4px}}
