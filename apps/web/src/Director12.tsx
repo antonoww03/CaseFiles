@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {ArrowLeft,ArrowRight,AudioLines,CheckCircle2,Clapperboard,FileSearch,Film,Lightbulb,Pause,Play,ScanSearch,SkipForward, Sparkles,Volume2,VolumeX,X} from 'lucide-react';
+import {ArrowLeft,ArrowRight,Clapperboard,FileSearch,Film,Play,ScanSearch,SkipForward,Volume2,VolumeX,X} from 'lucide-react';
 import './director12.css';
 type CaseId='case-001'|'case-002';
 type Beat={id:string;title:string;kicker:string;line:string;room:string;cue:string;watched:boolean};
