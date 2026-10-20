@@ -63,7 +63,7 @@ export function cinematicOverview(s:StoredSession) {
   recovered:c.decrypted.includes('sms-fragment'),recoverAvailable:s.found.has('E03')&&s.found.has('E04'),
   personas:reactions.map(r=>({...r,mood:c.moods[r.id]||'neutral'})),
   choices:dramaticChoices.map(d=>({id:d.id,personId:d.personId,label:d.label,available:d.needs.every(e=>s.found.has(e))&&!c.choiceConsequences.includes('block:'+d.personId),done:c.decisions.includes(d.id),needs:d.needs})),
-  lastLines:c.decisions.map(id=>{const d=dramaticChoices.find(x=>x.id===id)!;return {id,personId:d.personId,line:d.line,mood:d.mood}}),
+  lastLines:c.decisions.filter(id=>dramaticChoices.some(d=>d.id===id)).map(id=>{const d=dramaticChoices.find(x=>x.id===id)!;return {id,personId:d.personId,line:d.line,mood:d.mood}}),
   case2:{
    chapter:currentChapter,found:s.living.case2.found,verdict:s.living.case2.verdict,
    locations:case2Locations.map(l=>({...l,available:l.chapter<=currentChapter,visited:c.chapterVisits.includes(l.id)})),
