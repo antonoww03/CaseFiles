@@ -8,6 +8,7 @@ import { newImmersiveState, sceneObjects, tools as sceneTools, combinations, dia
 import type { StoredSession } from './storage.js';
 import { initialLiving, caseTemplateSchema, case002, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions } from './living.js';
 import { initialCinematic, phoneRecords, dramaticChoices, case2Locations, case2Decisions } from './cinematic.js';
+import { newGame09, game09Puzzles } from './game09.js';
 
 const lineSchema = z.object({role:z.enum(['player','npc']),text:z.string().min(1).max(2500)});
 const noteBackup = noteSchema.extend({id:z.string().uuid(),updatedAt:z.string().max(40)});
@@ -53,6 +54,7 @@ export const backupSchema = z.object({
  solved:z.boolean(),
  immersive:immersiveBackup.optional(),
  living:livingBackupSchema.optional(),
+ game09:z.object({solved:z.array(z.string().max(32)).max(8),attempts:z.record(z.number().int().min(0).max(99)),selectedRoom:z.enum(['hall','living','study']),discovered:z.array(z.string().max(32)).max(6),missionsDone:z.array(z.string().max(30)).max(12),newGamePlus:z.boolean(),focus:z.string().max(30),events:z.array(z.object({name:z.string().max(90),at:z.string().max(40)})).max(40)}).optional(),
  cinematic:z.object({opened:z.array(z.string().max(50)).max(6),decrypted:z.array(z.string().max(30)).max(1),decisions:z.array(z.string().max(45)).max(10),moods:z.record(z.string().max(15)),chapterVisits:z.array(z.string().max(30)).max(6),choiceConsequences:z.array(z.string().max(40)).max(10),effectsPlayed:z.number().int().min(0).max(9999)}).optional(),
  expansion:z.object({
   difficulty:difficultySchema,
@@ -78,6 +80,7 @@ export function exportBackup(session:StoredSession):PortableBackup {
   immersive:session.immersive,
   living:session.living,
   cinematic:session.cinematic,
+  game09:session.game09,
   expansion:{
    difficulty:session.expansion.difficulty,
    milestones:session.expansion.milestones,
@@ -191,6 +194,18 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
   cinematic.effectsPlayed=value.cinematic.effectsPlayed;
  }
  session.cinematic=cinematic;
+ const g=newGame09();
+ if(value.game09){const saved=value.game09;
+  g.solved=game09Puzzles.filter(p=>saved.solved.includes(p.id)&&p.needs.every(e=>found.has(e))&&(p.id!=='cipher'||immersive.discoveries.includes('uv_marker'))).map(p=>p.id);
+  g.attempts=Object.fromEntries(Object.entries(saved.attempts).filter(([id])=>game09Puzzles.some(p=>p.id===id)));
+  g.selectedRoom=saved.selectedRoom;
+  g.discovered=sceneObjects.filter(o=>saved.discovered.includes(o.id)&&(!o.prerequisite||found.has(o.prerequisite))).map(o=>o.id);
+  g.missionsDone=saved.missionsDone;
+  g.focus=saved.focus;
+  g.events=saved.events;
+  g.newGamePlus=saved.newGamePlus&&value.solved;
+ }
+ session.game09=g;
  session.finalReport=null;
  session.accusationCount=next.attempts.length;
  session.aiCalls=25;
