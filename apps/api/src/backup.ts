@@ -29,7 +29,7 @@ export const backupSchema = z.object({
   tutorial:z.array(z.string().max(30)).max(4),
   uiSettings:z.object({sound:z.boolean(),reducedMotion:z.boolean()}),
   actions:z.array(z.object({at:z.string().max(40),kind:z.string().max(30),text:z.string().max(300)})).max(120),
-  attempts:z.array(z.object({at:z.string().max(40),result:z.enum(['solved','incorrect','insufficient']),selected:z.enum(['martin','elena','petar'])})).max(30)
+  attempts:z.array(z.object({at:z.string().max(40),result:z.string().max(20),selected:z.string().max(20)})).max(30)
  })
 }).strict();
 export type PortableBackup = z.infer<typeof backupSchema>;
@@ -75,7 +75,7 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
  next.tutorial=[...new Set(value.expansion.tutorial.filter(x=>tutorial.some(t=>t.id===x)))];
  next.uiSettings=value.expansion.uiSettings;
  next.actions=value.expansion.actions;
- next.attempts=value.expansion.attempts;
+ next.attempts=value.expansion.attempts.filter(x=>['solved','incorrect','insufficient'].includes(x.result)&&['martin','elena','petar'].includes(x.selected));
  const allowedHints=({rookie:3,detective:2,expert:1})[next.difficulty];
  session.found=found;
  session.links=links;
