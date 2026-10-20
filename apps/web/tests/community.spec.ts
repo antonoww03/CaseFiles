@@ -36,5 +36,5 @@ test('community editor and detective profile are usable without game session',as
   await expect(page.getByRole('heading',{name:/Създай и публикувай/})).toBeVisible();
   await page.getByRole('button',{name:/Публикувай в общността/}).click();
   await expect(page.getByText(/Публикуван случай/)).toBeVisible();
-  await expect(page.getByText('Мистерията на нощния архив')).toBeVisible();
+  await expect(page.getByText('Мистерията на нощния архив',{exact:true}).first()).toBeVisible();
 });
