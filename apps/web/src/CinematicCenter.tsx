@@ -1,3 +1,4 @@
+import {DirectorPortrait} from './Director12';
 import { useEffect, useRef, useState } from 'react';
 import { Award, BellRing, BookOpen, Camera, CheckCircle2, ChevronRight, FileImage, FolderOpen, Headphones, LockKeyhole, Mail, MapPin, MessageCircle, Mic2, Minus, Phone, Plus, Search, Smartphone, Sparkles, Star, UserRound, Volume2, VolumeX, X } from 'lucide-react';
 import './cinematic.css';
@@ -16,9 +17,7 @@ async function api<T>(session:string,path:string,method='GET',body?:unknown):Pro
 }
 function Portrait({person,mood,large=false}:{person:Persona;mood?:string;large?:boolean}){
  const state=mood||person.mood||'neutral';
- return <div className={'cin-portrait '+person.tint+(large?' large':'')+' '+state} aria-label={'Портрет на '+person.name+', '+state} role="img">
-  <div className="cin-person-halo"/><div className="cin-person-shoulders"/><div className="cin-person-neck"/><div className="cin-person-face"><span className="cin-person-hair"/><span className="cin-person-brow left"/><span className="cin-person-brow right"/><span className="cin-person-eye left"/><span className="cin-person-eye right"/><span className="cin-person-nose"/><span className="cin-person-mouth"/></div><span className="cin-portrait-caption">{person.initials} / {state.toUpperCase()}</span>
- </div>;
+ return <div className={'cin-portrait '+person.tint+(large?' large':'')+' '+state}><DirectorPortrait id={person.id} mood={state} compact={!large}/></div>;
 }
 function AmbientControls(){
  const [running,setRunning]=useState(false),[level,setLevel]=useState(24);
