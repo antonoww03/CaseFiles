@@ -37,6 +37,39 @@ No new API keys, paid services or accounts are needed for these features. The ex
 
 None of the forensic content represents real CCTV or real people. The correct solution remains in the public repository source code; a future production version needs a private story-content backend to prevent out-of-game spoilers.
 
+## CASEFILES 0.5 — Investigation Expansion (20 features)
+
+All twenty requested systems are available in the **Детективски инструменти** tab. These are fictional game mechanics and early prototypes, not real forensic analysis or navigation.
+
+| # | Feature | Implementation |
+|---|---|---|
+| 1 | Fingerprint comparison | Three-choice visual pattern exercise, evidence-gated |
+| 2 | Audio analysis | Synthetic waveform and timestamped sound-event exercise; not recorded audio |
+| 3 | UV inspection | Simulated UV hotspot identification exercise |
+| 4 | Deleted file recovery | Reconstruct an in-story three-fragment note |
+| 5 | Investigation map | Schematic map for four fictional case locations |
+| 6 | Source reliability | Classify direct observations, witness testimony and hypotheses |
+| 7 | Red herrings | Identify and reject an unsupported guilt inference |
+| 8 | Additional witnesses | Security guard and building porter provide gated contextual statements |
+| 9 | Decision log | Timestamped server-tracked actions in the active session |
+| 10 | Unlockable locations | Locations become available only after specific evidence |
+| 11 | Map-based alibi | Puzzle checking whether phone contact proves physical presence |
+| 12 | Suspicion scores | Independently adjustable and stored personal suspicion sliders |
+| 13 | Difficulty | Rookie / Detective / Expert change hint allowance (3/2/1) and hint penalties (2/4/6) |
+| 14 | Achievements | Eight calculated badges for investigation milestones |
+| 15 | Tutorial | Four checkable introductory investigation steps |
+| 16 | Local save backup | Portable JSON export and validated import of evidence, deductions, notes, transcripts, journal, attempts and settings |
+| 17 | Investigation history | Per-session accusation attempts and decision chronology |
+| 18 | Hidden rating | Resolution-grade summary is visible only after a solved case |
+| 19 | Different endings | Outcome label for continuing investigation, proven accusation and full disclosure; no alternate playable chapters yet |
+| 20 | Automated browser testing | Playwright Chromium desktop/mobile smoke tests configured in GitHub Actions |
+
+**Portable backup:** GET `/api/backup` exports the current authenticated save; POST `/api/backup/restore` validates JSON against the game's known evidence and relationships, imports into an **empty new session** and recreates a completed report only if the restored clues justify it. Imported saves intentionally cannot send paid OpenAI requests. JSON save files contain player-written notes and transcripts; keep them private. As a single-player game, locally edited saves are not cryptographically signed and can be tampered with.
+
+**Persistence:** Render still reports `storage: memory` without `DATABASE_URL`. The export/import flow provides manual recovery across restarts, not automatic saving. The optional PostgreSQL storage remains the recommended long-term solution.
+
+**E2E tests:** `npm run test:e2e -w apps/web` requires Playwright Chromium installed locally. The GitHub CI pipeline installs it and executes two browser checks. A passing Render build alone does not prove GitHub's browser job has passed.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
