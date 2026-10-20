@@ -275,3 +275,31 @@ Do not enable either diagnostic switch permanently.
 - Sessions are anonymous bearer tokens without player accounts; account-based saves and multi-device sync are not implemented.
 - The free database has a limited lifespan. Implement backups before using it for important data.
 - Current deduction and accusation rules are designed for this first case and need further balancing.
+
+
+## CASEFILES Community 0.5 — Co-op & Creator Expansion
+
+This add-on preserves the later CASEFILES 1.x interface, story content and legacy tools. It extends the already playable Case #002 with a separate server-authoritative **community investigation hub** accessible from the main menu; it does **not** synchronize the entire original Case #001 3D/2D game interface between users.
+
+Five features:
+
+1. **Case #002** — the existing authored "Изчезналият архив" is available as a room-based shared mini-investigation with clues, alibi interviews and evidence-based accusations.
+2. **Multiplayer/co-op rooms** — invitation code, up to six investigators, room membership tokens, shared discovery and verdict state, four-second client polling, rate limits and server-side evidence checks. There is no account login or real-time voice/chat.
+3. **Procedural cases** — randomized fictional setting, character roster, clues and a hidden culprit generated server-side from a seed. These are variations on a curated template, not AI-written unlimited narratives.
+4. **Detective progression** — optional private UUID-based profile, 100 XP per newly solved room, levels and milestone badges, with idempotent rewards.
+5. **Community editor** — visual editing of 3 suspects, 5 clues, alibis, narrative and adjudicated solution; anonymous public publishing and a browsable community-case library. Content entered by players is public, not professionally moderated, so never include private personal information.
+
+### PostgreSQL persistence
+
+The API initializes **casefiles.sessions** and **casefiles.community_records** when a valid \`DATABASE_URL\` is configured. Rooms, public stories, profiles and existing investigation sessions are written to PostgreSQL using parameterized queries; concurrent room/profile updates use version-checked writes to avoid lost state. PostgreSQL game saves no longer expire simply because they have been inactive for two weeks. Existing in-memory sessions without a database still expire after fourteen days and do not survive a restart.
+
+**Current Render limitation:** the connected Render tooling can inspect the existing \`casefiles-db\` database but does not reveal its database password or internal connection URL. Merely creating the DB and committing PostgreSQL-aware code does not connect it. Until the Render API web service has its \`DATABASE_URL\` set to the internal connection URL of \`casefiles-db\`, \`/api/health\` and \`/api/community/status\` will truthfully report \`storage: memory\`. No placeholder connection URL is used. The currently provisioned free database reports expiry on **2026-11-18**, and must remain provisioned for data to remain accessible.
+
+To connect it using Render's dashboard: open the existing \`casefiles-db\` database and copy its **Internal Database URL**, then set \`DATABASE_URL\` under **casefiles-api → Environment**. Render automatically redeploys the web service when environment is updated. Never commit that URL or share it publicly. Confirm that both status endpoints report \`postgres\` and verify a room/profile survives restarting the backend. This database wiring cannot be considered deployed until those checks pass.
+
+### Verification
+
+- \`npm run build -w apps/api\` executes TypeScript compilation, Vitest and an isolated API HTTP smoke test.
+- \`apps/api/src/community.test.ts\` verifies random-case structure, clue gating, concealed solution and supported verdict logic.
+- \`scripts/smoke.mjs\` verifies profile XP, invite/join, membership protection, shared evidence, procedural rooms and public-story publishing using **in-memory test data**; \`DATABASE_URL\` is deliberately unset in the smoke child process to prevent test fixtures from reaching production PostgreSQL.
+- \`apps/web/tests/community.spec.ts\` provides Playwright Chromium UI coverage of community navigation, co-op code joining, shared clue refresh, profile creation and publishing. A passing Render build does **not** establish a passing Playwright run.
