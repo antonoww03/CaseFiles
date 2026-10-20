@@ -3,6 +3,7 @@ import {test,expect} from '@playwright/test';
 test('0.9 unified mode joins scene inventory drawer and smartphone',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Играй CASEFILES 0.9/}).click();
  await expect(page.getByRole('heading',{name:'Единен игрови режим'})).toBeVisible();
@@ -23,6 +24,7 @@ test('0.9 unified mode joins scene inventory drawer and smartphone',async({page}
 
 test('0.9 lab and guided mission HUD are accessible',async({page})=>{
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Играй CASEFILES 0.9/}).click();
  await page.getByRole('navigation',{name:'Бърза игрова навигация'}).getByRole('button',{name:/Лаборатория/}).click();
@@ -38,6 +40,7 @@ test('0.9 mobile navigates phone map and detective vision without runtime errors
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setViewportSize({width:390,height:844});
  await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Отвори навигацията/}).click();
  await page.getByRole('button',{name:/Играй CASEFILES 0.9/}).click();
