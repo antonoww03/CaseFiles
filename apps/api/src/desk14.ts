@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { StoredSession } from './storage.js';
-import { case002 } from './living.js';
 
 export type DeskCaseId = 'case-001' | 'case-002';
 const caseIds = ['case-001', 'case-002'] as const;
