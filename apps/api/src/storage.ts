@@ -1,10 +1,13 @@
 import { Pool } from 'pg';
 import type { InterviewLine } from './interview.js';
+import type { Note } from './gameplay.js';
 
 export type StoredSession = {
   id: string;
   found: Set<string>;
   links: Set<string>;
+  notes: Note[];
+  verified: Set<string>;
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   lastActive: number;
@@ -16,6 +19,8 @@ export type StoredSession = {
 type Persisted = {
   found: string[];
   links: string[];
+  notes?: Note[];
+  verified?: string[];
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   interviewCount: number;
@@ -60,6 +65,8 @@ export async function saveSession(session: StoredSession): Promise<void> {
   const state: Persisted = {
     found: [...session.found],
     links: [...session.links],
+    notes: session.notes,
+    verified: [...session.verified],
     messages: session.messages,
     disclosed: session.disclosed,
     interviewCount: session.interviewCount,
@@ -86,6 +93,8 @@ export async function restoreSession(id: string): Promise<StoredSession|null> {
     id: row.id,
     found: new Set(Array.isArray(saved.found) ? saved.found : []),
     links: new Set(Array.isArray(saved.links) ? saved.links : []),
+    notes: Array.isArray(saved.notes) ? saved.notes : [],
+    verified: new Set(Array.isArray(saved.verified) ? saved.verified : []),
     messages: saved.messages || {},
     disclosed: saved.disclosed || {},
     lastActive: row.last_active.getTime(),
