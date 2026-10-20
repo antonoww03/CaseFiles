@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
-  ArrowRight, BookMarked, Check, CheckCheck, ClipboardList, FileText,
+  ArrowRight, BookMarked, Check, CheckCheck, ClipboardList,
   Fingerprint, Lock, MessageSquareText, NotebookPen, Plus, Save, Search,
-  ShieldAlert, ShieldCheck, Sparkles, Trash2, UserRound, X,
+  ShieldAlert, ShieldCheck, Sparkles, Trash2, X,
   type LucideIcon
 } from 'lucide-react';
 import './features.css';
