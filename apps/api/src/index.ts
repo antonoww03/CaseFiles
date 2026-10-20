@@ -12,6 +12,7 @@ import { exportBackup, applyBackup } from './backup.js';
 import { newImmersiveState, immersiveSnapshot, interactionSchema, interaction, dialogueSchema, chooseDialogue, searchSchema, searchRecords } from './immersive.js';
 import { initialLiving, visibility, capture, progressTick, canWarrant, canAdmit, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions, caseCatalog, case002, caseTemplateSchema, publicStory, solveCase, warrantAction, expertAction, confrontationAction, financeAction, policyAction, courtAction, caseAction } from './living.js';
 import { initialCinematic, cinematicOverview, cinematicActionSchema, useCinematicChoice, profileSnapshot } from './cinematic.js';
+import { newGame09, game09View, game09Action, evaluateGame09 } from './game09.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -76,7 +77,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), cinematic: initialCinematic(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), cinematic: initialCinematic(), game09: newGame09(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -112,6 +113,22 @@ const expansionView = (session:Session) => {
  };
 };
 app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/game09',(req,res)=>{
+ const session=getSession(req,res);
+ if(session)res.json(game09View(session));
+});
+app.post('/api/game09/action',async(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ if(!useQuota('game09:'+req.ip,200,60*60*1000))return void res.status(429).json({error:'Твърде много действия.'});
+ const parsed=game09Action.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно игрово действие.'});
+ const before=structuredClone(session.game09);
+ const result=evaluateGame09(session,parsed.data);
+ if(result.status!==200&&result.status!==422)return void res.status(result.status).json({error:result.message});
+ try{await saveSession(session);}catch{session.game09=before;return void res.status(503).json({error:'Неуспешно запазване.'});}
+ if(result.status===422)return void res.status(422).json({error:result.message,progress:game09View(session)});
+ res.json({message:result.message,progress:game09View(session)});
+});
 app.get('/api/cinematic',(req,res)=>{
  const s=getSession(req,res);if(s)res.json(cinematicOverview(s));
 });
