@@ -14,7 +14,8 @@ export const game09Puzzles=[
  {id:'cctv',title:'CCTV — засечи детайла',type:'video',hint:'Използвай 01:12:00 и маркирай диагоналната презрамка.',needs:['E06'],success:'Маркиран е моментът с презрамката. Не може да се извлече самоличност.'},
  {id:'cipher',title:'Шифър на сейфа',type:'cipher',hint:'Под UV светлина са изписани символи 3 · 7 · 1.',needs:['E04'],success:'Кодът е разчетен и проверен спрямо предметите.'},
  {id:'testimony',title:'Две свидетелски версии',type:'compare',hint:'Телефонният регистър показва разговор; първоначалното показание отрича контакт.',needs:['E03','E11'],success:'Потвърдено е противоречие, а не физическо присъствие.'},
- {id:'reconstruct',title:'Реконструкция на нощта',type:'chronology',hint:'Кодът в 01:09, асансьорът в 01:12, разговорът в 01:17, заключването в 01:28.',needs:['E03','E05','E06','E08'],success:'Възстановена е доказателствена последователност на събитията.'}
+ {id:'reconstruct',title:'Реконструкция на нощта',type:'chronology',hint:'Кодът в 01:09, асансьорът в 01:12, разговорът в 01:17, заключването в 01:28.',needs:['E03','E05','E06','E08'],success:'Възстановена е доказателствена последователност на събитията.'},
+ {id:'bonus',title:'New Game+ — комплексен анализ',type:'bonus',hint:'Свържи протокола от огледа и служебното съобщение, без да ги бъркаш със самоличност.',needs:['E01','E04'],success:'Отлично! Разграничи физическата следа от документа: нито една сама не доказва вина.'}
 ] as const;
 export const travelLocations=[
  {id:'apartment',name:'Апартамент 407',tag:'Местопрестъпление',needs:[] as string[]},
@@ -53,6 +54,7 @@ export function evaluateGame09(s:StoredSession,action:z.infer<typeof game09Actio
  }
  const p=game09Puzzles.find(x=>x.id===action.id);
  if(!p)return {status:404,message:'Неизвестна задача.'};
+ if(p.id==='bonus'&&!state.newGamePlus)return {status:403,message:'Бонусната задача се отключва след разрешен случай и активиран New Game+.'};
  if(p.needs.some(id=>!s.found.has(id)))return {status:403,message:'Първо намери необходимите доказателства.'};
  if(action.id==='cipher'&&!s.immersive.discoveries.includes('uv_marker'))return {status:403,message:'Не е разчетена UV следата.'};
  if(state.solved.includes(p.id))return {status:409,message:'Задачата вече е решена.'};
@@ -63,7 +65,8 @@ export function evaluateGame09(s:StoredSession,action:z.infer<typeof game09Actio
   cctv:'120:strap',
   cipher:'371',
   testimony:'call-denial',
-  reconstruct:'E05>E06>E03>E08'
+  reconstruct:'E05>E06>E03>E08',
+  bonus:'E01+E04'
  } as Record<string,string>)[p.id]===action.answer;
  if(!good)return {status:422,message:'Това решение не съвпада с доказателствата. Опитай отново.'};
  state.solved.push(p.id);state.events.push({name:'Разрешено: '+p.title,at:new Date().toISOString()});state.events=state.events.slice(-40);
@@ -80,7 +83,7 @@ export function game09View(s:StoredSession){
   {id:'ending',title:'Достигни финал',done:!!s.finalReport||s.living.case2.verdict==='solved',detail:'Представи обосновано обвинение.'}
  ];
  const totalSteps=s.immersive.inspected.length+s.found.size+g.solved.length+s.cinematic.decisions.length;
- const hints=game09Puzzles.filter(p=>p.needs.every(x=>s.found.has(x))&&!g.solved.includes(p.id)).map(p=>({
+ const hints=game09Puzzles.filter(p=>(p.id!=='bonus'||g.newGamePlus)&&p.needs.every(x=>s.found.has(x))&&!g.solved.includes(p.id)).map(p=>({
   id:p.id,title:p.title,detail:(g.attempts[p.id]||0)>=2?p.hint:'Опитай сам. Подсказка след две грешни проверки.',unlocked:(g.attempts[p.id]||0)>=2
  }));
  const tension=Math.min(100,15+s.cinematic.decisions.length*8+s.living.confrontations.length*14+s.verified.size*8+s.found.size*3);
@@ -96,7 +99,7 @@ export function game09View(s:StoredSession){
   inventory:s.immersive.inventory,
   inspected:s.immersive.inspected,
   solved:g.solved,
-  puzzles:game09Puzzles.map(p=>({id:p.id,title:p.title,type:p.type,available:p.needs.every(x=>s.found.has(x)),solved:g.solved.includes(p.id),needs:p.needs,attempts:g.attempts[p.id]||0})),
+  puzzles:game09Puzzles.filter(p=>p.id!=='bonus'||g.newGamePlus).map(p=>({id:p.id,title:p.title,type:p.type,available:p.needs.every(x=>s.found.has(x)),solved:g.solved.includes(p.id),needs:p.needs,attempts:g.attempts[p.id]||0})),
   hints,
   missions,missionCompleted:missions.filter(m=>m.done).length,
   locations:travelLocations.map(x=>({...x,unlocked:x.needs.every(id=>s.found.has(id))})),
