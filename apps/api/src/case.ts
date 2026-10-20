@@ -39,7 +39,9 @@ export const accusationSchema = z.object({
 export const messageSchema = z.object({
   personId: z.enum(['martin', 'elena', 'petar']),
   message: z.string().trim().min(1).max(600),
-  evidenceId: z.string().optional()
+  evidenceId: z.string().optional(),
+  interviewStyle: z.enum(['neutral', 'challenge', 'empathy']).default('neutral'),
+  scriptedOnly: z.boolean().default(false)
 });
 export function evaluate(suspectId: string, ids: string[], motive: string, timeline: string, links: string[] = []) {
   const selected = new Set(ids);
