@@ -203,7 +203,7 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
   g.missionsDone=saved.missionsDone;
   g.focus=saved.focus;
   g.events=saved.events;
-  g.newGamePlus=saved.newGamePlus&&value.solved;
+  g.newGamePlus=saved.newGamePlus&&(value.solved||living.case2.verdict==='solved');
  }
  session.game09=g;
  session.finalReport=null;
