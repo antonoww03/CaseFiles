@@ -72,7 +72,6 @@ export async function initializeStorage(): Promise<'postgres'|'memory'> {
       )
     `);
     await instance.query('CREATE INDEX IF NOT EXISTS casefiles_sessions_last_active ON casefiles.sessions (last_active)');
-    await instance.query("DELETE FROM casefiles.sessions WHERE last_active < now() - interval '14 days'");
     pool = instance;
     return 'postgres';
   } catch (error) {
@@ -118,7 +117,7 @@ export async function saveSession(session: StoredSession): Promise<void> {
 export async function restoreSession(id: string): Promise<StoredSession|null> {
   if (!pool || !/^[0-9a-f-]{36}$/i.test(id)) return null;
   const result = await pool.query<{ id: string; state: Persisted; last_active: Date }>(
-    "SELECT id, state, last_active FROM casefiles.sessions WHERE id = $1::uuid AND last_active > now() - interval '14 days'",
+    "SELECT id, state, last_active FROM casefiles.sessions WHERE id = $1::uuid",
     [id]
   );
   if (!result.rowCount) return null;
