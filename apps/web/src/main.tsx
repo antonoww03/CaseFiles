@@ -97,7 +97,7 @@ function EmptyState({ icon: Icon, title, description, action }: { icon: LucideIc
 
 function App() {
   const [view, setView] = useState<View>('home10');
-  const [case10,setCase10]=useState<'case-001'|'case-002'>('case-001');
+  const [case10,setCase10]=useState<'case-001'|'case-002'>(()=>localStorage.getItem('cf10-selected-case')==='case-002'?'case-002':'case-001');
   const [info, setInfo] = useState<CaseInfo | null>(null);
   const [session, setSession] = useState('');
   const [found, setFound] = useState<string[]>([]);
@@ -328,7 +328,7 @@ function App() {
     </button>;
   })}</div>;
 
-  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
+  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
   if(view==='play10')return <FullGame10 session={session} caseId={case10} found={found} onFound={setFound} onHome={()=>go('home10')} onLegacy={dest=>go(dest as View)}/>;
   
   return <div className="app-shell">
