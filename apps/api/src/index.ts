@@ -7,6 +7,7 @@ import { aiReply, configuredMode, scriptedReply, type InterviewLine } from './in
 import { deductions, findDeduction } from './deductions.js';
 import { suspects, contradictions, noteSchema, availableContradictions, scoreCase } from './gameplay.js';
 import { clipObservations, documents, observationSchema, frameFor, verifyObservation, documentPage, hintLevels, actualCaseTimeline } from './forensics.js';
+import { initialProgress, puzzles, actionSchema, unlocks, witnesses, classificationTargets, timelineItems, tutorial, difficultySchema, canEnter, achievements, outcome } from './expansion.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -70,7 +71,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -83,6 +84,96 @@ app.get('/api/session', (req, res) => {
   const session = getSession(req, res);
   if (session) res.json({ found: [...session.found], links: [...session.links], notes: session.notes, verified: [...session.verified], analyses: [...session.analyses], pressure: session.pressure, hintsUsed: session.hintsUsed, solved: !!session.finalReport, messages: session.messages });
 });
+const logDecision = (session:Session, kind:string, text:string) => {
+  session.expansion.actions.push({ at:new Date().toISOString(), kind, text });
+  session.expansion.actions = session.expansion.actions.slice(-120);
+};
+const expansionView = (session:Session) => {
+ const progress=session.expansion;
+ return {
+  difficulty:progress.difficulty,
+  puzzles:puzzles.map(({solution,...p})=>({...p, solved:progress.milestones.includes(p.id), available:p.requires.every(x=>session.found.has(x))})),
+  locations:unlocks.map(p=>({...p, unlocked:canEnter(p.id,session.found)})),
+  witnesses:witnesses.map(p=>({...p, available:p.requires.every(x=>session.found.has(x)), interviewed:progress.milestones.includes('witness:'+p.id), statement:progress.milestones.includes('witness:'+p.id)?p.statement:null})),
+  classifications:classificationTargets.map(x=>({id:x.id,label:x.label,completed:Object.hasOwn(progress.classifications,x.id),answer:progress.classifications[x.id]||null,available:x.id==='H01'||session.found.has(x.id)})),
+  timeline:timelineItems.map(x=>({...x,available:session.found.has(x.requires),completed:progress.placements[x.id]===x.time})),
+  tutorial:tutorial.map(x=>({...x,done:progress.tutorial.includes(x.id)})),
+  achievements:achievements(session.found,session.links,session.verified,progress.milestones,progress.attempts.length,!!session.finalReport),
+  suspicions:progress.suspects, actions:progress.actions,
+  attempts:progress.attempts,
+  rating:session.finalReport?{title:outcome(true,progress.attempts.filter(x=>x.result==='incorrect').length,Number((session.finalReport as {score?:{total?:number}}).score?.total||0)),level:progress.difficulty}:null,
+  settings:progress.uiSettings,
+  timelineSolved:timelineItems.every(x=>!session.found.has(x.requires)||progress.placements[x.id]===x.time)
+ };
+};
+app.get('/api/expansion',(req,res)=>{
+ const s=getSession(req,res);if(s)res.json(expansionView(s));
+});
+app.post('/api/expansion/difficulty',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ const parsed=difficultySchema.safeParse(req.body?.difficulty);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидна трудност.'});
+ if(s.expansion.actions.length||s.found.size||s.interviewCount)return void res.status(409).json({error:'Трудността се избира преди първото действие.'});
+ s.expansion.difficulty=parsed.data;
+ try{await saveSession(s);}catch{return void res.status(503).json({error:'Неуспешно запазване.'});}
+ res.json(expansionView(s));
+});
+app.post('/api/expansion/action',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ const parsed=actionSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно действие.'});
+ const action=parsed.data;
+ const before=structuredClone(s.expansion);
+ let message='';
+ if(action.kind==='puzzle'){
+  const challenge=puzzles.find(x=>x.id===action.id);
+  if(!challenge)return void res.status(404).json({error:'Няма такава задача.'});
+  if(challenge.requires.some(x=>!s.found.has(x)))return void res.status(403).json({error:'Първо намери нужните улики.'});
+  if(action.answer!==challenge.solution)return void res.status(422).json({error:'Неправилно решение. Провери материалите.'});
+  if(!s.expansion.milestones.includes(challenge.id))s.expansion.milestones.push(challenge.id);
+  message=challenge.result;
+  logDecision(s,'puzzle',challenge.name+' — решено');
+ }else if(action.kind==='classify'){
+  const target=classificationTargets.find(x=>x.id===action.id);
+  if(!target)return void res.status(404).json({error:'Неизвестно твърдение.'});
+  if(target.id!=='H01'&&!s.found.has(target.id))return void res.status(403).json({error:'Липсва необходимото доказателство.'});
+  if(action.answer!==target.correct)return void res.status(422).json({error:'Грешна класификация. Разграничи факт, показание и хипотеза.'});
+  s.expansion.classifications[action.id]=action.answer;
+  message='Класификацията е потвърдена.';
+  logDecision(s,'logic','Класификация '+action.id+' — '+action.answer);
+ }else if(action.kind==='suspect'){
+  s.expansion.suspects[action.id]=action.score;
+  message='Оценката на подозрението е запазена.';
+  logDecision(s,'suspicion','Актуализирано лично подозрение към '+action.id);
+ }else if(action.kind==='timeline'){
+  const event=timelineItems.find(x=>x.id===action.id);
+  if(!event)return void res.status(404).json({error:'Неизвестно събитие.'});
+  if(!s.found.has(event.requires))return void res.status(403).json({error:'Не е открита подкрепящата улика.'});
+  if(event.time!==action.position)return void res.status(422).json({error:'Позицията не съвпада с подкрепящото доказателство.'});
+  s.expansion.placements[action.id]=action.position;
+  message='Времевата точка е потвърдена.';
+  logDecision(s,'timeline','Поставено събитие '+event.id);
+ }else if(action.kind==='witness'){
+  const witness=witnesses.find(x=>x.id===action.id);
+  if(!witness)return void res.status(404).json({error:'Няма такъв свидетел.'});
+  if(witness.requires.some(x=>!s.found.has(x)))return void res.status(403).json({error:'Свидетелят още не е открит.'});
+  const marker='witness:'+witness.id;
+  if(!s.expansion.milestones.includes(marker))s.expansion.milestones.push(marker);
+  message=witness.statement;
+  logDecision(s,'witness','Взети показания от '+witness.name);
+ }else if(action.kind==='tutorial'){
+  const step=tutorial.find(x=>x.id===action.id);
+  if(!step)return void res.status(404).json({error:'Няма такава стъпка.'});
+  if(!s.expansion.tutorial.includes(step.id))s.expansion.tutorial.push(step.id);
+  message='Стъпката е приключена.';
+ }else{
+  s.expansion.uiSettings={sound:action.sound,reducedMotion:action.reducedMotion};
+  message='Предпочитанията са запазени.';
+ }
+ try{await saveSession(s);}catch{s.expansion=before;return void res.status(503).json({error:'Запазването е неуспешно.'});}
+ res.json({message,progress:expansionView(s)});
+});
+
 app.get('/api/suspects', (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
@@ -365,6 +456,9 @@ app.post('/api/accusation', async (req, res) => {
   const verdict = evaluate(suspectId, evidenceIds, motive, timeline, [...session.links]);
   const score = scoreCase({ found: session.found, links: session.links, interviews: session.messages, verified: session.verified, verdict: verdict.status });
   session.accusationCount++;
+  session.expansion.attempts.push({at:new Date().toISOString(),result:verdict.status,selected:suspectId});
+  session.expansion.attempts=session.expansion.attempts.slice(-30);
+  logDecision(session,'accusation','Обвинение: '+verdict.status);
   const deduction = Math.min(20, session.hintsUsed * 4 + Math.max(0, session.accusationCount - 1) * 3);
   const finalScore = { ...score, total: Math.max(0, score.total - deduction), penalty: deduction };
   if (verdict.status === 'solved') {
@@ -378,7 +472,8 @@ app.post('/api/accusation', async (req, res) => {
       verifiedFindings: availableContradictions(session.found).filter(c => session.verified.has(c.id)).map(c => ({ id: c.id, title: c.title, finding: c.finding })),
       score: finalScore,
       hintsUsed: session.hintsUsed,
-      accusations: session.accusationCount
+      accusations: session.accusationCount,
+      ending: outcome(true,session.expansion.attempts.filter(x=>x.result==='incorrect').length,finalScore.total)
     };
   }
   try { await saveSession(session); }
