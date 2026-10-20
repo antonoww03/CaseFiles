@@ -16,6 +16,7 @@ import { newGame09, game09View, game09Action, evaluateGame09 } from './game09.js
 import { snapshot10, releaseActionSchema, evaluateRelease10 } from './release10.js';
 import {worldSnapshot,examineSchema,executeWorld} from './experience11.js';
 import {directorView,directorSchema,applyDirector} from './director12.js';
+import {detective13View,detective13Schema,submitDetective13} from './detective13.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -116,6 +117,27 @@ const expansionView = (session:Session) => {
  };
 };
 app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/detective13/:caseId',(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ const caseId=req.params.caseId;
+ if(caseId!=='case-001'&&caseId!=='case-002')return void res.status(404).json({error:'Непознат случай.'});
+ res.json(detective13View(session,caseId));
+});
+app.post('/api/detective13/:caseId/action',async(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ const caseId=req.params.caseId;
+ if(caseId!=='case-001'&&caseId!=='case-002')return void res.status(404).json({error:'Непознат случай.'});
+ if(!useQuota('detective13:'+req.ip,130,60*60*1000))return void res.status(429).json({error:'Превишен лимит.'});
+ const parsed=detective13Schema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалиден избор.'});
+ const previous=structuredClone(session.expansion.actions);
+ const result=submitDetective13(session,caseId,parsed.data);
+ if(result.status!==200&&result.status!==422)return void res.status(result.status).json({error:result.message});
+ try{await saveSession(session);}catch{
+  session.expansion.actions=previous;return void res.status(503).json({error:'Неуспешно запазване.'});
+ }
+ res.status(result.status).json({message:result.message,progress:detective13View(session,caseId)});
+});
 app.get('/api/director12/:caseId',(req,res)=>{
  const session=getSession(req,res);if(!session)return;
  const caseId=req.params.caseId;
