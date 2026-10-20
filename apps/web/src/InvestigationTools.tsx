@@ -7,8 +7,8 @@ type Deduction = { id: string; title: string; explanation: string; evidenceIds: 
 const zones: { id: string; name: string; sub: string; icon: LucideIcon; clueIds: string[]; hotspots: { id: string; x: number; y: number; name: string }[] }[] = [
   { id: 'living', name: 'Всекидневна', sub: 'Основна стая', icon: Eye, clueIds: ['E01','E03'],
     hotspots: [{ id:'E01',x:38,y:68,name:'Протокол от огледа' },{ id:'E03',x:68,y:43,name:'Телефонът'}] },
-  { id: 'study', name: 'Работен кът', sub: 'Маса и документи', icon: FolderOpen, clueIds: ['E04','E09'],
-    hotspots: [{id:'E04',x:50,y:41,name:'Съобщение'}, {id:'E09',x:71,y:69,name:'Финансова чернова'}] },
+  { id: 'study', name: 'Работен кът', sub: 'Маса и документи', icon: FolderOpen, clueIds: ['E04'],
+    hotspots: [{id:'E04',x:50,y:41,name:'Съобщение'}] },
   { id: 'entrance', name: 'Входно антре', sub: 'Врата и ключалка', icon: DoorOpen, clueIds: ['E08'],
     hotspots: [{ id:'E08',x:66,y:54,name:'Дневник на ключалката' }] }
 ];
@@ -47,7 +47,7 @@ export function ExpandedScene({ found, clues, loading, onDiscover, onView }: {
       {zone.hotspots.map(h=>{const done=found.includes(h.id);return <button key={h.id} style={{left:h.x+'%',top:h.y+'%'}} className={'v03-point '+(done?'found':'')} type="button" disabled={loading} onClick={()=>void inspect(h.id)} aria-label={'Разгледай: '+h.name} title={h.name}>{done?<Check size={18}/>:<Plus size={18}/>}</button>})}
       <div className="v03-room-bottom"><span><Crosshair size={13}/> ПОСОЧИ МАРКЕР ЗА ОГЛЕД</span><span>ЕКСПЕРТЕН РЕЖИМ / 02:37</span></div>
     </div>
-    <div className="v03-scene-footer"><div><strong><ScanSearch size={15}/> ОБХОД НА АПАРТАМЕНТА</strong><span>{sceneFound.length}/5 открити улики · {zone.clueIds.filter(id=>found.includes(id)).length}/{zone.clueIds.length} в тази стая</span></div><div className="v03-zone-nav"><button type="button" aria-label="Предишна стая" onClick={()=>{setZoneId(zones[(zones.findIndex(z=>z.id===zoneId)+2)%3].id);setInspected(null);}}><ChevronLeft size={17}/></button><button type="button" aria-label="Следваща стая" onClick={()=>{setZoneId(zones[(zones.findIndex(z=>z.id===zoneId)+1)%3].id);setInspected(null);}}><ChevronRight size={17}/></button></div></div>
+    <div className="v03-scene-footer"><div><strong><ScanSearch size={15}/> ОБХОД НА АПАРТАМЕНТА</strong><span>{sceneFound.length}/4 открити улики · {zone.clueIds.filter(id=>found.includes(id)).length}/{zone.clueIds.length} в тази стая</span></div><div className="v03-zone-nav"><button type="button" aria-label="Предишна стая" onClick={()=>{setZoneId(zones[(zones.findIndex(z=>z.id===zoneId)+2)%3].id);setInspected(null);}}><ChevronLeft size={17}/></button><button type="button" aria-label="Следваща стая" onClick={()=>{setZoneId(zones[(zones.findIndex(z=>z.id===zoneId)+1)%3].id);setInspected(null);}}><ChevronRight size={17}/></button></div></div>
     {inspected && found.includes(inspected.id) && <div className="v03-inspection"><div className="v03-inspection-icon"><FileSearch size={23}/></div><div><span className="v03-mono">{inspected.id} / ОТКРИТА УЛИКА</span><h3>{inspected.title}</h3><p>{inspected.detail}</p></div><button type="button" onClick={()=>setInspected(null)} aria-label="Затвори подробностите">×</button></div>}
     <div className="v03-scene-collection"><strong>ДОКАЗАТЕЛСТВА ОТ ОГЛЕДА</strong><div>{zones.flatMap(z=>z.clueIds).map(id=>{const item=clues.find(c=>c.id===id)!;const done=found.includes(id);return <button type="button" key={id} disabled={!done} onClick={()=>{setInspected(item);onView(item)}}><span className={'v03-clue-symbol '+(done?'done':'')}>{done?<Check size={16}/>:<Lock size={15}/>}</span><span>{id}<small>{done?item.title:'Неоткрита улика'}</small></span><ChevronRight size={15}/></button>})}</div></div>
   </div>;
