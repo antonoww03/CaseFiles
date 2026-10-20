@@ -4,6 +4,7 @@ test('immersive inventory unlocks the drawer with collected key', async ({ page 
   const pageErrors: string[] = [];
   page.on('pageerror', err => pageErrors.push(err.message));
   await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
   await page.getByRole('button', { name: /Започни разследването/ }).click();
   await page.getByRole('button', { name: /Интерактивно разследване/ }).click();
   await expect(page.getByRole('heading', { name: 'Интерактивно разследване' })).toBeVisible();
@@ -20,6 +21,7 @@ test('immersive inventory unlocks the drawer with collected key', async ({ page 
 
 test('police terminal hides records until evidence is discovered', async ({ page }) => {
   await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
   await page.getByRole('button', { name: /Започни разследването/ }).click();
   await page.getByRole('button', { name: /Интерактивно разследване/ }).click();
   await page.getByRole('button', { name: /Полицейски компютър/ }).click();
@@ -32,6 +34,7 @@ test('police terminal hides records until evidence is discovered', async ({ page
 test('mobile menu navigates to immersive investigation', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
   await page.getByRole('button', { name: /Отвори навигацията/ }).click();
   await page.getByRole('button', { name: /Интерактивно разследване/ }).click();
   await expect(page.getByRole('heading', { name: 'Интерактивно разследване' })).toBeVisible();
