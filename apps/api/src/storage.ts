@@ -72,6 +72,16 @@ export async function initializeStorage(): Promise<'postgres'|'memory'> {
       )
     `);
     await instance.query('CREATE INDEX IF NOT EXISTS casefiles_sessions_last_active ON casefiles.sessions (last_active)');
+    await instance.query(`CREATE TABLE IF NOT EXISTS casefiles.community_records (
+      kind text NOT NULL CHECK(kind IN ('room','story','profile')),
+      id text NOT NULL,
+      payload jsonb NOT NULL,
+      version bigint NOT NULL DEFAULT 0,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY(kind,id)
+    )`);
+    await instance.query('CREATE INDEX IF NOT EXISTS casefiles_community_recent ON casefiles.community_records(kind,updated_at DESC)');
+    await instance.query("DELETE FROM casefiles.community_records WHERE kind='room' AND updated_at < now() - interval '30 days'");
     pool = instance;
     return 'postgres';
   } catch (error) {
