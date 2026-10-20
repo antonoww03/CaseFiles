@@ -43,6 +43,11 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const initialCinematic=await request('/cinematic','GET',undefined,token);
+  assert.equal(initialCinematic.status,200);
+  assert.equal(initialCinematic.json.phone.length,6);
+  assert.equal(initialCinematic.json.phone.find(x=>x.id==='email-report').available,false);
+  assert.equal((await request('/cinematic/action','POST',{kind:'phone',id:'email-report'},token)).status,403);
   const cases=await request('/cases');
   assert.equal(cases.status,200);
   assert.equal(cases.json.length,2);
@@ -62,6 +67,12 @@ try {
   assert.equal(caseWin.status,200);
   assert.equal(caseWin.json.story.verdict,'solved');
   assert.match(caseWin.json.story.ending,/Борис/);
+  const openArchiveScene=await request('/cinematic/action','POST',{kind:'location',id:'lift'},token);
+  assert.equal(openArchiveScene.status,200);
+  const case2Choice=await request('/cinematic/action','POST',{kind:'branch',id:'follow-camera'},token);
+  assert.equal(case2Choice.status,200);
+  assert.ok(case2Choice.json.progress.case2.consequences.includes('path:camera'));
+  assert.equal((await request('/cinematic/action','POST',{kind:'branch',id:'follow-camera'},token)).status,409);
   const custom={
    id:'custom-probe',title:'Тайната на смяната',setting:'Измислен хотел във Варна',
    briefing:'След изчезването на договор трима служители се опитват да прикрият какво се е случило през нощната смяна.',
@@ -156,6 +167,20 @@ try {
     assert.equal(clue.status, 200);
   }
   assert.equal((await request('/discover/E08','POST',{},token)).status,200);
+  const phoneEntry=await request('/cinematic/action','POST',{kind:'phone',id:'sms-martin'},token);
+  assert.equal(phoneEntry.status,200);
+  assert.match(phoneEntry.json.message,/фактури/);
+  assert.equal((await request('/cinematic/action','POST',{kind:'recover',answer:'000'},token)).status,422);
+  const recoveredText=await request('/cinematic/action','POST',{kind:'recover',answer:'407'},token);
+  assert.equal(recoveredText.status,200);
+  assert.equal(recoveredText.json.progress.recovered,true);
+  const cinematicDialogue=await request('/cinematic/action','POST',{kind:'dialogue',id:'martin-calm'},token);
+  assert.equal(cinematicDialogue.status,200);
+  assert.equal(cinematicDialogue.json.progress.personas.find(x=>x.id==='martin').mood,'neutral');
+  assert.equal((await request('/cinematic/action','POST',{kind:'dialogue',id:'martin-calm'},token)).status,409);
+  const earnedProfile=await request('/profile','GET',undefined,token);
+  assert.ok(earnedProfile.json.total>0);
+  assert.ok(earnedProfile.json.evidence>=4);
   const lamp = await request('/immersive/action','POST',{kind:'inspect',objectId:'lamp'},token);
   assert.equal(lamp.status,200);
   const bookshelf = await request('/immersive/action','POST',{kind:'inspect',objectId:'bookshelf'},token);
@@ -175,6 +200,8 @@ try {
   const unlockedDraft = await request('/forensics/documents/draft/inspect','POST',{pageId:'signature'},token);
   assert.equal(unlockedDraft.status,200);
   assert.ok(unlockedDraft.json.found.includes('E09'));
+  const unlockedMail=await request('/cinematic/action','POST',{kind:'phone',id:'email-report'},token);
+  assert.equal(unlockedMail.status,200);
   const priorWarrant=await request('/living','GET',undefined,token);
   assert.equal(priorWarrant.json.warrants.find(w=>w.id==='office').eligible,true);
   const warrant=await request('/living/action','POST',{kind:'warrant',id:'office'},token);
@@ -304,6 +331,9 @@ try {
   assert.equal(portable.status,200);
   assert.equal(portable.json.format,'casefiles-backup-v1');
   assert.equal(portable.json.solved,true);
+  assert.ok(portable.json.cinematic.opened.includes('sms-martin'));
+  assert.ok(portable.json.cinematic.chapterVisits.includes('lift'));
+
   assert.equal(portable.json.living.case2.verdict,'solved');
   assert.ok(portable.json.living.warrants.includes('office'));
   assert.ok(portable.json.living.chain.some(x=>x.id==='E09'));
@@ -327,6 +357,11 @@ try {
   assert.equal(restoredExpansion.json.difficulty,'expert');
   assert.equal(restoredExpansion.json.suspicions.martin,75);
   assert.equal(restoredExpansion.json.attempts.length,1);
+  const restoredCinematic=await request('/cinematic','GET',undefined,restoredToken);
+  assert.equal(restoredCinematic.status,200);
+  assert.equal(restoredCinematic.json.recovered,true);
+  assert.equal(restoredCinematic.json.phone.find(x=>x.id==='sms-martin').opened,true);
+  assert.equal(restoredCinematic.json.case2.locations.find(x=>x.id==='lift').visited,true);
   const restoredLiving=await request('/living','GET',undefined,restoredToken);
   assert.equal(restoredLiving.status,200);
   assert.ok(restoredLiving.json.warrants.find(w=>w.id==='office').approved);
