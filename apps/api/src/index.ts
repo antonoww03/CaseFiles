@@ -11,6 +11,7 @@ import { initialProgress, puzzles, actionSchema, unlocks, witnesses, classificat
 import { exportBackup, applyBackup } from './backup.js';
 import { newImmersiveState, immersiveSnapshot, interactionSchema, interaction, dialogueSchema, chooseDialogue, searchSchema, searchRecords } from './immersive.js';
 import { initialLiving, visibility, capture, progressTick, canWarrant, canAdmit, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions, caseCatalog, case002, caseTemplateSchema, publicStory, solveCase, warrantAction, expertAction, confrontationAction, financeAction, policyAction, courtAction, caseAction } from './living.js';
+import { initialCinematic, cinematicOverview, cinematicActionSchema, useCinematicChoice, profileSnapshot } from './cinematic.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -75,7 +76,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), cinematic: initialCinematic(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -111,6 +112,23 @@ const expansionView = (session:Session) => {
  };
 };
 app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/cinematic',(req,res)=>{
+ const s=getSession(req,res);if(s)res.json(cinematicOverview(s));
+});
+app.get('/api/profile',(req,res)=>{
+ const s=getSession(req,res);if(s)res.json(profileSnapshot(s));
+});
+app.post('/api/cinematic/action',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ if(!useQuota('cinematic:'+req.ip,160,60*60*1000))return void res.status(429).json({error:'Превишен лимит на игрови действия.'});
+ const parsed=cinematicActionSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно действие.'});
+ const before=structuredClone(s.cinematic);
+ const out=useCinematicChoice(s,parsed.data);
+ if(out.status!==200)return void res.status(out.status).json({error:out.message});
+ try{await saveSession(s);}catch{s.cinematic=before;return void res.status(503).json({error:'Неуспешно запазване.'});}
+ res.json({message:out.message,progress:cinematicOverview(s)});
+});
 app.get('/api/living', (req,res)=>{
  const s=getSession(req,res);if(s)res.json(visibility(s.living,s.found));
 });
