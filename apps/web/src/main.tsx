@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import {
-  Activity, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, type LucideIcon
+  ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, type LucideIcon
 } from 'lucide-react';
 import './style.css';
 import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
 import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
+import { ForensicWorkbench, FinalReport, HintStation, type FinalReportData } from './ForensicPanels';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis';
+type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
@@ -27,7 +27,8 @@ const tabs: Tab[] = [
   { id: 'board', name: 'Връзки', hint: 'Логически заключения', icon: Network },
   { id: 'timeline', name: 'Хронология', hint: 'Последователност', icon: Clock3 },
   { id: 'interview', name: 'Разпити', hint: 'Свидетели и заподозрени', icon: MessageSquareText },
-  { id: 'accusation', name: 'Обвинение', hint: 'Финално заключение', icon: Gavel }
+  { id: 'accusation', name: 'Обвинение', hint: 'Финално заключение', icon: Gavel },
+  { id: 'report', name: 'Доклад', hint: 'Развръзка на случая', icon: ShieldCheck }
 ];
 
 const labIds = ['E05', 'E06', 'E07', 'E10', 'E02'];
@@ -101,6 +102,10 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [aiMode, setAiMode] = useState<Mode>('checking');
+  const [interviewStyle, setInterviewStyle] = useState<'neutral'|'challenge'|'empathy'>('neutral');
+  const [scriptedOnly, setScriptedOnly] = useState(true);
+  const [pressure, setPressure] = useState<Record<string,number>>({});
+  const [finalReport, setFinalReport] = useState<FinalReportData|null>(null);
   const [suspect, setSuspect] = useState('martin');
   const [motive, setMotive] = useState('');
   const [sequence, setSequence] = useState('');
@@ -116,11 +121,13 @@ function App() {
     call<{ mode: 'ai-configured' | 'scripted-demo' }>('/health')
       .then(data => setAiMode(data.mode)).catch(() => setAiMode('scripted-demo'));
     const old = localStorage.getItem(storageKey);
-    if (old) call<{ found: string[]; messages: Record<string, Chat[]> }>('/session', 'GET', undefined, old)
+    if (old) call<{ found: string[]; messages: Record<string, Chat[]>; pressure?: Record<string,number>; solved?: boolean }>('/session', 'GET', undefined, old)
       .then(s => {
         setSession(old);
         setFound(s.found);
         setMessages(s.messages);
+        setPressure(s.pressure||{});
+        if (s.solved) void call<FinalReportData>('/report','GET',undefined,old).then(setFinalReport).catch(()=>{});
         void call<Deduction[]>('/deductions', 'GET', undefined, old).then(setDeductions).catch(() => setDeductions([]));
         void loadCaseExtras(old);
       }).catch(() => localStorage.removeItem(storageKey));
@@ -159,6 +166,7 @@ function App() {
       localStorage.setItem(storageKey, data.sessionId);
       setSession(data.sessionId); setFound([]); setMessages({}); setDeductions([]);
       setSelected(null); setLinkA(''); setLinkB(''); setLinkNotice('');
+      setFinalReport(null); setPressure({}); setInterviewStyle('neutral'); setScriptedOnly(true);
       setNotes([]); setAlibiChecks([]); setSuspects([]);
       void loadCaseExtras(data.sessionId);
       setChecked([]); setVerdict(null); go('scene');
@@ -182,12 +190,12 @@ function App() {
     const text = question.trim();
     setBusy(true); setError('');
     try {
-      const data = await call<{ reply: string; found: string[]; mode: 'ai-live' | 'scripted-demo' }>(
+      const data = await call<{ reply: string; found: string[]; mode: 'ai-live' | 'scripted-demo'; pressure: number }>(
         '/interview', 'POST',
-        { personId: activePerson, message: text, ...(present ? { evidenceId: present } : {}) }, session
+        { personId: activePerson, message: text, interviewStyle, scriptedOnly, ...(present ? { evidenceId: present } : {}) }, session
       );
       setMessages(m => ({ ...m, [activePerson]: [...(m[activePerson] || []), { role: 'player', text }, { role: 'npc', text: data.reply }] }));
-      setFound(data.found); setAiMode(data.mode); setQuestion(''); setPresent(''); refreshClues(session);
+      setFound(data.found); setAiMode(data.mode); setPressure(m=>({...m,[activePerson]:data.pressure})); setQuestion(''); setPresent(''); refreshClues(session);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
 
@@ -238,7 +246,9 @@ function App() {
     if (!session || busy) return;
     setBusy(true); setError('');
     try {
-      setVerdict(await call('/accusation', 'POST', { suspectId: suspect, motive, timeline: sequence, evidenceIds: checked }, session));
+      const result = await call<{ status:string;title:string;explanation:string;score:DetectiveScore;report?:FinalReportData }>('/accusation', 'POST', { suspectId: suspect, motive, timeline: sequence, evidenceIds: checked }, session);
+      setVerdict(result);
+      if(result.report)setFinalReport(result.report);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
 
@@ -277,7 +287,7 @@ function App() {
         <div className="sidebar-case-meta"><MapPin size={12} /> СОФИЯ <span className="meta-separator">/</span> #001</div>
       </div>
 
-      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 11</span></div>
+      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 12</span></div>
       <nav className="main-nav" aria-label="Навигация по разследването">
         {tabs.map(t => {
           const Icon = t.icon;
@@ -353,10 +363,10 @@ function App() {
             </>}
 
             {view === 'lab' && <>
-              <SectionHeader kicker="ЛАБОРАТОРИЯ / АНАЛИЗИ" title="Криминалистика" description="Технически експертизи, записи от камери и системни дневници. Изследвай ги, за да допълниш картината." extra={<span className="tag"><FlaskConical size={13} /> ЕКСПЕРТНО БЮРО</span>} />
-              <div className="feature-banner"><div className="feature-banner-icon"><Microscope size={27} strokeWidth={1.4} /></div><div><strong>Лабораторни материали</strong><p>Всеки анализ има значение само в контекста на останалите доказателства. Самостоятелната улика рядко дава пълен отговор.</p></div><span>FORENSICS / 01</span></div>
-              <div className="subsection-title"><div><h2>Налични експертизи</h2><p>{labIds.filter(id => found.includes(id)).length} от {labIds.length} прегледани</p></div></div>
-              {evidenceCards(labIds)}
+              <SectionHeader kicker="ЛАБОРАТОРИЯ / АНАЛИЗИ" title="Криминалистика" description="Превъртай записа кадър по кадър и изследвай страници от документи. Само потвърдените наблюдения отключват нови улики." extra={<span className="tag"><FlaskConical size={13}/> FORENSIC UPDATE 0.4</span>}/>
+              <ForensicWorkbench session={session} onFound={ids=>{setFound(ids);refreshClues(session);}}/>
+              <div className="subsection-title"><div><h2>Други налични експертизи</h2><p>Прегледай допълнителните материали от лабораторията.</p></div></div>
+              {evidenceCards(['E05','E02'])}
             </>}
 
             {view === 'evidence' && <>
@@ -394,9 +404,22 @@ function App() {
               <div className="interview">
                 <div className="interview-head"><div className="interview-ident"><span className="avatar large">{person?.initial || '·'}</span><div><div className="interview-subtitle">РАЗПИТ / АКТИВЕН ПРОТОКОЛ</div><h3>{person?.name}</h3><p>{person?.role} · СЛУЧАЙ 001</p></div></div><div className="recording-badge"><span /> ЗАПИС НА РАЗГОВОР</div></div>
                 <div className="chat" role="log" aria-label="Разговор със заподозрения" aria-live="polite"><div className="transcript-label"><span>НАЧАЛО НА РАЗПИТА</span></div><div className="bubble"><div className="bubble-label"><UserRound size={13} /> {person?.name}</div><p>{person?.opening}</p></div>{(messages[activePerson] || []).map((m, i) => <div key={i} className={'bubble ' + (m.role === 'player' ? 'player' : '')}><div className="bubble-label">{m.role === 'player' ? <><ShieldCheck size={13} /> ДЕТЕКТИВ</> : <><UserRound size={13} /> {person?.name}</>}</div><p>{m.text}</p></div>)}{busy && <div className="typing-indicator"><span /><span /><span /> Подготвя се отговор...</div>}<div ref={chatEndRef} /></div>
-                <div className="interview-compose"><label htmlFor="present"><FileCheck2 size={15} /> ПРЕДЯВЕНО ДОКАЗАТЕЛСТВО <span>НЕЗАДЪЛЖИТЕЛНО</span></label><select id="present" value={present} onChange={e => setPresent(e.target.value)}><option value="">Без приложена улика</option>{allEvidence.filter(e => found.includes(e.id)).map(e => <option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><form className="composer" onSubmit={e => { e.preventDefault(); void send(); }}><input maxLength={600} value={question} onChange={e => setQuestion(e.target.value)} placeholder="Въведи въпроса си към заподозрения..." aria-label="Въпрос към заподозрения" /><button className="primary send-btn" disabled={!session || busy || !question.trim()} type="submit"><Send size={16} /> Изпрати</button></form><div className="composer-foot"><span><LockKeyhole size={12} /> Разговорът е част от досието</span><span>{question.length} / 600</span></div></div>
+                <div className="interview-compose"><label htmlFor="present"><FileCheck2 size={15} /> ПРЕДЯВЕНО ДОКАЗАТЕЛСТВО <span>НЕЗАДЪЛЖИТЕЛНО</span></label><select id="present" value={present} onChange={e => setPresent(e.target.value)}><option value="">Без приложена улика</option>{allEvidence.filter(e => found.includes(e.id)).map(e => <option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><div className="f04-interview-strategy">
+                  <div className="f04-pressure-head"><strong>СТРАТЕГИЯ НА РАЗПИТА</strong><span>НАПРЕЖЕНИЕ: {pressure[activePerson]||20} / 100</span></div>
+                  <div className="f04-pressure-track"><span style={{width:(pressure[activePerson]||20)+'%'}}/></div>
+                  <div className="f04-interview-modes">
+                    {([['neutral','Неутрален'],['empathy','Емпатия'],['challenge','Конфронтация']] as const).map(([id,label])=><button key={id} type="button" className={interviewStyle===id?'active':''} onClick={()=>setInterviewStyle(id)}>{label}</button>)}
+                  </div>
+                  <label className="f04-script-toggle"><input type="checkbox" checked={scriptedOnly} onChange={e=>setScriptedOnly(e.target.checked)}/> Сценарен режим без AI заявки</label>
+                </div>
+                <form className="composer" onSubmit={e => { e.preventDefault(); void send(); }}><input maxLength={600} value={question} onChange={e => setQuestion(e.target.value)} placeholder="Въведи въпроса си към заподозрения..." aria-label="Въпрос към заподозрения" /><button className="primary send-btn" disabled={!session || busy || !question.trim()} type="submit"><Send size={16} /> Изпрати</button></form><div className="composer-foot"><span><LockKeyhole size={12} /> Разговорът е част от досието</span><span>{question.length} / 600</span></div></div>
               </div>
               <div className="interview-disclaimer"><Info size={15} /> {aiMode === 'ai-live' ? 'Последният отговор беше генериран от AI.' : aiMode === 'ai-configured' ? 'AI ключ е конфигуриран, но реален отговор не е потвърден. При грешка се използва демонстрационен диалог.' : 'В момента се използват демонстрационни реплики.'}</div>
+            </>}
+
+            {view === 'report' && <>
+              <SectionHeader kicker="ЗАКЛЮЧИТЕЛЕН ДОКЛАД / СЛУЧАЙ 001" title="Реконструкция на случая" description="Пълната хронология и пропуснатите улики се показват само след успешно обосновано обвинение." extra={<span className="tag"><ShieldCheck size={13}/> {finalReport?'СЛУЧАЙ ПРИКЛЮЧЕН':'ЗАПЕЧАТАНО ДОСИЕ'}</span>}/>
+              <FinalReport report={finalReport}/>
             </>}
 
             {view === 'accusation' && <>
@@ -408,10 +431,11 @@ function App() {
                 <div className="accusation-bottom"><div><LockKeyhole size={15} /> ЗАКЛЮЧЕНИЕТО СЕ ОЦЕНЯВА ПО ДОКАЗАТЕЛСТВАТА</div><button className="primary" disabled={!session || busy || checked.length < 3 || motive.trim().length < 12 || sequence.trim().length < 12} onClick={() => void accuse()} type="button">Предай заключението <ArrowRight size={16} /></button></div>
                 {verdict && <div className={'verdict ' + verdict.status} role="status"><div className="verdict-symbol">{verdict.status === 'solved' ? <CheckCheck size={24} /> : <Info size={24} />}</div><div><strong>{verdict.title}</strong><p>{verdict.explanation}</p></div></div>}
                 {verdict?.score && <ScoreReport score={verdict.score} status={verdict.status}/>}
+                {finalReport && <button type="button" className="primary" onClick={()=>go('report')}>Прегледай финалния доклад <ArrowRight size={16}/></button>}
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.3</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.4</span></div>
         </main>
 
         <aside className="inspector">
@@ -436,7 +460,7 @@ function App() {
           <div className="inspector-section-label">СЪСТОЯНИЕ НА РАЗСЛЕДВАНЕТО</div>
           <div className="inspector-metrics"><div><span><Files size={15} /> Доказателства</span><strong>{found.length}<small>/{allEvidence.length}</small></strong></div><div><span><Link2 size={15} /> Връзки</span><strong>{deductions.length}</strong></div><div><span><Activity size={15} /> Сесия</span><strong className={session ? 'state-green' : 'state-muted'}>{session ? 'Активна' : 'Няма'}</strong></div></div>
           <div className="inspector-progress"><div className="inspector-progress-top"><span>ПРОГРЕС</span><strong>{progress}%</strong></div><div className="progress-track"><span style={{ width: progress + '%' }} /></div></div>
-          <div className="inspector-bottom"><div className="inspector-hint"><CircleHelp size={17} /><p>Най-добрите заключения идват от две независими улики.</p></div><div className="inspector-ai"><TerminalSquare size={14} /><span>{statusText}</span></div></div>
+          <div className="inspector-bottom"><HintStation session={session}/><div className="inspector-hint"><CircleHelp size={17} /><p>Най-добрите заключения идват от две независими улики.</p></div><div className="inspector-ai"><TerminalSquare size={14} /><span>{statusText}</span></div></div>
         </aside>
       </div>
     </div>
