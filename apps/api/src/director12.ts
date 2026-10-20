@@ -42,7 +42,7 @@ export function directorView(s:StoredSession,caseId:CaseId){
   caseId,chapter:Math.max(1,available.length),total:beats.length,
   beats:available.map(b=>({...b,watched:actions.includes(tag(b.id))})),
   next:available.find(b=>!actions.includes(tag(b.id)))||null,
-  decisions:eligibleChoices.map(c=>({...c,available:c.requires.every(x=>f.has(x))&&!eligibleChoices.some(other=>other.exclusive===c.exclusive&&actions.includes(tag(other.id))),chosen:actions.includes(tag(c.id))})),
+  decisions:eligibleChoices.filter(c=>c.requires.every(x=>f.has(x))).map(c=>({...c,effect:actions.includes(tag(c.id))?c.effect:null,available:!eligibleChoices.some(other=>other.exclusive===c.exclusive&&actions.includes(tag(other.id))),chosen:actions.includes(tag(c.id))})),
   lastDecision:eligibleChoices.filter(c=>actions.includes(tag(c.id))).at(-1)?.effect||null,
   evidenceCount:caseId==='case-001'?s.found.size:s.living.case2.found.length,
   unlockedPlaces:caseId==='case-001'?(f.has('E04')?['living','desk','entrance','medical']:['living','desk','entrance']):(f.has('C2')?['reading','server','security','hall']:['reading','server','security']),
