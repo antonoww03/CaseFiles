@@ -51,7 +51,7 @@ export function exportBackup(session:StoredSession):PortableBackup {
 
 export function applyBackup(session:StoredSession,raw:unknown):string[] {
  const value=backupSchema.parse(raw);
- const validIds=new Set(evidence.map(x=>x.id));
+ const validIds=new Set<string>(evidence.map(x=>x.id));
  const found=new Set(value.found.filter(x=>validIds.has(x)));
  const links=new Set(value.links.filter(x=>deductions.some(d=>d.id===x&&d.evidenceIds.every(e=>found.has(e)))));
  const verified=new Set(value.verified.filter(x=>contradictions.some(d=>d.id===x&&d.evidenceIds.every(e=>found.has(e)))));
