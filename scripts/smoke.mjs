@@ -261,7 +261,7 @@ try {
   const unlockedDraft = await request('/forensics/documents/draft/inspect','POST',{pageId:'signature'},token);
   assert.equal(unlockedDraft.status,200);
   assert.ok(unlockedDraft.json.found.includes('E09'));
-  const detectiveFinancial=await request('/detective13/case-001/action','POST',{id:'financial',answer:'invoices'},token);
+  const detectiveFinancial=await request('/detective13/case-001/action','POST',{id:'financial',answer:'invoices',evidenceIds:['E04','E09']},token);
   assert.equal(detectiveFinancial.status,200);
   assert.equal(detectiveFinancial.json.progress.progress.solved,1);
   const boardProof=await request('/experience11/action','POST',{kind:'board',first:'E04',second:'E09'},token);
