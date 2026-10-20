@@ -6,6 +6,7 @@ import { publicCase, evidence, accusationSchema, messageSchema, evaluate } from 
 import { aiReply, configuredMode, scriptedReply, type InterviewLine } from './interview.js';
 import { deductions, findDeduction } from './deductions.js';
 import { suspects, contradictions, noteSchema, availableContradictions, scoreCase } from './gameplay.js';
+import { clipObservations, documents, observationSchema, frameFor, verifyObservation, documentPage, hintLevels, actualCaseTimeline } from './forensics.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -69,7 +70,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -80,7 +81,7 @@ app.post('/api/session', async (req, res) => {
 });
 app.get('/api/session', (req, res) => {
   const session = getSession(req, res);
-  if (session) res.json({ found: [...session.found], links: [...session.links], notes: session.notes, verified: [...session.verified], messages: session.messages });
+  if (session) res.json({ found: [...session.found], links: [...session.links], notes: session.notes, verified: [...session.verified], analyses: [...session.analyses], pressure: session.pressure, hintsUsed: session.hintsUsed, solved: !!session.finalReport, messages: session.messages });
 });
 app.get('/api/suspects', (req, res) => {
   const session = getSession(req, res);
@@ -159,6 +160,113 @@ app.post('/api/contradictions/:id', async (req, res) => {
   res.json({ finding: match, verified: [...session.verified] });
 });
 
+app.get('/api/forensics/clips', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  res.json(clipObservations.map(({ id, title, place, start, end }) => ({
+    id, title, place, start, end, duration: 240,
+    analyzed: session.analyses.has('video:' + id)
+  })));
+});
+
+app.get('/api/forensics/clips/:id/frame', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const clip = clipObservations.find(c => c.id === req.params.id);
+  const sec = Number(req.query.second);
+  if (!clip) return void res.status(404).json({ error: 'Няма такъв запис.' });
+  if (!Number.isInteger(sec) || sec < 0 || sec > 240) return void res.status(400).json({ error: 'Невалидна позиция в записа.' });
+  res.json({ frame: frameFor(clip.id, sec), second: sec });
+});
+
+app.post('/api/forensics/clips/:id/analyze', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const clip = clipObservations.find(c => c.id === req.params.id);
+  if (!clip) return void res.status(404).json({ error: 'Няма такъв запис.' });
+  const parsed = observationSchema.safeParse(req.body);
+  if (!parsed.success) return void res.status(400).json({ error: 'Невалидно наблюдение.' });
+  const matchedId = verifyObservation(clip.id, parsed.data.second, parsed.data.detail);
+  if (!matchedId) return void res.status(422).json({ error: 'Това наблюдение не е достатъчно. Потърси отличителен детайл в конкретния кадър.' });
+  const previouslyFound = session.found.has(matchedId);
+  session.found.add(matchedId);
+  session.analyses.add('video:' + clip.id);
+  try { await saveSession(session); }
+  catch {
+    if (!previouslyFound) session.found.delete(matchedId);
+    session.analyses.delete('video:' + clip.id);
+    return void res.status(503).json({ error: 'Неуспешно запазване.' });
+  }
+  res.json({ found: [...session.found], clueId: matchedId, observation: 'Потвърден е отличителният детайл от записа.' });
+});
+
+app.get('/api/forensics/documents', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  res.json(documents.map(d => ({
+    id: d.id, title: d.title, category: d.category, publicSummary: d.publicSummary,
+    available: d.requires.every(id => session.found.has(id)),
+    analyzed: session.analyses.has('document:' + d.id)
+  })));
+});
+
+app.get('/api/forensics/documents/:id', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const document = documents.find(d => d.id === req.params.id);
+  if (!document) return void res.status(404).json({ error: 'Няма такъв документ.' });
+  if (!document.requires.every(id => session.found.has(id))) return void res.status(403).json({ error: 'Документът още не е достъпен за анализ.' });
+  res.json({ id: document.id, title: document.title, pages: document.pages, analyzed: session.analyses.has('document:' + document.id) });
+});
+
+app.post('/api/forensics/documents/:id/inspect', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const document = documents.find(d => d.id === req.params.id);
+  if (!document) return void res.status(404).json({ error: 'Няма такъв документ.' });
+  if (!document.requires.every(id => session.found.has(id))) return void res.status(403).json({ error: 'Липсват предварителни доказателства.' });
+  const pageId = typeof req.body?.pageId === 'string' ? req.body.pageId : '';
+  const page = documentPage(document.id, pageId);
+  if (!page) return void res.status(400).json({ error: 'Избери валидна страница.' });
+  const completed = pageId === document.revealPage;
+  const wasFound = session.found.has(document.clueId);
+  if (completed) {
+    session.found.add(document.clueId);
+    session.analyses.add('document:' + document.id);
+    try { await saveSession(session); }
+    catch {
+      if (!wasFound) session.found.delete(document.clueId);
+      session.analyses.delete('document:' + document.id);
+      return void res.status(503).json({ error: 'Неуспешно запазване.' });
+    }
+  }
+  res.json({ finding: page.finding, completed, clueId: completed ? document.clueId : null, found: [...session.found] });
+});
+
+app.get('/api/hints', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  res.json({ used: session.hintsUsed, max: hintLevels.length, nextLevel: session.hintsUsed < hintLevels.length ? session.hintsUsed + 1 : null });
+});
+
+app.post('/api/hints', async (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  const hint = hintLevels[session.hintsUsed];
+  if (!hint) return void res.status(429).json({ error: 'Всички подсказки вече са използвани.' });
+  session.hintsUsed++;
+  try { await saveSession(session); }
+  catch { session.hintsUsed--; return void res.status(503).json({ error: 'Неуспешно запазване.' }); }
+  res.json({ hint, used: session.hintsUsed, remaining: hintLevels.length - session.hintsUsed });
+});
+
+app.get('/api/report', (req, res) => {
+  const session = getSession(req, res);
+  if (!session) return;
+  if (!session.finalReport) return void res.status(403).json({ error: 'Пълният доклад е достъпен само след успешно разрешаване на случая.' });
+  res.json(session.finalReport);
+});
+
 app.get('/api/evidence', (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
@@ -170,6 +278,8 @@ app.post('/api/discover/:id', async (req, res) => {
   const item = evidence.find(item => item.id === req.params.id);
   if (!item) return void res.status(404).json({ error: 'Неизвестна улика.' });
   if (item.source === 'interview') return void res.status(403).json({ error: 'Тази улика се придобива чрез разпит.' });
+  if (['E06','E07','E09','E10'].includes(item.id)) return void res.status(403).json({ error: 'Тази улика се отключва чрез анализ в криминалистичния модул.' });
+  if (item.id === 'E08' && (!session.found.has('E01') || !session.found.has('E03'))) return void res.status(403).json({ error: 'Първо провери протокола от огледа и телефона.' });
   session.found.add(item.id);
   try { await saveSession(session); } catch { return void res.status(503).json({ error: 'Неуспешно запазване на уликата.' }); }
   res.json({ evidence: item, found: [...session.found] });
@@ -200,7 +310,7 @@ app.post('/api/interview', async (req, res) => {
   if (!session) return;
   const parsed = messageSchema.safeParse(req.body);
   if (!parsed.success) return void res.status(400).json({ error: 'Невалиден въпрос.' });
-  const { personId, message, evidenceId } = parsed.data;
+  const { personId, message, evidenceId, interviewStyle, scriptedOnly } = parsed.data;
   if (evidenceId && !session.found.has(evidenceId)) {
     return void res.status(403).json({ error: 'Уликата още не е открита.' });
   }
@@ -211,7 +321,7 @@ app.post('/api/interview', async (req, res) => {
   try {
     const disclosed = [...new Set([...(session.disclosed[personId] || []), ...(evidenceId ? [evidenceId] : [])])];
     const history = session.messages[personId] || [];
-    const requestedAi = configuredMode() === 'ai-live' && session.aiCalls < 25
+    const requestedAi = !scriptedOnly && configuredMode() === 'ai-live' && session.aiCalls < 25
       && useQuota('ai-ip:' + req.ip, 60, 60 * 60 * 1000)
       && useQuota('ai-global', 300, 24 * 60 * 60 * 1000);
     let reply: string | null = null;
@@ -223,6 +333,13 @@ app.post('/api/interview', async (req, res) => {
       });
     }
     const mode = reply ? 'ai-live' : 'scripted-demo';
+    const oldPressure = session.pressure[personId] || 20;
+    const pressureDelta = interviewStyle === 'challenge' ? (evidenceId ? 17 : 8) : interviewStyle === 'empathy' ? -6 : 2;
+    const newPressure = Math.max(0, Math.min(100, oldPressure + pressureDelta));
+    session.pressure[personId] = newPressure;
+    if (!reply && personId === 'martin' && newPressure >= 55 && disclosed.includes('E04') && disclosed.includes('E09')) {
+      reply = 'Да, документите бяха проблем. Никола настояваше за оригиналните фактури и спорихме. Но това не доказва, че аз съм го убил.';
+    }
     reply ??= scriptedReply(personId, message, disclosed);
     const updatedHistory: InterviewLine[] = [...history, { role: 'player', text: message }, { role: 'npc', text: reply }];
     session.messages[personId] = updatedHistory.slice(-40);
@@ -231,14 +348,14 @@ app.post('/api/interview', async (req, res) => {
     if (personId === 'elena') session.found.add('E11');
     if (personId === 'petar') session.found.add('E12');
     await saveSession(session);
-    res.json({ reply, found: [...session.found], mode });
+    res.json({ reply, found: [...session.found], mode, pressure: session.pressure[personId], interviewStyle });
   } catch {
     res.status(503).json({ error: 'Разпитът не можа да бъде запазен.' });
   } finally {
     session.interviewBusy = false;
   }
 });
-app.post('/api/accusation', (req, res) => {
+app.post('/api/accusation', async (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
   const parsed = accusationSchema.safeParse(req.body);
@@ -247,7 +364,26 @@ app.post('/api/accusation', (req, res) => {
   if (evidenceIds.some(id => !session.found.has(id))) return void res.status(403).json({ error: 'Можеш да използваш само открити улики.' });
   const verdict = evaluate(suspectId, evidenceIds, motive, timeline, [...session.links]);
   const score = scoreCase({ found: session.found, links: session.links, interviews: session.messages, verified: session.verified, verdict: verdict.status });
-  res.json({ ...verdict, score });
+  session.accusationCount++;
+  const deduction = Math.min(20, session.hintsUsed * 4 + Math.max(0, session.accusationCount - 1) * 3);
+  const finalScore = { ...score, total: Math.max(0, score.total - deduction), penalty: deduction };
+  if (verdict.status === 'solved') {
+    session.finalReport = {
+      status: 'solved',
+      headline: 'Разследването е приключено',
+      conclusion: 'Съвкупността от финансовия мотив, времевите записи и обоснованите доказателствени връзки подкрепя обвинението срещу Мартин Русев.',
+      timeline: actualCaseTimeline,
+      collected: [...session.found],
+      missed: evidence.filter(item => !session.found.has(item.id)).map(item => ({ id: item.id, title: item.title })),
+      verifiedFindings: availableContradictions(session.found).filter(c => session.verified.has(c.id)).map(c => ({ id: c.id, title: c.title, finding: c.finding })),
+      score: finalScore,
+      hintsUsed: session.hintsUsed,
+      accusations: session.accusationCount
+    };
+  }
+  try { await saveSession(session); }
+  catch { return void res.status(503).json({ error: 'Финалното заключение не можа да бъде записано.' }); }
+  res.json({ ...verdict, score: finalScore, ...(verdict.status === 'solved' ? { report: session.finalReport } : {}) });
 });
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
