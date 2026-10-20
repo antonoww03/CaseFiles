@@ -6,6 +6,7 @@ import { puzzles, witnesses, timelineItems, classificationTargets, tutorial, dif
 import { actualCaseTimeline } from './forensics.js';
 import { newImmersiveState, sceneObjects, tools as sceneTools, combinations, dialogueOptions } from './immersive.js';
 import type { StoredSession } from './storage.js';
+import { initialLiving, caseTemplateSchema, case002, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions, type LivingState } from './living.js';
 
 const lineSchema = z.object({role:z.enum(['player','npc']),text:z.string().min(1).max(2500)});
 const noteBackup = noteSchema.extend({id:z.string().uuid(),updatedAt:z.string().max(40)});
@@ -23,6 +24,20 @@ const immersiveBackup = z.object({
  terminalSearches:z.number().int().min(0).max(9999)
 });
 
+const chainSchema=z.object({id:z.string().max(12),source:z.string().max(80),at:z.string().max(42),officer:z.string().max(80),location:z.string().max(80),lawful:z.boolean()});
+const livingBackupSchema=z.object({
+ reputation:z.number().int().min(0).max(100),phase:z.number().int().min(0).max(4),actions:z.number().int().min(0).max(500),
+ warrants:z.array(z.string().max(25)).max(2),denied:z.array(z.string().max(25)).max(2),chain:z.array(chainSchema).max(12),
+ expertRequests:z.array(z.string().max(25)).max(3),experts:z.array(z.string().max(25)).max(3),
+ confrontations:z.array(z.string().max(25)).max(2),events:z.array(z.string().max(25)).max(3),
+ locked:z.array(z.string().max(32)).max(12),secrets:z.array(z.string().max(25)).max(3),
+ financial:z.array(z.string().max(15)).max(4),
+ court:z.object({outcome:z.string().max(80),reason:z.string().max(500)}).nullable(),
+ courtAttempts:z.number().int().min(0).max(100),policy:z.array(z.string().max(30)).max(3),lastAction:z.string().max(500),
+ case2:z.object({found:z.array(z.string().max(10)).max(6),dialogue:z.array(z.string().max(30)).max(3),accusations:z.number().int().min(0).max(100),verdict:z.string().max(30).nullable()}),
+ custom:caseTemplateSchema.nullable(),
+ customProgress:z.object({found:z.array(z.string().max(10)).max(8),dialogue:z.array(z.string().max(30)).max(3),accusations:z.number().int().min(0).max(100),verdict:z.string().max(30).nullable()})
+});
 export const backupSchema = z.object({
  format:z.literal('casefiles-backup-v1'),
  version:z.literal(1),
@@ -36,6 +51,7 @@ export const backupSchema = z.object({
  hintsUsed:z.number().int().min(0).max(3),
  solved:z.boolean(),
  immersive:immersiveBackup.optional(),
+ living:livingBackupSchema.optional(),
  expansion:z.object({
   difficulty:difficultySchema,
   milestones:z.array(z.string().max(35)).max(20),
@@ -58,6 +74,7 @@ export function exportBackup(session:StoredSession):PortableBackup {
   messages:session.messages as PortableBackup['messages'],
   pressure:session.pressure,hintsUsed:session.hintsUsed,solved:!!session.finalReport,
   immersive:session.immersive,
+  living:session.living,
   expansion:{
    difficulty:session.expansion.difficulty,
    milestones:session.expansion.milestones,
@@ -127,6 +144,39 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
   immersive.terminalSearches=value.immersive.terminalSearches;
  }
  session.immersive=immersive;
+ const living=initialLiving();
+ if(value.living){
+  const v=value.living;
+  living.reputation=v.reputation;
+  living.actions=v.actions;
+  living.phase=Math.min(4,Math.floor(living.actions/3));
+  living.chain=v.chain.filter(e=>found.has(e.id)&&!living.chain.some(x=>x.id===e.id));
+  living.warrants=warrantDefinitions.filter(w=>v.warrants.includes(w.id)&&w.needs.every(id=>found.has(id))).map(w=>w.id);
+  living.denied=warrantDefinitions.filter(w=>v.denied.includes(w.id)).map(w=>w.id);
+  living.expertRequests=expertDefinitions.filter(x=>v.expertRequests.includes(x.id)&&x.needs.every(id=>found.has(id))).map(x=>x.id);
+  living.experts=expertDefinitions.filter(x=>v.experts.includes(x.id)&&living.expertRequests.includes(x.id)).map(x=>x.id);
+  living.confrontations=confrontationDefinitions.filter(x=>v.confrontations.includes(x.id)&&x.needs.every(id=>found.has(id))).map(x=>x.id);
+  living.events=['phone','witness','letter'].filter((x,i)=>v.events.includes(x)&&living.actions>=(i+1)*3);
+  living.locked=v.locked.filter(x=>['contact','invoices'].includes(x));
+  living.policy=v.policy.filter(x=>['respect','publicize','force'].includes(x));
+  living.secrets=v.secrets.filter(x=>['martin','elena','petar'].includes(x));
+  living.financial=transactions.filter(x=>v.financial.includes(x.id)&&found.has('E04')&&living.warrants.includes('office')).map(x=>x.id);
+  living.court=v.court;
+  living.courtAttempts=v.courtAttempts;
+  living.lastAction=v.lastAction;
+  living.case2.found=case002.clues.filter(x=>v.case2.found.includes(x.id)).map(x=>x.id);
+  living.case2.dialogue=case002.suspects.filter(x=>v.case2.dialogue.includes(x.id)&&living.case2.found.length>=2).map(x=>x.id);
+  living.case2.accusations=v.case2.accusations;
+  living.case2.verdict=v.case2.verdict==='solved'&&living.case2.found.length>=3?'solved':v.case2.verdict==='incorrect'?'incorrect':null;
+  living.custom=v.custom;
+  if(v.custom){
+   living.customProgress.found=v.custom.clues.filter(x=>v.customProgress.found.includes(x.id)).map(x=>x.id);
+   living.customProgress.dialogue=v.custom.suspects.filter(x=>v.customProgress.dialogue.includes(x.id)&&living.customProgress.found.length>=2).map(x=>x.id);
+   living.customProgress.accusations=v.customProgress.accusations;
+   living.customProgress.verdict=v.customProgress.verdict==='solved'&&living.customProgress.found.length>=3?'solved':null;
+  }
+ }
+ session.living=living;
  session.finalReport=null;
  session.accusationCount=next.attempts.length;
  session.aiCalls=25;
