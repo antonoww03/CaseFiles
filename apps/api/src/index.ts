@@ -15,6 +15,7 @@ import { initialCinematic, cinematicOverview, cinematicActionSchema, useCinemati
 import { newGame09, game09View, game09Action, evaluateGame09 } from './game09.js';
 import { snapshot10, releaseActionSchema, evaluateRelease10 } from './release10.js';
 import {worldSnapshot,examineSchema,executeWorld} from './experience11.js';
+import {directorView,directorSchema,applyDirector} from './director12.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -115,6 +116,27 @@ const expansionView = (session:Session) => {
  };
 };
 app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/director12/:caseId',(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ const caseId=req.params.caseId;
+ if(caseId!=='case-001'&&caseId!=='case-002')return void res.status(404).json({error:'Непознат случай.'});
+ res.json(directorView(session,caseId));
+});
+app.post('/api/director12/:caseId/action',async(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ const caseId=req.params.caseId;
+ if(caseId!=='case-001'&&caseId!=='case-002')return void res.status(404).json({error:'Непознат случай.'});
+ if(!useQuota('director12:'+req.ip,90,60*60*1000))return void res.status(429).json({error:'Превишен лимит.'});
+ const parsed=directorSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно действие.'});
+ const previous=structuredClone(session.game09);
+ const result=applyDirector(session,caseId,parsed.data);
+ if(result.status!==200)return void res.status(result.status).json({error:result.message});
+ try{await saveSession(session);}catch{
+  session.game09=previous;return void res.status(503).json({error:'Сесията не може да се запази.'});
+ }
+ res.json({message:result.message,story:directorView(session,caseId)});
+});
 app.get('/api/experience11',(req,res)=>{
  const session=getSession(req,res);if(session)res.json(worldSnapshot(session));
 });
