@@ -134,6 +134,20 @@ All 0.7 gameplay modes remain available. New **Кинематографичен 
 
 **Database:** The backend already supports persistent PostgreSQL sessions when \`DATABASE_URL\` is supplied. A free Render database \`casefiles-db\` is available, but the connector does **not expose** its password or internal connection URL and therefore this update does not silently link it. The free instance is due to expire on **2026-11-18** unless renewed/upgraded. Until connected, Render continues to use memory storage plus local snapshots; don't confuse local autosave with cross-device PostgreSQL persistence.
 
+## CASEFILES 1.0 — Full Game Experience
+
+**The default home screen is now a cinematic 1.0 case-selection menu.** Start a new game, continue a local session, choose Case #001 or Case #002, adjust intro/reduced-motion preferences, or open the classic tools. Older mechanics and saved sessions remain available.
+
+New visual assets: original hand-authored SVG scenes in \`apps/web/public/art/\`, showing apartment 407 and the fictional archive. These are original **illustrated 2D game scenes** with cinematic layout, not photographs, true 3D environments, recorded footage or pre-rendered video.
+
+The **1.0 game screen** unifies scene exploration, evidence dossier, a real forensic workbench, logical deduction links, scripted character interrogation, a gated phone, puzzle progression and an accusation/final report. In Case #001, the new evidence screen directly calls the established deduction API, and the forensic tab includes the existing full CCTV + document analysis so these do not require a legacy panel. Optional classic tools remain in reach for deeper investigation and older progress.
+
+Case #002 receives six selectable narrative locations, original archive art, three new **server-validated** investigation puzzles (key record, video timeline, contract trace), gated witness interviews and a final accusation requiring at least four found clues plus two confirmed puzzles. It has varied epilogues based on the number of accusation attempts, verified puzzles and irreversible interrogation choices. The earlier Case #002 routes remain compatible.
+
+**Quality and limitations:** Use \`npm test\`, \`npm run build\`, \`node scripts/smoke.mjs\` and \`npm run test:e2e -w apps/web\` for automated checks. The new 1.0 smoke test verifies locked evidence, solved puzzles and portable backup recovery. Playwright covers the default title screen, scene, dossier, mobile navigation and second-case gating. The game remains an illustrated browser detective adventure, not a photorealistic AAA game; narrative scenes use text and transitions, not full-motion cinematics or recorded voice acting.
+
+**Storage:** Database connection settings remain **unchanged**, as requested. Render may continue using in-memory sessions and browser-local autosave until PostgreSQL is connected separately. Local data does not automatically synchronize across devices. No AI key or GitHub comments are required by the new features.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
