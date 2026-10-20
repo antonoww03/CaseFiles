@@ -11,6 +11,7 @@ import { InvestigationExpansion } from './ExpansionPanel';
 import { ImmersiveInvestigation } from './ImmersiveInvestigation';
 const LivingInvestigation=React.lazy(()=>import('./LivingInvestigation').then(m=>({default:m.LivingInvestigation})));
 const CinematicCenter=React.lazy(()=>import('./CinematicCenter').then(m=>({default:m.CinematicCenter})));
+const Experience09=React.lazy(()=>import('./Experience09').then(m=>({default:m.Experience09})));
 import { autosaveKey, saveLocalSnapshot, readLocalSnapshot, recoverLocalSnapshot } from './autosave';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
@@ -18,12 +19,13 @@ type Evidence = { id: string; title: string; type: string; detail: string; icon:
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living' | 'cinematic';
+type View = 'game09' | 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living' | 'cinematic';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
   { id: 'briefing', name: 'Досие', hint: 'Обща информация', icon: FolderOpen },
+  { id: 'game09', name: 'Играй CASEFILES 0.9', hint: 'Единен игрови режим', icon: Crosshair },
   { id: 'scene', name: 'Местопрестъпление', hint: 'Апартамент 407', icon: ScanSearch },
   { id: 'immersive', name: 'Интерактивно разследване', hint: 'Инвентар и терминал', icon: LockKeyhole },
   { id: 'living', name: 'Живо разследване', hint: 'Правосъдие и нови случаи', icon: Scale },
@@ -419,6 +421,10 @@ function App() {
               <SectionHeader kicker="CASEFILES 0.7 / LIVING INVESTIGATION" title="Живо разследване" description="Разрешения за обиск, проверка на доказателства, експертизи, събития и последствия, финансови следи, съдебен процес и нови криминални случаи." extra={<span className="tag"><Scale size={13}/> CASE #001 + #002</span>} />
               <React.Suspense fallback={<div className="empty-state">Зареждане на разследването...</div>}><LivingInvestigation session={session} found={found}/></React.Suspense>
             </>}
+            {view === 'game09' && <>
+              <SectionHeader kicker="CASEFILES 0.9 / THE CINEMATIC EXPERIENCE" title="Единен игрови режим" description="Един общ интерфейс: стаи и интерактивни предмети, телефон, разпити, визуални миниигри, карта, мисии и последствия." extra={<span className="tag"><Crosshair size={13}/> CASEFILES 0.9</span>}/>
+              <React.Suspense fallback={<div className="empty-state">Зареждане на игровия свят...</div>}><Experience09 session={session} found={found}/></React.Suspense>
+            </>}
             {view === 'cinematic' && <>
               <SectionHeader kicker="CASEFILES 0.8 / QUALITY & IMMERSION" title="Кинематографичен свят" description="2.5D оглед, динамични портрети, звукова атмосфера, цифрови доказателства, сюжетни глави и профил на детектива." extra={<span className="tag"><Camera size={13}/> NEW 0.8</span>}/>
               <React.Suspense fallback={<div className="empty-state">Зареждане на кинематографичния свят...</div>}><CinematicCenter session={session} found={found}/></React.Suspense>
@@ -500,7 +506,7 @@ function App() {
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.8 · {saveStatus==='saved'?'ЛОКАЛНО ЗАПАЗЕНО':saveStatus==='restored'?'ВЪЗСТАНОВЕНО':saveStatus==='offline'?'ОФЛАЙН АРХИВ':'AUTO-SAVE'}</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.9 · {saveStatus==='saved'?'ЛОКАЛНО ЗАПАЗЕНО':saveStatus==='restored'?'ВЪЗСТАНОВЕНО':saveStatus==='offline'?'ОФЛАЙН АРХИВ':'AUTO-SAVE'}</span></div>
         </main>
 
         <aside className="inspector">
