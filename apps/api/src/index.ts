@@ -246,7 +246,7 @@ app.post('/api/forensics/documents/:id/inspect', async (req, res) => {
 app.get('/api/hints', (req, res) => {
   const session = getSession(req, res);
   if (!session) return;
-  res.json({ used: session.hintsUsed, max: hintLevels.length, nextLevel: session.hintsUsed < hintLevels.length ? session.hintsUsed + 1 : null });
+  res.json({ used: session.hintsUsed, max: hintLevels.length, nextLevel: session.hintsUsed < hintLevels.length ? session.hintsUsed + 1 : null, lastHint: session.hintsUsed ? hintLevels[session.hintsUsed - 1] : null });
 });
 
 app.post('/api/hints', async (req, res) => {
