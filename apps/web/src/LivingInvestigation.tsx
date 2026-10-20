@@ -100,13 +100,13 @@ export function LivingInvestigation({session,found}:{session:string;found:string
  return <div className="liv-root">
   <nav className="liv-nav" aria-label="Разширени разследвания">{sections.map(s=><button key={s.id} className={section===s.id?'active':''} onClick={()=>{setSection(s.id);setNotice('');}} type="button"><s.icon size={17}/>{s.name}</button>)}</nav>
   {notice&&<div className="liv-notice" role="status"><ShieldAlert size={18}/><span>{notice}</span><button type="button" onClick={()=>setNotice('')} aria-label="Затвори"><X size={16}/></button></div>}
-  {!session?<div className="liv-empty"><Lock size={27}/>Първо започни игрова сесия, за да отключиш разследванията.</div>:!living?<div className="liv-empty">Зареждане на следствените данни...</div>:<>
-  <div className="liv-overview">
+  {!session?<div className="liv-empty"><Lock size={27}/>Първо започни игрова сесия, за да отключиш разследванията.</div>:(!living&&section!=='cases'&&section!=='editor')?<div className="liv-empty">Зареждане на следствените данни...</div>:<>
+  {living&&<div className="liv-overview">
     <div><span><Clock3 size={15}/> ИГРОВИ ЧАСОВНИК</span><strong>ФАЗА {living.phase+1} / 5</strong><small>{living.clockLabel} · {living.actions} действия</small></div>
     <div><span><Handshake size={15}/> РЕПУТАЦИЯ</span><strong>{living.reputation} / 100</strong><div className="liv-meter"><span style={{width:living.reputation+'%'}}/></div></div>
     <div><span><Activity size={15}/> ДИНАМИЧНИ СЪБИТИЯ</span><strong>{living.events.length} активни</strong><small>Отключват се с игровия напредък</small></div>
-  </div>
-  {section==='warrants'&&<div className="liv-column">
+  </div>}
+  {section==='warrants'&&living&&<div className="liv-column">
    <Header icon={FolderLock} title="Разрешения за обиск" detail="Исканията се разглеждат по доказателства и репутация. Това са игрови правила, не реална правна процедура."/>
    <div className="liv-grid">{living.warrants.map(w=><article className="liv-card" key={w.id}><div className="liv-label">{w.approved?'РАЗРЕШЕНО':w.eligible?'ГОТОВО ЗА ПОДАВАНЕ':'НЯМА ДОСТАТЪЧНО ОСНОВАНИЯ'}</div><h3>{w.title}</h3><p>{w.reason}</p><small>{w.place} · Улики: {w.needs.join(', ')}</small><button type="button" className="primary" disabled={busy||!w.eligible||w.approved} onClick={()=>void act('warrant',{id:w.id})}>{w.approved?<><Check size={15}/> Разрешено</>:<>Поискай заповед <ArrowRight size={15}/></>}</button></article>)}</div>
    <Header icon={Archive} title="Верига на доказателствата" detail="Кога е записана уликата в CASEFILES, откъде идва и кой я е обработил. Исторически събирания преди този ъпдейт може да липсват."/>
@@ -114,7 +114,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
    <Header icon={ShieldCheck} title="Допустимост на материалите" detail="В съдебната фаза се проверява както произходът, така и наличието на игрово разрешение за защитени документи."/>
    <p className="liv-muted">Финансовата чернова E09 изисква разрешение за служебния архив. Данните за пропуска E10 изискват разрешение за сервизния вход. Материали без проследим произход не се приемат автоматично.</p>
   </div>}
-  {section==='experts'&&<div className="liv-column">
+  {section==='experts'&&living&&<div className="liv-column">
    <Header icon={Fingerprint} title="Експертни заключения" detail="Назначи специалист, продължи с друго действие и получи експертно становище."/>
    <div className="liv-grid">{living.experts.map(e=><article className="liv-card" key={e.id}><div className="liv-label">{e.ready?'ЕКСПЕРТИЗАТА Е ГОТОВА':e.requested?'НАЗНАЧЕНА':'ДОСТЪПНА ПРИ НАЛИЧНИ УЛИКИ'}</div><h3>{e.name}</h3><p>{e.report||'Експертният анализ ще бъде разкрит след приключване.'}</p><button type="button" className="secondary" disabled={!e.available||e.ready||busy} onClick={()=>void act('expert',{id:e.id})}>{e.ready?'Готово':e.requested?'Провери резултата':'Назначи експертиза'}</button></article>)}</div>
    <Header icon={UserRound} title="Конфронтации и тайни в досиетата" detail="Предяви доказателствата. Определени избори могат необратимо да блокират линия на разпит."/>
@@ -125,7 +125,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
    <Header icon={Timer} title="Събития според напредъка" detail="Няма реално чакане. Новите сигнали се появяват при достигане на съответната игрова фаза."/>
    <div className="liv-grid">{living.events.map(e=><article className="liv-card" key={e.id}><span className="liv-label">НОВО СЪБИТИЕ</span><h3>{e.title}</h3><p>{e.message}</p></article>)}{living.events.length===0&&<div className="liv-empty">Още няма отключени събития.</div>}</div>
   </div>}
-  {section==='finance'&&<div className="liv-column">
+  {section==='finance'&&living&&<div className="liv-column">
     <Header icon={Wallet} title="Разследване на финансови следи" detail="Измислена финансова мрежа. Анализирай транзакциите и потърси необичайните маршрути на средства."/>
     <div className="liv-timeline">{living.transactions.map(t=><article key={t.id} className="liv-transfer"><div><span>{t.time}</span><strong>€{t.amount.toLocaleString('bg-BG')}</strong></div><div><h3>{t.from} <ArrowRight size={15}/> {t.to}</h3><p>{t.analyzed?t.detail:'Детайлите изискват служебно разрешение.'}</p>{t.analyzed&&<span className={t.flag?'liv-bad':'liv-ok'}>{t.flag?'Необичаен поток':'Обичаен запис'}</span>}</div><button type="button" className="secondary" disabled={busy||t.analyzed} onClick={()=>void act('finance',{id:t.id})}>{t.analyzed?'Анализирано':'Изследвай'}</button></article>)}</div>
     <Header icon={Gavel} title="Съдебна фаза" detail="Избери доказателства и аргументация. Прокурорът може да оспори произхода, разрешението или достатъчността на уликите."/>
@@ -138,7 +138,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
   </div>}
   {section==='cases'&&<div className="liv-column">
     <Header icon={Files} title="Библиотека с криминални случаи" detail="Избери Case #002 или своя създаден сценарий. Всеки има отделен прогрес в текущата сесия."/>
-    <div className="liv-grid">{catalog.map(t=><button type="button" className={'liv-case '+(caseId===t.id?'selected':'')} key={t.id} onClick={()=>{setCaseId(t.id);setSuspect('');setChosen([]);}}><span className="liv-label">{t.id.toUpperCase()}</span><strong>{t.title}</strong><small>{t.setting}</small><p>{t.briefing}</p></button>)}{living.custom&&<button type="button" className={'liv-case '+(caseId===living.custom.id?'selected':'')} onClick={()=>{setCaseId(living.custom!.id);setSuspect('');setChosen([]);}}><span className="liv-label">СОБСТВЕН СЛУЧАЙ</span><strong>{living.custom.title}</strong><small>{living.custom.setting}</small><p>{living.custom.briefing}</p></button>}</div>
+    <div className="liv-grid">{catalog.map(t=><button type="button" className={'liv-case '+(caseId===t.id?'selected':'')} key={t.id} onClick={()=>{setCaseId(t.id);setSuspect('');setChosen([]);}}><span className="liv-label">{t.id.toUpperCase()}</span><strong>{t.title}</strong><small>{t.setting}</small><p>{t.briefing}</p></button>)}{living?.custom&&<button type="button" className={'liv-case '+(caseId===living?.custom?.id?'selected':'')} onClick={()=>{setCaseId(living?.custom?.id||'');setSuspect('');setChosen([]);}}><span className="liv-label">СОБСТВЕН СЛУЧАЙ</span><strong>{living?.custom?.title}</strong><small>{living?.custom?.setting}</small><p>{living?.custom?.briefing}</p></button>}</div>
     {caseId==='case-001'?<p className="liv-muted">Оригиналният случай се играе през основните табове „Досие“, „Оглед“, „Разпити“ и „Обвинение“.</p>:story&&<>
      <div className="liv-story-hero"><span className="liv-label">{story.id.toUpperCase()} / АКТИВНО ДОСИЕ</span><h2>{story.title}</h2><p>{story.briefing}</p><small>{story.setting} · Открити следи: {story.found.length}/{story.clues.length}</small></div>
      <Header icon={FileSearch} title="Откриване на доказателства" detail="Началните материали са достъпни веднага; следващите следи се отключват след първите две."/>
