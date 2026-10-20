@@ -13,17 +13,19 @@ const LivingInvestigation=React.lazy(()=>import('./LivingInvestigation').then(m=
 const CinematicCenter=React.lazy(()=>import('./CinematicCenter').then(m=>({default:m.CinematicCenter})));
 const Experience09=React.lazy(()=>import('./Experience09').then(m=>({default:m.Experience09})));
 import { autosaveKey, saveLocalSnapshot, readLocalSnapshot, recoverLocalSnapshot } from './autosave';
+import { Home10, FullGame10 } from './Release10';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'game09' | 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living' | 'cinematic';
+type View = 'home10' | 'play10' | 'game09' | 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living' | 'cinematic';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
+  { id: 'play10', name: 'Играй CASEFILES 1.0', hint: 'Единно разследване', icon: Crosshair },
   { id: 'briefing', name: 'Досие', hint: 'Обща информация', icon: FolderOpen },
   { id: 'game09', name: 'Играй CASEFILES 0.9', hint: 'Единен игрови режим', icon: Crosshair },
   { id: 'scene', name: 'Местопрестъпление', hint: 'Апартамент 407', icon: ScanSearch },
@@ -94,7 +96,8 @@ function EmptyState({ icon: Icon, title, description, action }: { icon: LucideIc
 }
 
 function App() {
-  const [view, setView] = useState<View>('briefing');
+  const [view, setView] = useState<View>('home10');
+  const [case10,setCase10]=useState<'case-001'|'case-002'>('case-001');
   const [info, setInfo] = useState<CaseInfo | null>(null);
   const [session, setSession] = useState('');
   const [found, setFound] = useState<string[]>([]);
@@ -208,7 +211,7 @@ function App() {
     await restoreSessionAccess(result.sessionId);
   };
 
-  const start = async () => {
+  const start = async (destination: View = 'scene') => {
     setBusy(true); setError('');
     try {
       const data = await call<{ sessionId: string }>('/session', 'POST');
@@ -220,7 +223,7 @@ function App() {
       setFinalReport(null); setPressure({}); setInterviewStyle('neutral'); setScriptedOnly(true);
       setNotes([]); setAlibiChecks([]); setSuspects([]);
       void loadCaseExtras(data.sessionId);
-      setChecked([]); setVerdict(null); go('scene');
+      setChecked([]); setVerdict(null); go(destination);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
 
@@ -304,7 +307,7 @@ function App() {
   };
 
   const progress = Math.round(found.length / allEvidence.length * 100);
-  const activeTab = tabs.find(t => t.id === view)!;
+  const activeTab = tabs.find(t => t.id === view) || tabs[0];
   const ActiveIcon = activeTab.icon;
   const person = info?.people.find(p => p.id === activePerson);
   const visibleTimeline = timeline.filter(([, , id]) => found.includes(id));
@@ -325,8 +328,12 @@ function App() {
     </button>;
   })}</div>;
 
+  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
+  if(view==='play10')return <FullGame10 session={session} caseId={case10} found={found} onFound={setFound} onHome={()=>go('home10')} onLegacy={dest=>go(dest as View)}/>;
+  
   return <div className="app-shell">
     <aside className={'sidebar ' + (sidebarOpen ? 'sidebar-open' : '')}>
+      <button className="r10-return" type="button" onClick={()=>go('home10')}><ArrowRight size={15}/> Главно меню 1.0</button>
       <div className="sidebar-brand">
         <div className="brand-symbol"><Fingerprint size={25} strokeWidth={1.4} /></div>
         <div className="brand-text"><strong>CASE<span>FILES</span></strong><small>THE TRUTH IS HIDDEN</small></div>
@@ -506,7 +513,7 @@ function App() {
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.9 · {saveStatus==='saved'?'ЛОКАЛНО ЗАПАЗЕНО':saveStatus==='restored'?'ВЪЗСТАНОВЕНО':saveStatus==='offline'?'ОФЛАЙН АРХИВ':'AUTO-SAVE'}</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 1.0 · {saveStatus==='saved'?'ЛОКАЛНО ЗАПАЗЕНО':saveStatus==='restored'?'ВЪЗСТАНОВЕНО':saveStatus==='offline'?'ОФЛАЙН АРХИВ':'AUTO-SAVE'}</span></div>
         </main>
 
         <aside className="inspector">
