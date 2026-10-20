@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react';
-import {ArrowRight,BookOpen,BrainCircuit,CheckCircle2,ChevronRight,Clock3,Compass,Eye,FileCheck2,Files,LockKeyhole,RotateCcw,Scale,ScanSearch,ShieldAlert,Target} from 'lucide-react';
+import {ArrowRight,BookOpen,BrainCircuit,CheckCircle2,ChevronRight,Clock3,Compass,Eye,FileCheck2,Files,LockKeyhole,RotateCcw,Scale,ScanSearch,ShieldAlert,Sparkles,Target} from 'lucide-react';
 import './detective13.css';
 type CaseId='case-001'|'case-002';
 type Category='reason'|'challenge'|'compare'|'theory';
@@ -31,6 +31,19 @@ export function Detective13({session,caseId,found,clues,onNavigate}:{session:str
  const current=challenges.find(c=>c.id===selectedId)||null;
  const choose=(c:Challenge)=>{setSelectedId(c.id);setChoice('');setFeedback('');setCorrect(false);};
  const checked=useMemo(()=>[compareA,compareB].filter(Boolean).map(id=>clues.find(c=>c.id===id)).filter((c):c is CaseClue=>!!c),[compareA,compareB,clues]);
+ const activateReplay=async()=>{
+  if(!snapshot?.replay.available||snapshot.replay.enabled)return;
+  setBusy(true);
+  try{
+   const response=await fetch((import.meta.env.VITE_API_URL||'')+'/api/game09/action',{method:'POST',headers:{'Content-Type':'application/json','x-case-session':session},body:JSON.stringify({kind:'newGamePlus'})});
+   const payload=await response.json();
+   if(!response.ok)throw new Error(payload.error||'Неуспешно отключване.');
+   setSnapshot(await api<Snapshot>(session,caseId));
+   setFeedback('New Game+ е отключен: вече можеш да изпробваш допълнителни разследващи предизвикателства.');
+   setCorrect(true);
+  }catch(e){setFeedback(e instanceof Error?e.message:String(e));setCorrect(false);}
+  finally{setBusy(false);}
+ };
  const send=async()=>{
   if(!current||!choice||busy)return;setBusy(true);setFeedback('');setError('');
   try{
@@ -57,6 +70,7 @@ export function Detective13({session,caseId,found,clues,onNavigate}:{session:str
   </>:<div className="d13-empty"><Eye size={37}/><h2>Избери следствен въпрос</h2><p>Намерете уликите в основните помещения. Заключенията се отключват, когато има реална доказателствена основа.</p><button type="button" onClick={()=>onNavigate('scene')}>Към местопрестъплението <ArrowRight size={16}/></button></div>}</div></div>
   <div className="d13-after"><section><h3><Target size={18}/> Следващи цели</h3>{snapshot?.tasks.map(task=><button key={task.id} type="button" onClick={()=>onNavigate(task.target)}><span>{task.done?<CheckCircle2 size={16}/>:<Clock3 size={16}/>}</span><strong>{task.text}</strong><ChevronRight size={16}/></button>)}</section>
   <section><h3><BookOpen size={18}/> Детективски дневник</h3><p>Потвърдени изводи: {snapshot?.progress.solved||0}. Преразгледани предположения: {snapshot?.progress.wrongAttempts||0}.</p><button type="button" onClick={()=>setExpanded(v=>!v)}><Compass size={16}/> {expanded?'Скрий съвета':'Как да различавам факт от теория?'}</button>{expanded&&<p>Факт е това, което е записано в проверена улика. Теорията е обяснение, подкрепено от няколко независими факта. Дори правилният заподозрян не оправдава прибързан извод.</p>}</section></div>
-  {snapshot?.review?<section className="d13-review"><span><FileCheck2 size={18}/> CASE REVIEW · ОТКЛЮЧЕН</span><h2>Преглед на разследването</h2><p>Потвърдени заключения: {snapshot.review.solved}/{snapshot.progress.total}. Неправилни опити: {snapshot.review.mistakes}.</p><div>{snapshot.review.missed.map(q=><article key={q.id}><strong>Пропуснато: {q.title}</strong><small>{q.requires.length?'Неоткрити улики: '+q.requires.join(', '):'Разгледай задачата отново.'}</small></article>)}</div><p>{snapshot.review.recommendations}</p>{snapshot.review.branchDecisions.length>0&&<p>Сюжетни решения: {snapshot.review.branchDecisions.join(' · ')}</p>}<button type="button" onClick={()=>onNavigate('ending')}><RotateCcw size={16}/> Прегледай развръзката</button></section>:<div className="d13-review-locked"><LockKeyhole size={18}/> Подробният Case Review се отключва след успешния финал на случая.</div>}
+  {snapshot?.review?<section className="d13-review"><span><FileCheck2 size={18}/> CASE REVIEW · ОТКЛЮЧЕН</span><h2>Преглед на разследването</h2><p>Потвърдени заключения: {snapshot.review.solved}/{snapshot.progress.total}. Неправилни опити: {snapshot.review.mistakes}.</p><div>{snapshot.review.missed.map(q=><article key={q.id}><strong>Пропуснато: {q.title}</strong><small>{q.requires.length?'Неоткрити улики: '+q.requires.join(', '):'Разгледай задачата отново.'}</small></article>)}</div><p>{snapshot.review.recommendations}</p>{snapshot.review.branchDecisions.length>0&&<p>Сюжетни решения: {snapshot.review.branchDecisions.join(' · ')}</p>}<button type="button" onClick={()=>onNavigate('ending')}><RotateCcw size={16}/> Прегледай развръзката</button>
+   <button type="button" disabled={snapshot.replay.enabled||busy} onClick={()=>void activateReplay()}><Sparkles size={16}/> {snapshot.replay.enabled?'New Game+ е отключен':'Отключи New Game+ предизвикателствата'}</button></section>:<div className="d13-review-locked"><LockKeyhole size={18}/> Подробният Case Review се отключва след успешния финал на случая.</div>}
  </section>;
 }
