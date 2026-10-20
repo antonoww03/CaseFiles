@@ -13,6 +13,7 @@ import { newImmersiveState, immersiveSnapshot, interactionSchema, interaction, d
 import { initialLiving, visibility, capture, progressTick, canWarrant, canAdmit, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions, caseCatalog, case002, caseTemplateSchema, publicStory, solveCase, warrantAction, expertAction, confrontationAction, financeAction, policyAction, courtAction, caseAction } from './living.js';
 import { initialCinematic, cinematicOverview, cinematicActionSchema, useCinematicChoice, profileSnapshot } from './cinematic.js';
 import { newGame09, game09View, game09Action, evaluateGame09 } from './game09.js';
+import { snapshot10, releaseActionSchema, evaluateRelease10 } from './release10.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -113,6 +114,21 @@ const expansionView = (session:Session) => {
  };
 };
 app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/release10',(req,res)=>{
+ const session=getSession(req,res);
+ if(session)res.json(snapshot10(session));
+});
+app.post('/api/release10/action',async(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ if(!useQuota('release10:'+req.ip,120,60*60*1000))return void res.status(429).json({error:'Превишен лимит.'});
+ const parsed=releaseActionSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно действие.'});
+ const oldGame=structuredClone(session.game09),oldCase=structuredClone(session.living.case2);
+ const result=evaluateRelease10(session,parsed.data);
+ if(result.status!==200)return void res.status(result.status).json({error:result.message});
+ try{await saveSession(session);}catch{session.game09=oldGame;session.living.case2=oldCase;return void res.status(503).json({error:'Неуспешно запазване.'});}
+ res.json({message:result.message,progress:snapshot10(session)});
+});
 app.get('/api/game09',(req,res)=>{
  const session=getSession(req,res);
  if(session)res.json(game09View(session));
