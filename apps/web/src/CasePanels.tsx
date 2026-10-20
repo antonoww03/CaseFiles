@@ -1,3 +1,4 @@
+import {DirectorPortrait} from './Director12';
 import { useEffect, useState } from 'react';
 import {
   ArrowRight, BookMarked, Check, CheckCheck, ClipboardList,
@@ -97,7 +98,7 @@ export function DossiersPanel({ suspects, found, checks, onInterview }: {
   return <div className="v03-dossiers">{suspects.map((person, index) => {
     const known = checks.filter(c => c.personId === person.id && c.verified);
     return <article key={person.id} className="v03-dossier">
-      <div className="v03-dossier-hero"><span className={'v03-portrait '+person.color}><span className="v03-portrait-pattern" /><span>{person.portrait}</span></span><div className="v03-dossier-identity"><span className="v03-mono">ДОСИЕ / {String(index + 1).padStart(2, '0')}</span><h3>{person.name}</h3><span>{person.age} г. · {person.occupation}</span></div></div>
+      <div className="v03-dossier-hero"><DirectorPortrait id={person.id} compact mood="neutral"/><div className="v03-dossier-identity"><span className="v03-mono">ДОСИЕ / {String(index + 1).padStart(2, '0')}</span><h3>{person.name}</h3><span>{person.age} г. · {person.occupation}</span></div></div>
       <div className="v03-dossier-facts">
         <div><span>ВРЪЗКА С ЖЕРТВАТА</span><p>{person.relationship}</p></div>
         <div><span>ЗАЯВЕНО АЛИБИ</span><p>{person.alibi}</p></div>
