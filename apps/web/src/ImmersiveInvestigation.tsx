@@ -6,6 +6,7 @@ import {
   Minus, Plus, ScanSearch, Search, ShieldCheck, Terminal, X
 } from 'lucide-react';
 import './immersive.css';
+import {ObjectArt,visualForObject,roomAsset} from './sceneArt';
 
 type InventoryItem={id:string;title:string;detail:string;icon:string};
 type ObjectInfo={id:string;room:string;title:string;summary:string;x:number;y:number;inspected:boolean;locked:boolean;requiresItem:string|null};
@@ -114,11 +115,11 @@ export function ImmersiveInvestigation({session,found}:{session:string;found:str
     {section==='scene'&&<>
       <div className="im-intro"><div><span className="im-kicker">АПАРТАМЕНТ 407 / ИНТЕРАКТИВНА СРЕДА</span><h2>Изследвай всеки предмет</h2><p>Избери стая, натисни върху осветен обект и събери инструменти за следващите задачи.</p></div><span className="im-counter">{data.objects.filter(o=>o.inspected).length} / {data.objects.length} ОБЕКТА</span></div>
       <div className="im-rooms" role="group" aria-label="Стая за оглед">{data.rooms.map(r=><button key={r.id} type="button" onClick={()=>{setRoom(r.id);setFocusObject(null);}} className={room===r.id?'active':''}><MapPin size={17}/><strong>{r.title}</strong><small>{r.subtitle}</small></button>)}</div>
-      <div className={'im-stage room-'+room}>
+      <div className={'im-stage room-'+room} style={{backgroundImage:'url('+roomAsset(room==='hall'?'entrance':room==='study'?'desk':'living')+')'}}>
         <div className="im-stage-grid"/><div className="im-stage-wall"/>
         <div className="im-furniture one"/><div className="im-furniture two"/><div className="im-furniture three"/><div className="im-furniture four"/>
         <div className="im-stage-heading"><span><ScanSearch size={15}/> {currentRoom?.title.toUpperCase()}</span><span>CASE 001 / SCENE {data.rooms.findIndex(r=>r.id===room)+1}</span></div>
-        {visible.map(o=><button key={o.id} type="button" style={{left:o.x+'%',top:o.y+'%'}} className={'im-hotspot '+(o.inspected?'done':'')} onClick={()=>{setFocusObject(o);setRotation(0);}} aria-label={'Разгледай '+o.title}><span>{o.inspected?<Check size={18}/>:<Plus size={18}/>}</span><small>{o.title}</small></button>)}
+        {visible.map(o=><button key={o.id} type="button" style={{left:o.x+'%',top:o.y+'%'}} className={'im-hotspot '+(o.inspected?'done':'')} onClick={()=>{setFocusObject(o);setRotation(0);}} aria-label={'Разгледай '+o.title}><ObjectArt asset={visualForObject(o.id)?.asset||'evidence'} alt={o.title}/><span>{o.inspected?<Check size={18}/>:<Plus size={18}/>}</span><small>{o.title}</small></button>)}
         <div className="im-stage-footer"><Eye size={15}/> Избери маркер, за да отвориш подробния оглед</div>
       </div>
       <div className="im-inventory-section"><div className="im-section-head"><BriefcaseBusiness size={19}/><div><h3>Инвентар на детектива</h3><p>Избери два предмета, за да провериш дали могат да се комбинират.</p></div></div>
