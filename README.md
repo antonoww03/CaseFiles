@@ -174,6 +174,21 @@ Server endpoints \`GET /api/experience11\` and \`POST /api/experience11/action\`
 
 **Regression validation:** added unit tests for locked clue interactions, key/UV tool use, verification of deduction links, protected audio text and location gates, extended end-to-end API smoke, and Playwright tests covering real keyboard/mouse/touch-style interactions in the case-one and case-two flow.
 
+## CASEFILES 1.2 — Director's Cut
+
+The **1.0 main menu is intentionally preserved**. Director's Cut changes the investigation after clicking Start:
+
+- **Cinematic acts:** five authored, evidence-gated story beats per case, a fullscreen illustrated cinematic view, room-specific visuals and transitions. Server state is never advanced merely by opening or reloading the frontend.
+- **Branch choices:** four evidence-dependent choices per case (phone handling / financial or CCTV priorities; archive log handling / document or footage priorities). Contradictory decisions are mutually exclusive, with the authoritative choices written into the existing persisted \`game09.events\`.
+- **Expressive protagonists:** six individually authored SVG-based character portraits, named and labeled accessibly, with emotional facial variants. These are hand-designed vectors rather than external AI likenesses.
+- **Detailed props:** six original SVG close-up illustrations for phone, invoices, negative, CCTV, key and archive records in \`apps/web/public/art/props\`. Rotate/zoom and jump to the relevant evidence tools.
+- **Adaptive audio:** on-demand generated quiet/rising/tense musical drone and per-scene audio cue. No autoplay, voice-cloning, subscription, or external audio library.
+- **Gameplay integration:** the scene director, props and portraits are embedded in the unified 1.0 game rather than duplicating the old tools. Existing CCTV, evidence board, interactive inventory, court, interview branches and puzzles remain.
+- **UX:** reduced-motion CSS support, accessible dialog titles, responsive scene stages and portrait layouts.
+- **QA:** server unit tests check scene prerequisites, unrevealed twists, exclusive choices and persistence; HTTP smoke covers forbidden shortcuts and portable save restoration; Playwright exercises opening scene, close-up interaction, branching consequences, portraits and mobile Case #002.
+
+**Boundaries:** This is a narrative/visual upgrade to a stylized 2D browser game, **not** full-motion 3D, film-quality animation, a professionally recorded soundtrack or a complete rewrite of the mystery. The new director mechanics cover pivotal beats rather than replacing every line of existing story dialogue. No database schema or Render database configuration was changed, as requested.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
