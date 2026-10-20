@@ -70,6 +70,21 @@ All twenty requested systems are available in the **Детективски ин�
 
 **E2E tests:** `npm run test:e2e -w apps/web` requires Playwright Chromium installed locally. The GitHub CI pipeline installs it and executes two browser checks. A passing Render build alone does not prove GitHub's browser job has passed.
 
+## CASEFILES 0.6 — Immersive Investigation
+
+A new **Интерактивно разследване** navigation tab provides an additional fully scripted, in-session investigation workspace (no paid AI calls):
+
+- **Interactive rooms and object inspection:** entrance hall, living room and work desk with selectable hotspots and rotatable object close-ups. Objects are 2D CSS illustrations, not photogrammetric 3D.
+- **Inventory and gated objects:** collect five tools. The brass key unlocks a desk drawer containing a photographic negative; office papers are accessible after uncovering the message clue (E04).
+- **Combine physical clues:** magnifier + negative explains the photograph; UV lamp + paper fragment reveals the coded clue. Wrong or missing combinations are rejected by the backend.
+- **Visual combination puzzle:** a three-dial lock can only be solved once the code clue is discovered. Correctness and completion are validated server-side.
+- **Branching interviews:** additional choices for Martin, Elena and Petar adjust trust and may be blocked by prior choices or missing evidence. The branching dialogue is deterministic and separate from the optional AI interviews.
+- **Simulated police computer:** search fictional access, camera, financial, telephone and forensic records. A record is returned only when its prerequisites have been collected. Nothing is fetched from real police databases.
+- **Session state:** tools, inspected objects, combinations, dial completion, trust, dialogue history and number of archive searches are included in PostgreSQL serialization and validated portable backups.
+- **Regression coverage:** unit tests cover object requirements, combinations, trust, dialogue gating, secure record access and backup recovery; the HTTP smoke test exercises the full progression. Playwright adds browser navigation, inventory and terminal checks.
+
+**Limitations:** This is a richer 2D interactive prototype rather than fully 3D gameplay, and forensic mini-games remain fictional simulations. The existing case narrative, clues and final server-side verdict are not replaced. Local portable backups are player-controlled and not cryptographically signed; do not rely on them as cheat-resistant server records. Render reports \`storage: memory\` until \`DATABASE_URL\` is configured for PostgreSQL, so session state can otherwise be lost after a restart.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
