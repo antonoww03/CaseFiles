@@ -92,6 +92,18 @@ try {
   const deleted = await request('/notes/'+noteId,'DELETE',undefined,token);
   assert.equal(deleted.status,200);
   assert.equal(deleted.json.notes.length,0);
+  const callLog = await request('/discover/E03','POST',{},token);
+  assert.equal(callLog.status,200);
+  const elenaInterview = await request('/interview','POST',{personId:'elena',message:'Говорихте ли с Никола?',evidenceId:'E03'},token);
+  assert.equal(elenaInterview.status,200);
+  assert.ok(elenaInterview.json.found.includes('E11'));
+  const contradictionElena = await request('/contradictions/C01','POST',{},token);
+  assert.equal(contradictionElena.status,200);
+  const petarInterview = await request('/interview','POST',{personId:'petar',message:'Какъв шум чухте?'},token);
+  assert.equal(petarInterview.status,200);
+  assert.ok(petarInterview.json.found.includes('E12'));
+  const finalSession = await request('/session','GET',undefined,token);
+  assert.deepEqual(finalSession.json.verified.sort(),['C01','C02']);
   const accusation = { suspectId: 'martin', motive: 'Служебни финансови несъответствия.', timeline: 'Посещение по време на престъплението и напускане.', evidenceIds: ['E04', 'E09', 'E05', 'E06', 'E08'] };
   const verdict = await request('/accusation', 'POST', accusation, token);
   assert.equal(verdict.status, 200);
