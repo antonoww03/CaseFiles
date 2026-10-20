@@ -1,3 +1,4 @@
+import './sceneArt.css';
 /** One registry for visible evidence and tappable hotspots across all case views.
  * Positions use % of the 1600×900 scene art, not the viewport.
  * A room with no matching foreground object must NOT show a generic floating pin.
