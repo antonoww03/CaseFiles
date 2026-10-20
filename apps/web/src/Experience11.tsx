@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {BookOpen,Check,CheckCheck,ChevronDown,ChevronUp,Compass,Eye,FileAudio,Flashlight,FolderOpen,GripVertical,Lightbulb,MapPinned,MessageCircle,Mic2,Play,RotateCcw,Search,Sparkles,Volume2,VolumeX,X} from 'lucide-react';
+import {BookOpen,Check,CheckCheck,ChevronDown,ChevronUp,Compass,Eye,FileAudio,Flashlight,FolderOpen,GripVertical,Lightbulb,MapPinned,Mic2,Play,RotateCcw,Search,Sparkles,Volume2,VolumeX,X} from 'lucide-react';
 import './experience11.css';
 type CaseId='case-001'|'case-002';
 type World={locations:{id:string;caseId:string;name:string;description:string;available:boolean}[];inventory:{id:string;title:string}[];sceneItems:{id:string;title:string;room:string;inspected:boolean;available:boolean;x:number;y:number}[];recordings:{id:string;title:string;available:boolean;voice:string|null}[];board:{id:string}[];journal:{id:string;type:string;title:string;detail:string}[];event:string|null;hints:{suggestion:string;failedAttempts:number};story:{tension:number;branches:string[];complete:boolean}};
