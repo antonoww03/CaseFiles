@@ -38,7 +38,7 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(cors({ origin: process.env.WEB_ORIGIN || 'http://localhost:5173' }));
-app.use('/api/backup/restore', express.json({ limit: '128kb' }));
+app.use('/api/backup/restore', express.json({ limit: '512kb' }));
 app.use(express.json({ limit: '16kb' }));
 app.use('/api', async (req, res, next) => {
   const id = req.header('x-case-session');
