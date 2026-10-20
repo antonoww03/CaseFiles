@@ -18,6 +18,7 @@ import {worldSnapshot,examineSchema,executeWorld} from './experience11.js';
 import {directorView,directorSchema,applyDirector} from './director12.js';
 import {detective13View,detective13Schema,submitDetective13} from './detective13.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
+import communityRouter from './community.js';
 
 type Session = StoredSession;
 if (existsSync('apps/api/.env')) process.loadEnvFile('apps/api/.env');
