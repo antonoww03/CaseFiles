@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
-  Activity, Archive, Award, BookOpen, Check, CheckCircle2, ChevronRight,
+  Activity, Archive, Award, BookOpen, Check, CheckCircle2,
   CircleHelp, ClipboardList, Compass, Download, Fingerprint, FlaskConical,
-  Footprints, Headphones, Lightbulb, Lock, Map, MapPin, Medal, Settings2,
+  Footprints, Lightbulb, Lock, Map, MapPin, Medal, Settings2,
   ShieldCheck, SlidersHorizontal, Upload, UserRound, Volume2, VolumeX,
   Eye, XCircle
 } from 'lucide-react';
