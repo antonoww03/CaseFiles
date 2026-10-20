@@ -4,10 +4,25 @@ import { deductions } from './deductions.js';
 import { contradictions, noteSchema, scoreCase, availableContradictions } from './gameplay.js';
 import { puzzles, witnesses, timelineItems, classificationTargets, tutorial, difficultySchema, initialProgress, outcome } from './expansion.js';
 import { actualCaseTimeline } from './forensics.js';
+import { newImmersiveState, sceneObjects, tools as sceneTools, combinations, dialogueOptions } from './immersive.js';
 import type { StoredSession } from './storage.js';
 
 const lineSchema = z.object({role:z.enum(['player','npc']),text:z.string().min(1).max(2500)});
 const noteBackup = noteSchema.extend({id:z.string().uuid(),updatedAt:z.string().max(40)});
+const immersiveBackup = z.object({
+ inventory:z.array(z.string().max(32)).max(5),
+ inspected:z.array(z.string().max(32)).max(6),
+ solved:z.array(z.string().max(32)).max(5),
+ discoveries:z.array(z.string().max(32)).max(5),
+ trust:z.record(z.number().int().min(0).max(100)),
+ dialogue:z.array(z.object({
+  personId:z.string().max(30),choiceId:z.string().max(40),
+  reply:z.string().max(1000),at:z.string().max(40)
+ })).max(32),
+ dialogueFlags:z.array(z.string().max(40)).max(32),
+ terminalSearches:z.number().int().min(0).max(9999)
+});
+
 export const backupSchema = z.object({
  format:z.literal('casefiles-backup-v1'),
  version:z.literal(1),
@@ -20,6 +35,7 @@ export const backupSchema = z.object({
  pressure:z.record(z.number().int().min(0).max(100)),
  hintsUsed:z.number().int().min(0).max(3),
  solved:z.boolean(),
+ immersive:immersiveBackup.optional(),
  expansion:z.object({
   difficulty:difficultySchema,
   milestones:z.array(z.string().max(35)).max(20),
@@ -41,6 +57,7 @@ export function exportBackup(session:StoredSession):PortableBackup {
   analyses:[...session.analyses],notes:session.notes,
   messages:session.messages as PortableBackup['messages'],
   pressure:session.pressure,hintsUsed:session.hintsUsed,solved:!!session.finalReport,
+  immersive:session.immersive,
   expansion:{
    difficulty:session.expansion.difficulty,
    milestones:session.expansion.milestones,
@@ -90,6 +107,23 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
  session.pressure=Object.fromEntries(Object.entries(value.pressure).filter(([id])=>['martin','elena','petar'].includes(id)));
  session.hintsUsed=Math.min(value.hintsUsed,allowedHints);
  session.expansion=next;
+ const immersive=newImmersiveState();
+ if(value.immersive){
+  const visited=new Set(value.immersive.inspected);
+  immersive.inspected=sceneObjects.filter(o=>visited.has(o.id)&&(!o.prerequisite||found.has(o.prerequisite))).map(o=>o.id);
+  const unlocked=new Set(sceneObjects.filter(o=>immersive.inspected.includes(o.id)).map(o=>o.item));
+  immersive.inventory=sceneTools.filter(t=>unlocked.has(t.id)).map(t=>t.id);
+  immersive.discoveries=combinations.filter(co=>value.immersive!.discoveries.includes(co.id)&&
+    immersive.inventory.includes(co.first)&&immersive.inventory.includes(co.second)).map(co=>co.id);
+  immersive.solved=immersive.discoveries.includes('uv_marker')&&value.immersive.solved.includes('safe_dial')?['safe_dial']:[];
+  immersive.trust=Object.fromEntries(Object.entries(value.immersive.trust).filter(([id])=>['martin','elena','petar'].includes(id)));
+  for(const id of ['martin','elena','petar'])immersive.trust[id]??=newImmersiveState().trust[id];
+  immersive.dialogue=value.immersive.dialogue.filter(d=>dialogueOptions.some(option=>option.id===d.choiceId&&option.personId===d.personId&&
+    option.needs.every(id=>found.has(id))));
+  immersive.dialogueFlags=[...new Set(immersive.dialogue.map(d=>d.choiceId))];
+  immersive.terminalSearches=value.immersive.terminalSearches;
+ }
+ session.immersive=immersive;
  session.finalReport=null;
  session.accusationCount=next.attempts.length;
  session.aiCalls=25;
