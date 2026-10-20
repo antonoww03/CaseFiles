@@ -17,7 +17,7 @@ test('Director Cut 1.2 exposes the opening scene, close-ups and a meaningful cho
  await page.getByRole('button',{name:'Събери улика'}).click();
  await expect(page.getByRole('button',{name:/Запази телефона като доказателство/})).toBeVisible();
  await page.getByRole('button',{name:/Запази телефона като доказателство/}).click();
- await expect(page.getByRole('button',{name:/Изискай незабавни обяснения/})).toBeDisabled();
+ await expect(page.getByRole('button',{name:/Изискай незабавни обяснения/})).toHaveCount(0);
  expect(errors).toEqual([]);
 });
 
