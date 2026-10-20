@@ -1,13 +1,14 @@
 import {describe,expect,it} from 'vitest';
 import {initialProgress} from './expansion.js';
 import {newImmersiveState} from './immersive.js';
+import {initialLiving} from './living.js';
 import {backupSchema,exportBackup,applyBackup} from './backup.js';
 import type {StoredSession} from './storage.js';
 function sample():StoredSession{
  return {id:'b93c9ace-a993-44a0-8b6a-7e9b565ddf66',found:new Set(['E01','E03','E04','E05','E06','E08','E09']),
  links:new Set(['D01','D02']),notes:[],verified:new Set(),
  analyses:new Set(['video:elevator','document:draft']),pressure:{martin:41},hintsUsed:1,accusationCount:0,finalReport:null,
- expansion:initialProgress(),immersive:newImmersiveState(),messages:{martin:[{role:'player',text:'Къде бяхте?'},{role:'npc',text:'У дома.'}]},disclosed:{},lastActive:Date.now(),interviewCount:1,aiCalls:0,interviewBusy:false};
+ expansion:initialProgress(),immersive:newImmersiveState(),living:initialLiving(),messages:{martin:[{role:'player',text:'Къде бяхте?'},{role:'npc',text:'У дома.'}]},disclosed:{},lastActive:Date.now(),interviewCount:1,aiCalls:0,interviewBusy:false};
 }
 describe('portable case backup',()=>{
  it('round trips valid progress while disabling paid AI for imported saves',()=>{
