@@ -132,7 +132,7 @@ export function InvestigationExpansion({session,foundCount,onRestoreSession}:{se
     <div className="exp-info"><strong><Upload size={15}/> Възстанови достъп от файл</strong><input type="file" accept=".json,application/json" aria-label="Избери JSON архив" onChange={e=>{const file=e.target.files?.[0];if(file&&file.size<8000)void file.text().then(setRestoreText);else setMessage('Файлът е прекалено голям.');}}/><button type="button" className="secondary" disabled={!restoreText||busy} onClick={()=>void restore()}>Възстанови сесия</button></div>
     <div className="exp-head"><SlidersHorizontal/><div><h2>Ниво на трудност</h2><p>Избери преди началото на разследването. След откриване на първа улика трудността остава фиксирана.</p></div></div>
     <div className="exp-choices horizontal">{([['rookie','Начинаещ'],['detective','Детектив'],['expert','Експерт']] as const).map(([value,label])=><button type="button" key={value} disabled={foundCount>0||data.actions.length>0||busy} className={data.difficulty===value?'chosen':''} onClick={()=>void difficulty(value)}>{label}</button>)}</div>
-    <p className="exp-disclaimer">Трудността е профилно предпочитание за текущата версия; основните правила на уликите и оценката са еднакви при трите нива.</p>
+    <p className="exp-disclaimer">Начинаещ: 3 подсказки и 2 наказателни точки за всяка. Детектив: 2 подсказки и 4 точки. Експерт: 1 подсказка и 6 точки. Фактите и отговорът на загадката остават същите.</p>
    </div>}
    </>}
  </div>;
