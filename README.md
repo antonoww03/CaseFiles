@@ -85,6 +85,34 @@ A new **Интерактивно разследване** navigation tab provide
 
 **Limitations:** This is a richer 2D interactive prototype rather than fully 3D gameplay, and forensic mini-games remain fictional simulations. The existing case narrative, clues and final server-side verdict are not replaced. Local portable backups are player-controlled and not cryptographically signed; do not rely on them as cheat-resistant server records. Render reports \`storage: memory\` until \`DATABASE_URL\` is configured for PostgreSQL, so session state can otherwise be lost after a restart.
 
+## CASEFILES 0.7 — Living Investigation
+
+The **Живо разследване** section contains fifteen new game systems:
+
+| # | Game system | 0.7 implementation |
+|---|---|---|
+| 1 | Search warrants | Evidence-gated, reputation-dependent fictional permits for the office archive and service entrance |
+| 2 | Chain of custody | Server-recorded source, fictional officer, location, timestamp and lawful flag for newly acquired evidence |
+| 3 | Expert opinions | Medical, video and financial written analyses; must have prerequisite clues and take another game action to become available |
+| 4 | Confrontations | Elena's phone contradiction and Martin's invoice discrepancy; evidence-dependent |
+| 5 | Reputation | Persistent 0–100 score affected by procedural choices and warrant handling |
+| 6 | Dynamic events | Additional phone signal, witness and anonymous letter triggered at game actions 3, 6 and 9 |
+| 7 | Consequences | One-time procedural choices can close a confrontation path irreversibly within the current session |
+| 8 | Forensic clock | Five progression phases; **not** a real-time waiting mechanic |
+| 9 | Financial trail | Four fictional transactions with flagged anomalies; detailed audit requires office warrant |
+| 10 | Courtroom | Submit a set of authenticated evidence on the financial or chronological route; simulated prosecutorial review |
+| 11 | Admissibility | Server checks record provenance and fictional permits for protected E09/E10 evidence |
+| 12 | Suspect secrets | Dossiers reveal hidden contextual facts only after defined confrontation and expertise |
+| 13 | Alternative paths | Financial and temporal evidentiary paths can independently satisfy the court game rules |
+| 14 | Case editor | Session-local, validated JSON templates with exactly 3 suspects, 5–8 evidence records and an adjudicated solution; downloadable JSON |
+| 15 | Case #002 | **Изчезналият архив**, a distinct playable mini-case: Plovdiv archive, 3 new suspects, 6 clues, gated interviews, accusation and a separate solution |
+
+The original Case #001, previous mechanics and its verdict remain playable independently. The second case and the custom case editor are a **story framework/mini-case** rather than a fully illustrated three-room 0.6-quality production story.
+
+New progress persists with the session when PostgreSQL is enabled, and is included in the portable backup schema. Existing Case #001 evidence collected **before** the update may not have a historical acquisition record; the system does not invent one. A manual player-controlled save can be edited and must not be mistaken for immutable audit evidence.
+
+**All warrants, prosecutor decisions, finance records and crime events are fictional in-game simulations, not a statement of Bulgarian legal process or connected police/banking data.**
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
