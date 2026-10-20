@@ -129,7 +129,7 @@ router.get('/status',(_req,res)=>res.json({storage:storagePool()?'postgres':'mem
 router.post('/profile',async(req,res)=>{
   const parsed=z.object({name:nick}).safeParse(req.body);
   if(!parsed.success)return void res.status(400).json({error:'Името трябва да е между 2 и 32 букви/цифри.'});
-  if(isThrottled(req.ip,'profile',15))return void res.status(429).json({error:'Твърде много профили.'});
+  if(isThrottled(req.ip||'unknown','profile',15))return void res.status(429).json({error:'Твърде много профили.'});
   const profile:Profile={id:randomUUID(),name:parsed.data.name,xp:0,completed:[],createdAt:new Date().toISOString()};
   try{await write('profile',profile.id,profile,-1);res.status(201).json(profile);}catch(e){fail(res,e);}
 });
@@ -145,7 +145,7 @@ router.get('/stories',async(_req,res)=>{
   }catch(e){fail(res,e);}
 });
 router.post('/stories',async(req,res)=>{
-  if(isThrottled(req.ip,'publish',5))return void res.status(429).json({error:'Максимум пет публикации на час.'});
+  if(isThrottled(req.ip||'unknown','publish',5))return void res.status(429).json({error:'Максимум пет публикации на час.'});
   const parsed=z.object({author:nick,story:caseTemplateSchema}).safeParse(req.body);
   if(!parsed.success)return void res.status(400).json({error:'Невалиден сценарий: нужни са 3 заподозрени, 5–8 улики и валидно решение.'});
   const id='case-'+randomBytes(6).toString('hex');
@@ -153,7 +153,7 @@ router.post('/stories',async(req,res)=>{
   try{await write('story',id,story,-1);res.status(201).json({id,title:story.story.title});}catch(e){fail(res,e);}
 });
 router.post('/rooms',async(req,res)=>{
-  if(isThrottled(req.ip,'room',20))return void res.status(429).json({error:'Прекалено много стаи.'});
+  if(isThrottled(req.ip||'unknown','room',20))return void res.status(429).json({error:'Прекалено много стаи.'});
   const parsed=initialForm.safeParse(req.body);
   if(!parsed.success)return void res.status(400).json({error:'Избери вид случай и име на детектив.'});
   try{
@@ -168,7 +168,7 @@ router.post('/rooms',async(req,res)=>{
   }catch(e){fail(res,e);}
 });
 router.post('/rooms/:id/join',async(req,res)=>{
-  if(isThrottled(req.ip,'join',40))return void res.status(429).json({error:'Прекалено много опити.'});
+  if(isThrottled(req.ip||'unknown','join',40))return void res.status(429).json({error:'Прекалено много опити.'});
   const parsed=z.object({name:nick}).safeParse(req.body);
   if(!parsed.success)return void res.status(400).json({error:'Избери кратък псевдоним.'});
   const id=req.params.id.toUpperCase();if(!/^[0-9A-F]{10}$/.test(id))return void res.status(400).json({error:'Невалиден код.'});
@@ -187,7 +187,7 @@ router.get('/rooms/:id',async(req,res)=>{
   try{const item=await read<Room>('room',id);if(!item)return void res.status(404).json({error:'Стаята не е открита.'});res.json(roomView(item.value));}catch(e){fail(res,e);}
 });
 router.post('/rooms/:id/action',async(req,res)=>{
-  if(isThrottled(req.ip,'action',240))return void res.status(429).json({error:'Твърде много действия.'});
+  if(isThrottled(req.ip||'unknown','action',240))return void res.status(429).json({error:'Твърде много действия.'});
   const action=actionSchema.safeParse(req.body),id=req.params.id.toUpperCase(),memberToken=req.header('x-room-member');
   if(!action.success||!/^[0-9A-F]{10}$/.test(id)||!memberToken)return void res.status(400).json({error:'Невалидно действие.'});
   try{
