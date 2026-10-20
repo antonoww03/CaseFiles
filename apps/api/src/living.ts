@@ -60,9 +60,9 @@ export type LivingState={
  locked:string[];secrets:string[];financial:string[];court:{outcome:string;reason:string}|null;
  courtAttempts:number;policy:string[];lastAction:string;
  case2:{found:string[];dialogue:string[];accusations:number;verdict:string|null};
- custom:CaseTemplate|null;customProgress:{found:string[];verdict:string|null};
+ custom:CaseTemplate|null;customProgress:{found:string[];dialogue:string[];accusations:number;verdict:string|null};
 };
-export function initialLiving():LivingState{return {reputation:60,phase:0,actions:0,warrants:[],denied:[],chain:[],expertRequests:[],experts:[],confrontations:[],events:[],locked:[],secrets:[],financial:[],court:null,courtAttempts:0,policy:[],lastAction:'',case2:{found:[],dialogue:[],accusations:0,verdict:null},custom:null,customProgress:{found:[],verdict:null}};}
+export function initialLiving():LivingState{return {reputation:60,phase:0,actions:0,warrants:[],denied:[],chain:[],expertRequests:[],experts:[],confrontations:[],events:[],locked:[],secrets:[],financial:[],court:null,courtAttempts:0,policy:[],lastAction:'',case2:{found:[],dialogue:[],accusations:0,verdict:null},custom:null,customProgress:{found:[],dialogue:[],accusations:0,verdict:null}};}
 export function progressTick(s:LivingState):void {
  s.actions=Math.min(500,s.actions+1);s.phase=Math.min(4,Math.floor(s.actions/3));
  if(s.actions>=3&&!s.events.includes('phone'))s.events.push('phone');
