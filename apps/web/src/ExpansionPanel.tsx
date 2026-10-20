@@ -38,15 +38,16 @@ async function api<T>(session:string,path:string,method='GET',body?:unknown):Pro
  return data;
 }
 function dateOf(value:string){return new Date(value).toLocaleString('bg-BG',{dateStyle:'short',timeStyle:'short'});}
-function importPortable(text:string){
- const parsed:unknown=JSON.parse(text);
- if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Неподдържан архив.');
- const p=parsed as Record<string,unknown>;
- if(p.format!=='casefiles-local-v1'||typeof p.sessionId!=='string'||!/^[0-9a-f-]{36}$/i.test(p.sessionId))throw new Error('Неподдържан формат на архив.');
- return p.sessionId;
+function importPortable(text:string):{kind:'session';id:string}|{kind:'backup';data:unknown}{
+ const value:unknown=JSON.parse(text);
+ if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Неподдържан архив.');
+ const p=value as Record<string,unknown>;
+ if(p.format==='casefiles-backup-v1'&&p.version===1)return {kind:'backup',data:value};
+ if(p.format==='casefiles-local-v1'&&typeof p.sessionId==='string'&&/^[0-9a-f-]{36}$/i.test(p.sessionId))return {kind:'session',id:p.sessionId};
+ throw new Error('Неподдържан формат на архива.');
 }
 
-export function InvestigationExpansion({session,foundCount,onRestoreSession}:{session:string;foundCount:number;onRestoreSession:(id:string)=>Promise<void>}) {
+export function InvestigationExpansion({session,foundCount,onRestoreSession,onRestoreBackup}:{session:string;foundCount:number;onRestoreSession:(id:string)=>Promise<void>;onRestoreBackup:(data:unknown)=>Promise<void>}) {
  const [data,setData]=useState<ExpansionData|null>(null);
  const [section,setSection]=useState<Section>('lab');
  const [busy,setBusy]=useState(false);
@@ -69,17 +70,29 @@ export function InvestigationExpansion({session,foundCount,onRestoreSession}:{se
   catch(e){setMessage(e instanceof Error?e.message:String(e));}
   finally{setBusy(false);}
  }
- function exportSession(){
-  if(!session)return;
-  const saved={format:'casefiles-local-v1',version:1,createdAt:new Date().toISOString(),sessionId:session,remarks:'Възстановява достъп до съществуваща сесия, но не спасява сървърните данни след рестарт, когато няма PostgreSQL.',preferences:data?.settings||null};
-  const file=new Blob([JSON.stringify(saved,null,2)],{type:'application/json'});
-  const href=URL.createObjectURL(file);
-  const link=document.createElement('a');link.href=href;link.download='casefiles-session-backup.json';link.click();URL.revokeObjectURL(href);setMessage('Архивът на идентификатора е записан на устройството. Пази го лично.');
+ async function exportSession(){
+  if(!session||busy)return;
+  setBusy(true);setMessage('');
+  try{
+   const saved=await api<unknown>(session,'/backup');
+   const file=new Blob([JSON.stringify(saved,null,2)],{type:'application/json'});
+   const href=URL.createObjectURL(file);
+   const link=document.createElement('a');
+   link.href=href;link.download='casefiles-progress-backup.json';
+   document.body.appendChild(link);link.click();link.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(href),1000);
+   setMessage('Пълният наличен прогрес е експортиран. Архивът съдържа личните ти бележки и разговори.');
+  }catch(e){setMessage(e instanceof Error?e.message:String(e));}
+  finally{setBusy(false);}
  }
  async function restore(){
   setBusy(true);setMessage('');
-  try{await onRestoreSession(importPortable(restoreText));setMessage('Сесията е възстановена.');}
-  catch(e){setMessage(e instanceof Error?e.message:String(e));}
+  try{
+   const archive=importPortable(restoreText);
+   if(archive.kind==='session')await onRestoreSession(archive.id);
+   else await onRestoreBackup(archive.data);
+   setMessage('Прогресът е възстановен успешно.');
+  }catch(e){setMessage(e instanceof Error?e.message:String(e));}
   finally{setBusy(false);}
  }
  if(!session)return <div className="exp-empty"><Lock size={26}/><h3>Първо започни разследване</h3><p>Разширените инструменти се отключват с игрова сесия.</p></div>;
@@ -127,9 +140,9 @@ export function InvestigationExpansion({session,foundCount,onRestoreSession}:{se
    </div>}
    {section==='backup'&&<div className="exp-stack"><div className="exp-head"><Settings2/><div><h2>Игрови настройки</h2><p>Предпочитанията са свързани със сесията. Звукът е изключен по подразбиране.</p></div></div>
     <div className="exp-info"><div className="exp-options"><button type="button" className="secondary" onClick={()=>void act({kind:'settings',sound:!data.settings.sound,reducedMotion:data.settings.reducedMotion})}>{data.settings.sound?<Volume2 size={16}/>:<VolumeX size={16}/>} Звукови сигнали: {data.settings.sound?'Включени':'Изключени'}</button><button type="button" className="secondary" onClick={()=>void act({kind:'settings',sound:data.settings.sound,reducedMotion:!data.settings.reducedMotion})}>Намалени анимации: {data.settings.reducedMotion?'Да':'Не'}</button></div><small>В момента звуковият превключвател запазва предпочитанието. Не възпроизвеждаме аудио без съгласие.</small></div>
-    <div className="exp-head"><Archive/><div><h2>Локален архив на сесията</h2><p>Експорт и импорт на идентификатора на сесията — полезно за повторно отваряне, но не е самостоятелен сървърен backup.</p></div></div>
-    <div className="exp-info"><p>Файлът съдържа поверителен идентификатор за достъп. Не го споделяй. За възстановяване след рестарт на backend-а е необходимо постоянно съхранение в PostgreSQL.</p><button className="primary" type="button" onClick={exportSession}><Download size={16}/> Експортирай достъпа</button></div>
-    <div className="exp-info"><strong><Upload size={15}/> Възстанови достъп от файл</strong><input type="file" accept=".json,application/json" aria-label="Избери JSON архив" onChange={e=>{const file=e.target.files?.[0];if(file&&file.size<8000)void file.text().then(setRestoreText);else setMessage('Файлът е прекалено голям.');}}/><button type="button" className="secondary" disabled={!restoreText||busy} onClick={()=>void restore()}>Възстанови сесия</button></div>
+    <div className="exp-head"><Archive/><div><h2>Локален архив на сесията</h2><p>Експорт и импорт на открити доказателства, връзки, бележки, показания и настройки. Може да се възстанови в нова сесия след рестарт.</p></div></div>
+    <div className="exp-info"><p>Файлът съдържа бележки, история на разпитите и игрови данни. Не го споделяй публично. Импортът създава нова сесия; платените AI разговори остават изключени, а финалното обвинение се подава отново.</p><button className="primary" type="button" onClick={exportSession}><Download size={16}/> Експортирай игровия прогрес</button></div>
+    <div className="exp-info"><strong><Upload size={15}/> Възстанови прогрес от файл</strong><input type="file" accept=".json,application/json" aria-label="Избери JSON архив" onChange={e=>{const file=e.target.files?.[0];if(file&&file.size<120000)void file.text().then(setRestoreText);else setMessage('Файлът е прекалено голям.');}}/><button type="button" className="secondary" disabled={!restoreText||busy} onClick={()=>void restore()}>Възстанови сесия</button></div>
     <div className="exp-head"><SlidersHorizontal/><div><h2>Ниво на трудност</h2><p>Избери преди началото на разследването. След откриване на първа улика трудността остава фиксирана.</p></div></div>
     <div className="exp-choices horizontal">{([['rookie','Начинаещ'],['detective','Детектив'],['expert','Експерт']] as const).map(([value,label])=><button type="button" key={value} disabled={foundCount>0||data.actions.length>0||busy} className={data.difficulty===value?'chosen':''} onClick={()=>void difficulty(value)}>{label}</button>)}</div>
     <p className="exp-disclaimer">Начинаещ: 3 подсказки и 2 наказателни точки за всяка. Детектив: 2 подсказки и 4 точки. Експерт: 1 подсказка и 6 точки. Фактите и отговорът на загадката остават същите.</p>
