@@ -31,6 +31,34 @@ describe('portable case backup',()=>{
   expect(destination.verified.size).toBe(0);
   expect(destination.analyses.size).toBe(0);
  });
+ it('round trips genuine inventory, combination results and dialogue without extra AI calls',()=>{
+  const original=sample();
+  original.immersive.inspected=['doormat','drawer','lamp','papers'];
+  original.immersive.inventory=['brass_key','negative','uv_lamp','cipher_strip'];
+  original.immersive.discoveries=['uv_marker'];
+  original.immersive.solved=['safe_dial'];
+  original.immersive.trust.martin=49;
+  original.immersive.dialogue=[{personId:'martin',choiceId:'martin_intro',reply:'Работихме върху фактури.',at:new Date().toISOString()}];
+  original.immersive.dialogueFlags=['martin_intro'];
+  const backup=exportBackup(original);
+  const target=sample();target.found.clear();
+  applyBackup(target,backup);
+  expect(target.immersive.inventory).toContain('brass_key');
+  expect(target.immersive.solved).toEqual(['safe_dial']);
+  expect(target.immersive.trust.martin).toBe(49);
+  expect(target.immersive.dialogueFlags).toContain('martin_intro');
+  expect(target.aiCalls).toBe(25);
+ });
+ it('filters impossible combinations from tampered save files',()=>{
+  const original=sample();
+  const backup=exportBackup(original);
+  const target=sample();
+  applyBackup(target,{...backup,immersive:{...backup.immersive,
+   inventory:['brass_key','negative'],inspected:['drawer'],discoveries:['uv_marker'],solved:['safe_dial']
+  }});
+  expect(target.immersive.discoveries).toEqual([]);
+  expect(target.immersive.solved).toEqual([]);
+ });
  it('does not restore a forged solved report without its backing evidence',()=>{
   const s=sample();
   const b=exportBackup(s);
