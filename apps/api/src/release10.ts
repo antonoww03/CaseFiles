@@ -54,6 +54,11 @@ export function snapshot10(s:StoredSession){
   case2:{
    found:clues,interviews:s.living.case2.dialogue,verdict:case2Verdict,ending:case2Ending,
    accusations:s.living.case2.accusations,
+   epilogue:case2Verdict!=='solved'?null:
+    case2Ending==='fractured'?'Договорът е възстановен, но прибързаният натиск е унищожил доверието на един от свидетелите. Истината идва с цена.':
+    case2Ending==='contested'?'След повторен преглед на неверните обвинения архивната следа най-сетне издържа проверка. Ранните грешки остават в досието.':
+    case2Ending==='complete'?'Часът на рестарта, резервният ключ и финансовата следа образуват непрекъсната доказателствена история. Случаят е окончателно приключен.':
+    'Откритите документи стигат за аргументирано обвинение, но някои второстепенни детайли остават неизяснени.',
    scenes:playableRooms.filter(x=>x.caseId==='case-002').map((room,i)=>({
     ...room,clueId:case002.clues[i].id,clueTitle:case002.clues[i].title,
     available:i<3||clues.length>=2,found:clues.includes(case002.clues[i].id),
@@ -67,7 +72,7 @@ export function snapshot10(s:StoredSession){
    quality:confidence
   },
   beats:{
-   'case-001':storyBeats['case-001'].filter(b=>b.requires.every(x=>s.found.has(x))).map(x=>({id:x.id,title:x.title,line:x.line})),
+   'case-001':storyBeats['case-001'].filter(b=>(b.id!=='truth'||!!s.finalReport)&&b.requires.every(x=>s.found.has(x))).map(x=>({id:x.id,title:x.title,line:x.line})),
    'case-002':storyBeats['case-002'].filter(b=>b.requires.every(x=>clues.includes(x))).map(x=>({id:x.id,title:x.title,line:x.line}))
   },
   totalProgress:Math.min(100,Math.round((s.found.size+s.living.case2.found.length+completed)/21*100))
