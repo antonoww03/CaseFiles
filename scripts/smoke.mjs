@@ -7,7 +7,7 @@ const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
 const origin = 'http://127.0.0.1:' + port;
 const child = spawn(process.execPath, ['apps/api/dist/index.js'], {
   cwd: repositoryRoot,
-  env: { ...process.env, PORT: String(port), WEB_ORIGIN: 'http://localhost:5173', OPENAI_API_KEY: '' },
+  env: { ...process.env, PORT: String(port), WEB_ORIGIN: 'http://localhost:5173', OPENAI_API_KEY: '', DATABASE_URL: '' },
   stdio: 'ignore'
 });
 
