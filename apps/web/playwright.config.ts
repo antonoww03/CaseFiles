@@ -17,7 +17,7 @@ export default defineConfig({
       url: 'http://127.0.0.1:3001/api/health',
       timeout: 60000,
       reuseExistingServer: !process.env.CI,
-      env: { WEB_ORIGIN: 'http://127.0.0.1:5173', OPENAI_API_KEY: '', DATABASE_URL: '' }
+      env: { WEB_ORIGIN: 'http://127.0.0.1:5173', OPENAI_API_KEY: '', DATABASE_URL: '', CASEFILES_E2E: 'true' }
     },
     {
       command: 'npm run dev -w apps/web',
