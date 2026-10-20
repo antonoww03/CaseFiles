@@ -107,7 +107,7 @@ try {
     return {status:response.status,json:await response.json()};
   };
   assert.equal((await memberRequest({action:'discover',id:'C4'})).status,403);
-  assert.equal((await memberRequest({action:'discover',id:'C1'},'made-up-member')).status,503);
+  assert.equal((await memberRequest({action:'discover',id:'C1'},'made-up-member')).status,403);
   for(const id of ['C1','C2','C3','C4','C6'])assert.equal((await memberRequest({action:'discover',id})).status,200);
   const shared=await request('/community/rooms/'+roomCode);
   assert.equal(shared.status,200);
