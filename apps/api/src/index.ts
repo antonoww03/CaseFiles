@@ -10,6 +10,7 @@ import { clipObservations, documents, observationSchema, frameFor, verifyObserva
 import { initialProgress, puzzles, actionSchema, unlocks, witnesses, classificationTargets, timelineItems, tutorial, difficultySchema, canEnter, achievements, outcome } from './expansion.js';
 import { exportBackup, applyBackup } from './backup.js';
 import { newImmersiveState, immersiveSnapshot, interactionSchema, interaction, dialogueSchema, chooseDialogue, searchSchema, searchRecords } from './immersive.js';
+import { initialLiving, visibility, capture, progressTick, canWarrant, canAdmit, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions, caseCatalog, case002, caseTemplateSchema, publicStory, solveCase, warrantAction, expertAction, confrontationAction, financeAction, policyAction, courtAction, caseAction } from './living.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -74,7 +75,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -109,6 +110,122 @@ const expansionView = (session:Session) => {
   timelineSolved:timelineItems.every(x=>!session.found.has(x.requires)||progress.placements[x.id]===x.time)
  };
 };
+app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/living', (req,res)=>{
+ const s=getSession(req,res);if(s)res.json(visibility(s.living,s.found));
+});
+app.get('/api/living/case/:id',(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ const template=req.params.id==='case-002'?case002:s.living.custom?.id===req.params.id?s.living.custom:null;
+ if(!template)return void res.status(404).json({error:'Няма такъв случай.'});
+ const state=req.params.id==='case-002'?s.living.case2:s.living.customProgress;
+ res.json(publicStory(template,state));
+});
+app.post('/api/living/case/editor',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ const parsed=caseTemplateSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидна история. Нужни са 3 заподозрени, 5–8 различни улики и последователно решение.'});
+ if(s.living.customProgress.found.length)return void res.status(409).json({error:'За да смениш собствената история, започни нова сесия.'});
+ const before=structuredClone(s.living);s.living.custom=parsed.data;
+ try{await saveSession(s);}catch{s.living=before;return void res.status(503).json({error:'Неуспешно запазване.'});}
+ res.status(201).json({id:parsed.data.id,title:parsed.data.title});
+});
+app.post('/api/living/case/action',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ const parsed=caseAction.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно действие по случая.'});
+ const {caseId,action,id,evidenceIds=[]}=parsed.data;
+ const template=caseId==='case-002'?case002:s.living.custom?.id===caseId?s.living.custom:null;
+ if(!template)return void res.status(404).json({error:'Невалиден случай.'});
+ const before=structuredClone(s.living);
+ const state=caseId==='case-002'?s.living.case2:s.living.customProgress;
+ const full=template.clues.map(x=>x.id);
+ let message='';
+ if(action==='discover'){
+   if(!full.includes(id))return void res.status(404).json({error:'Неизвестна следа.'});
+   if(full.indexOf(id)>=3&&state.found.length<2)return void res.status(403).json({error:'Първо намери две начални следи.'});
+   if(!state.found.includes(id))state.found.push(id);
+   message='Материалът е добавен към случая.';
+ }else if(action==='interview'){
+   if(!template.suspects.some(x=>x.id===id))return void res.status(404).json({error:'Неизвестен заподозрян.'});
+   if(state.found.length<2)return void res.status(403).json({error:'Нужни са две следи преди разговора.'});
+   if(!state.dialogue.includes(id))state.dialogue.push(id);
+   message=template.suspects.find(x=>x.id===id)!.alibi;
+ }else {
+   if(!template.suspects.some(x=>x.id===id))return void res.status(404).json({error:'Неизвестен заподозрян.'});
+   if(evidenceIds.some(x=>!state.found.includes(x)))return void res.status(403).json({error:'Използвай само открити доказателства.'});
+   state.accusations++;
+   state.verdict=solveCase(state,template,id,evidenceIds);
+   message=state.verdict==='solved'?'Случаят е разрешен.':state.verdict==='incorrect'?'Това обвинение не се подкрепя от заключението.':'Необходима е по-силна доказателствена връзка.';
+ }
+ progressTick(s.living);
+ try{await saveSession(s);}catch{s.living=before;return void res.status(503).json({error:'Неуспешно запазване.'});}
+ res.json({message,story:publicStory(template,state)});
+});
+app.post('/api/living/action',async(req,res)=>{
+ const s=getSession(req,res);if(!s)return;
+ if(!useQuota('living:'+req.ip,180,60*60*1000))return void res.status(429).json({error:'Превишен лимит на действията.'});
+ const kind=req.body?.kind;
+ const before=structuredClone(s.living);const l=s.living;
+ let message='';
+ if(kind==='warrant'){
+  const parsed=warrantAction.safeParse(req.body);if(!parsed.success)return void res.status(400).json({error:'Невалидна заповед.'});
+  const w=warrantDefinitions.find(w=>w.id===parsed.data.id)!;
+  if(l.warrants.includes(w.id))return void res.status(409).json({error:'Вече има разрешение.'});
+  if(!canWarrant(w.id,s.found,l.reputation)){l.denied.push(w.id);return void res.status(403).json({error:'Необходими са всички основания и репутация поне 35.'});}
+  l.warrants.push(w.id);l.reputation=Math.min(100,l.reputation+3);
+  message='Получено е игрово разрешение за '+w.place+'.';
+ }else if(kind==='expert'){
+  const parsed=expertAction.safeParse(req.body);if(!parsed.success)return void res.status(400).json({error:'Невалидна експертиза.'});
+  const x=expertDefinitions.find(x=>x.id===parsed.data.id)!;
+  if(x.needs.some(id=>!s.found.has(id)))return void res.status(403).json({error:'Липсват необходимите материали.'});
+  if(!l.expertRequests.includes(x.id)){l.expertRequests.push(x.id);message='Експертизата е назначена. Резултатът ще е наличен след следващо игрово действие.';}
+  else if(!l.experts.includes(x.id)&&l.actions>=3){l.experts.push(x.id);message=x.report;}
+  else if(l.experts.includes(x.id))return void res.status(409).json({error:'Становището вече е готово.'});
+  else message='Експертизата се обработва. Продължи разследването.';
+ }else if(kind==='confront'){
+  const parsed=confrontationAction.safeParse(req.body);if(!parsed.success)return void res.status(400).json({error:'Невалидна конфронтация.'});
+  const x=confrontationDefinitions.find(x=>x.id===parsed.data.id)!;
+  if(x.needs.some(id=>!s.found.has(id)))return void res.status(403).json({error:'Липсват доказателства.'});
+  if(l.locked.includes(x.id))return void res.status(409).json({error:'Тази линия е необратимо затворена от предишно решение.'});
+  if(l.confrontations.includes(x.id))return void res.status(409).json({error:'Конфронтацията вече е проведена.'});
+  l.confrontations.push(x.id);
+  if(x.id==='contact')l.secrets.push('elena');
+  if(x.id==='invoices'&&l.experts.includes('financial'))l.secrets.push('martin');
+  message=x.result;
+ }else if(kind==='policy'){
+  const parsed=policyAction.safeParse(req.body);if(!parsed.success)return void res.status(400).json({error:'Невалиден избор.'});
+  const choice=parsed.data.choice;
+  if(l.policy.includes(choice))return void res.status(409).json({error:'Този избор вече е направен.'});
+  l.policy.push(choice);
+  if(choice==='respect'){l.reputation=Math.min(100,l.reputation+10);message='Следването на процедурата подобри доверието в разследването.';}
+  if(choice==='publicize'){l.reputation=Math.max(0,l.reputation-25);if(!l.confrontations.includes('contact'))l.locked.push('contact');message='Разпространението на неподкрепени обвинения намали репутацията и може да затвори разговора с Елена.';}
+  if(choice==='force'){l.reputation=Math.max(0,l.reputation-20);if(!l.confrontations.includes('invoices'))l.locked.push('invoices');message='Непремереното действие намали репутацията и затвори една линия на разпит.';}
+ }else if(kind==='finance'){
+  const parsed=financeAction.safeParse(req.body);if(!parsed.success)return void res.status(400).json({error:'Невалидна транзакция.'});
+  if(!s.found.has('E04'))return void res.status(403).json({error:'Първо открий кореспонденцията за фактурите.'});
+  if(!l.warrants.includes('office'))return void res.status(403).json({error:'За детайлен преглед на архивните записи е необходимо разрешение.'});
+  if(!l.financial.includes(parsed.data.id))l.financial.push(parsed.data.id);
+  const t=transactions.find(t=>t.id===parsed.data.id)!;message=t.detail;
+ }else if(kind==='court'){
+  const parsed=courtAction.safeParse(req.body);if(!parsed.success)return void res.status(400).json({error:'Невалидна съдебна аргументация.'});
+  const ids=[...new Set(parsed.data.evidenceIds)];
+  if(ids.some(id=>!s.found.has(id)))return void res.status(403).json({error:'Можеш да представиш само събрани улики.'});
+  const admissible=ids.filter(id=>canAdmit(l,id)&&(!['E09'].includes(id)||l.warrants.includes('office'))&&(!['E10'].includes(id)||l.warrants.includes('basement')));
+  const groups=parsed.data.route==='financial'?[['E04','E09'],['E05','E10']]:[['E06','E07'],['E02','E08']];
+  const supported=groups.every(g=>g.some(id=>admissible.includes(id)));
+  const positive=l.reputation>=35&&admissible.length>=3&&supported&&l.experts.length>=1;
+  l.courtAttempts++;
+  l.court={outcome:positive?'Приети доказателства':'Върнато за допълване',reason:positive?'Прокурорът приема игровата аргументация по '+(parsed.data.route==='financial'?'финансовия':'времевия')+' път.':'Недостатъчно допустими доказателства, липсваща експертиза или увредена репутация.'};
+  message=l.court.reason;
+ }else return void res.status(400).json({error:'Неизвестно действие.'});
+ progressTick(l);l.lastAction=message;
+ if(l.experts.includes('video')&&!l.secrets.includes('petar'))l.secrets.push('petar');
+ if(l.experts.includes('financial')&&l.confrontations.includes('invoices')&&!l.secrets.includes('martin'))l.secrets.push('martin');
+ try{await saveSession(s);}catch{s.living=before;return void res.status(503).json({error:'Неуспешно запазване.'});}
+ res.json({message,progress:visibility(l,s.found)});
+});
+
 app.get('/api/immersive', (req,res) => {
   const s = getSession(req,res);
   if (s) res.json(immersiveSnapshot(s.immersive, s.found));
@@ -340,6 +457,7 @@ app.post('/api/forensics/clips/:id/analyze', async (req, res) => {
   if (!matchedId) return void res.status(422).json({ error: 'Това наблюдение не е достатъчно. Потърси отличителен детайл в конкретния кадър.' });
   const previouslyFound = session.found.has(matchedId);
   session.found.add(matchedId);
+  capture(session.living,matchedId,'Анализ на кадър','Камера '+clip.id);
   session.analyses.add('video:' + clip.id);
   try { await saveSession(session); }
   catch {
@@ -382,6 +500,7 @@ app.post('/api/forensics/documents/:id/inspect', async (req, res) => {
   const wasFound = session.found.has(document.clueId);
   if (completed) {
     session.found.add(document.clueId);
+    capture(session.living,document.clueId,'Изследване на страница','Документ '+document.id);
     session.analyses.add('document:' + document.id);
     try { await saveSession(session); }
     catch {
@@ -433,6 +552,7 @@ app.post('/api/discover/:id', async (req, res) => {
   if (['E06','E07','E09','E10'].includes(item.id)) return void res.status(403).json({ error: 'Тази улика се отключва чрез анализ в криминалистичния модул.' });
   if (item.id === 'E08' && (!session.found.has('E01') || !session.found.has('E03'))) return void res.status(403).json({ error: 'Първо провери протокола от огледа и телефона.' });
   session.found.add(item.id);
+  capture(session.living,item.id,'Оглед / първичен материал',item.source);
   try { await saveSession(session); } catch { return void res.status(503).json({ error: 'Неуспешно запазване на уликата.' }); }
   res.json({ evidence: item, found: [...session.found] });
 });
@@ -497,8 +617,8 @@ app.post('/api/interview', async (req, res) => {
     session.messages[personId] = updatedHistory.slice(-40);
     session.disclosed[personId] = disclosed;
     session.interviewCount++;
-    if (personId === 'elena') session.found.add('E11');
-    if (personId === 'petar') session.found.add('E12');
+    if (personId === 'elena') { session.found.add('E11'); capture(session.living,'E11','Свидетелски протокол','Разпит на Елена'); }
+    if (personId === 'petar') { session.found.add('E12'); capture(session.living,'E12','Свидетелски протокол','Разпит на Петър'); }
     await saveSession(session);
     res.json({ reply, found: [...session.found], mode, pressure: session.pressure[personId], interviewStyle });
   } catch {
