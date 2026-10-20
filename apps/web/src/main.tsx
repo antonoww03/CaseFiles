@@ -7,13 +7,14 @@ import './style.css';
 import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
 import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
 import { ForensicWorkbench, FinalReport, HintStation, type FinalReportData } from './ForensicPanels';
+import { InvestigationExpansion } from './ExpansionPanel';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report';
+type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
@@ -29,6 +30,7 @@ const tabs: Tab[] = [
   { id: 'timeline', name: 'Хронология', hint: 'Последователност', icon: Clock3 },
   { id: 'interview', name: 'Разпити', hint: 'Свидетели и заподозрени', icon: MessageSquareText },
   { id: 'accusation', name: 'Обвинение', hint: 'Финално заключение', icon: Gavel },
+  { id: 'advanced', name: 'Детективски инструменти', hint: 'Миниигри и прогрес', icon: Fingerprint },
   { id: 'report', name: 'Доклад', hint: 'Развръзка на случая', icon: ShieldCheck }
 ];
 
@@ -159,6 +161,17 @@ function App() {
     void call<SuspectDossier[]>('/suspects','GET',undefined,token).then(setSuspects).catch(()=>{});
   };
 
+  const restoreSessionAccess = async (token: string): Promise<void> => {
+    const state = await call<{ found: string[]; messages: Record<string,Chat[]>; pressure?:Record<string,number>; solved?:boolean }>('/session','GET',undefined,token);
+    localStorage.setItem(storageKey,token);
+    setSession(token);setFound(state.found);setMessages(state.messages);
+    setPressure(state.pressure||{});setError('');
+    if(state.solved) setFinalReport(await call<FinalReportData>('/report','GET',undefined,token));
+    else setFinalReport(null);
+    setDeductions(await call<Deduction[]>('/deductions','GET',undefined,token));
+    await loadCaseExtras(token);
+  };
+
   const start = async () => {
     setBusy(true); setError('');
     try {
@@ -287,7 +300,7 @@ function App() {
         <div className="sidebar-case-meta"><MapPin size={12} /> СОФИЯ <span className="meta-separator">/</span> #001</div>
       </div>
 
-      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 12</span></div>
+      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 13</span></div>
       <nav className="main-nav" aria-label="Навигация по разследването">
         {tabs.map(t => {
           const Icon = t.icon;
@@ -417,6 +430,10 @@ function App() {
               <div className="interview-disclaimer"><Info size={15} /> {aiMode === 'ai-live' ? 'Последният отговор беше генериран от AI.' : aiMode === 'ai-configured' ? 'AI ключ е конфигуриран, но реален отговор не е потвърден. При грешка се използва демонстрационен диалог.' : 'В момента се използват демонстрационни реплики.'}</div>
             </>}
 
+            {view === 'advanced' && <>
+              <SectionHeader kicker="CASEFILES / РАЗШИРЕНИ ИНСТРУМЕНТИ" title="Детективски център" description="Нови криминалистични миниигри, карта, логическа проверка, реконструкция, история на решенията и постижения." extra={<span className="tag"><Fingerprint size={13}/> DIGITAL INVESTIGATION</span>} />
+              <InvestigationExpansion session={session} foundCount={found.length} onRestoreSession={restoreSessionAccess}/>
+            </>}
             {view === 'report' && <>
               <SectionHeader kicker="ЗАКЛЮЧИТЕЛЕН ДОКЛАД / СЛУЧАЙ 001" title="Реконструкция на случая" description="Пълната хронология и пропуснатите улики се показват само след успешно обосновано обвинение." extra={<span className="tag"><ShieldCheck size={13}/> {finalReport?'СЛУЧАЙ ПРИКЛЮЧЕН':'ЗАПЕЧАТАНО ДОСИЕ'}</span>}/>
               <FinalReport report={finalReport}/>
@@ -435,7 +452,7 @@ function App() {
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.4</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.5</span></div>
         </main>
 
         <aside className="inspector">
