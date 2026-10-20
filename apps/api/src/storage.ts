@@ -8,6 +8,11 @@ export type StoredSession = {
   links: Set<string>;
   notes: Note[];
   verified: Set<string>;
+  analyses: Set<string>;
+  pressure: Record<string, number>;
+  hintsUsed: number;
+  accusationCount: number;
+  finalReport: Record<string, unknown> | null;
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   lastActive: number;
@@ -21,6 +26,11 @@ type Persisted = {
   links: string[];
   notes?: Note[];
   verified?: string[];
+  analyses?: string[];
+  pressure?: Record<string, number>;
+  hintsUsed?: number;
+  accusationCount?: number;
+  finalReport?: Record<string, unknown> | null;
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   interviewCount: number;
@@ -67,6 +77,11 @@ export async function saveSession(session: StoredSession): Promise<void> {
     links: [...session.links],
     notes: session.notes,
     verified: [...session.verified],
+    analyses: [...session.analyses],
+    pressure: session.pressure,
+    hintsUsed: session.hintsUsed,
+    accusationCount: session.accusationCount,
+    finalReport: session.finalReport,
     messages: session.messages,
     disclosed: session.disclosed,
     interviewCount: session.interviewCount,
@@ -95,6 +110,11 @@ export async function restoreSession(id: string): Promise<StoredSession|null> {
     links: new Set(Array.isArray(saved.links) ? saved.links : []),
     notes: Array.isArray(saved.notes) ? saved.notes : [],
     verified: new Set(Array.isArray(saved.verified) ? saved.verified : []),
+    analyses: new Set(Array.isArray(saved.analyses) ? saved.analyses : []),
+    pressure: saved.pressure || {},
+    hintsUsed: saved.hintsUsed || 0,
+    accusationCount: saved.accusationCount || 0,
+    finalReport: saved.finalReport || null,
     messages: saved.messages || {},
     disclosed: saved.disclosed || {},
     lastActive: row.last_active.getTime(),
