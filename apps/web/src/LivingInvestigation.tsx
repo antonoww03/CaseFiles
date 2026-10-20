@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import {
-  Activity, Archive, ArrowRight, BookOpen, Check, CheckCircle,
+  Activity, Archive, ArrowRight, BookOpen, Check,
   Clock3, FileCheck2, FileSearch, Files, Fingerprint, FolderLock,
   Gavel, Handshake, Lock, Scale,
   ShieldAlert, ShieldCheck, Timer, UserRound, Wallet, X
 } from 'lucide-react';
 import './living.css';
+import {VisualCaseEditor} from './VisualCaseEditor';
 
 type Warrant={id:string;title:string;place:string;reason:string;needs:string[];eligible:boolean;approved:boolean;denied:boolean};
 type Entry={id:string;source:string;at:string;officer:string;location:string;lawful:boolean};
@@ -60,7 +61,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
  const [route,setRoute]=useState<'financial'|'temporal'>('financial');
  const [notice,setNotice]=useState('');
  const [busy,setBusy]=useState(false);
- const [templateText,setTemplateText]=useState(JSON.stringify(demoTemplate,null,2));
+ const [template,setTemplate]=useState(demoTemplate);
  useEffect(()=>{void request<Catalog>('','/cases').then(setCatalog).catch(()=>{});},[]);
  async function refresh(){
   if(!session)return;
@@ -91,7 +92,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
  async function createStory(){
   if(busy||!session)return;
   setBusy(true);setNotice('');
-  try{const data=await request<{id:string;title:string}>(session,'/living/case/editor','POST',JSON.parse(templateText));setNotice('Историята е записана в тази игрова сесия.');setCaseId(data.id);setSection('cases');}
+  try{const data=await request<{id:string;title:string}>(session,'/living/case/editor','POST',template);setNotice('Историята е записана в тази игрова сесия.');setCaseId(data.id);setSection('cases');}
   catch(e){setNotice(e instanceof Error?e.message:String(e));}
   finally{setBusy(false);}
  }
@@ -153,8 +154,8 @@ export function LivingInvestigation({session,found}:{session:string;found:string
     </>}
    </div>}
   {section==='editor'&&<div className="liv-column">
-    <Header icon={BookOpen} title="Редактор на криминални истории" detail="Променяй заглавието, героите, уликите и решението през структуриран JSON. Валидира се на сървъра и се пази в личната игрова сесия."/>
-    <div className="liv-editor"><div className="liv-editor-head"><span>CASEFILES STORY FORMAT / JSON</span><button className="secondary" type="button" onClick={()=>setTemplateText(JSON.stringify(demoTemplate,null,2))}>Примерен шаблон</button></div><textarea spellCheck={false} aria-label="JSON редактор на криминален случай" rows={24} value={templateText} onChange={e=>setTemplateText(e.target.value)}/><div className="liv-editor-actions"><button type="button" className="secondary" onClick={()=>{const blob=new Blob([templateText],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='casefiles-custom-case.json';a.click();URL.revokeObjectURL(url);}}>Изтегли JSON</button><button type="button" className="primary" disabled={busy} onClick={()=>void createStory()}><CheckCircle size={16}/> Запази и играй историята</button></div></div>
+    <Header icon={BookOpen} title="Визуален редактор на криминални истории" detail="Редактирай историята, тримата заподозрени, уликите и решението с форми. Всичко се проверява на сървъра."/>
+    <VisualCaseEditor template={template} onChange={setTemplate} onSave={()=>void createStory()} busy={busy}/>
     <p className="liv-muted">Редакторът е за собствени измислени случаи и не публикува съдържание глобално. Засега поддържа три заподозрени, 5–8 улики и една проверявана развръзка.</p>
    </div>}
    </>}
