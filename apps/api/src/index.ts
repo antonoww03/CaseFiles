@@ -14,6 +14,7 @@ import { initialLiving, visibility, capture, progressTick, canWarrant, canAdmit,
 import { initialCinematic, cinematicOverview, cinematicActionSchema, useCinematicChoice, profileSnapshot } from './cinematic.js';
 import { newGame09, game09View, game09Action, evaluateGame09 } from './game09.js';
 import { snapshot10, releaseActionSchema, evaluateRelease10 } from './release10.js';
+import {worldSnapshot,examineSchema,executeWorld} from './experience11.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 
 type Session = StoredSession;
@@ -114,6 +115,24 @@ const expansionView = (session:Session) => {
  };
 };
 app.get('/api/cases', (_req,res)=>res.json(caseCatalog));
+app.get('/api/experience11',(req,res)=>{
+ const session=getSession(req,res);if(session)res.json(worldSnapshot(session));
+});
+app.post('/api/experience11/action',async(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ if(!useQuota('experience11:'+req.ip,130,60*60*1000))return void res.status(429).json({error:'Превишен лимит на проверки.'});
+ const parsed=examineSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно игрово действие.'});
+ const beforeImmersive=structuredClone(session.immersive);
+ const beforeLinks=new Set(session.links);
+ const result=executeWorld(session,parsed.data);
+ if(result.status!==200)return void res.status(result.status).json({error:result.message});
+ try{await saveSession(session);}catch{
+  session.immersive=beforeImmersive;session.links=beforeLinks;
+  return void res.status(503).json({error:'Промяната не е запазена.'});
+ }
+ res.json({message:result.message,world:worldSnapshot(session)});
+});
 app.get('/api/release10',(req,res)=>{
  const session=getSession(req,res);
  if(session)res.json(snapshot10(session));
