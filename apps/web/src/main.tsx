@@ -11,6 +11,7 @@ import { InvestigationExpansion } from './ExpansionPanel';
 import { ImmersiveInvestigation } from './ImmersiveInvestigation';
 import { LivingInvestigation } from './LivingInvestigation';
 import { CinematicCenter } from './CinematicCenter';
+import { autosaveKey, saveLocalSnapshot, readLocalSnapshot, recoverLocalSnapshot } from './autosave';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
@@ -122,6 +123,7 @@ function App() {
   const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState('Всички');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [saveStatus,setSaveStatus]=useState<'idle'|'saved'|'restored'|'offline'>('idle');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,8 +140,28 @@ function App() {
         if (s.solved) void call<FinalReportData>('/report','GET',undefined,old).then(setFinalReport).catch(()=>{});
         void call<Deduction[]>('/deductions', 'GET', undefined, old).then(setDeductions).catch(() => setDeductions([]));
         void loadCaseExtras(old);
-      }).catch(() => localStorage.removeItem(storageKey));
+      }).catch(async () => {
+        const backup=readLocalSnapshot(old);
+        if(!backup){setError('Не успях да възстановя сесията. Провери връзката и локалния архив.');return;}
+        try{
+          const recovered=await recoverLocalSnapshot(backup);
+          localStorage.setItem(storageKey,recovered);
+          await restoreSessionAccess(recovered);
+          setSaveStatus('restored');
+        }catch{setSaveStatus('offline');setError('Сървърът или локалният архив не са достъпни. Запазих данните в браузъра за повторен опит.');}
+      });
   }, []);
+
+  useEffect(() => {
+    if(!session)return;
+    let active=true;
+    const backup=async()=>{try{await saveLocalSnapshot(session);if(active)setSaveStatus('saved');}catch{if(active)setSaveStatus('offline');}};
+    const delayed=window.setTimeout(()=>void backup(),1200);
+    const repeated=window.setInterval(()=>void backup(),18000);
+    const onVisibility=()=>{if(document.visibilityState==='hidden')void backup();};
+    document.addEventListener('visibilitychange',onVisibility);
+    return()=>{active=false;window.clearTimeout(delayed);window.clearInterval(repeated);document.removeEventListener('visibilitychange',onVisibility);};
+  },[session,found,notes,messages,deductions]);
 
   useEffect(() => {
     if (view === 'interview') chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -189,6 +211,8 @@ function App() {
     try {
       const data = await call<{ sessionId: string }>('/session', 'POST');
       localStorage.setItem(storageKey, data.sessionId);
+      localStorage.removeItem(autosaveKey);
+      setSaveStatus('idle');
       setSession(data.sessionId); setFound([]); setMessages({}); setDeductions([]);
       setSelected(null); setLinkA(''); setLinkB(''); setLinkNotice('');
       setFinalReport(null); setPressure({}); setInterviewStyle('neutral'); setScriptedOnly(true);
@@ -476,7 +500,7 @@ function App() {
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.8</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.8 · {saveStatus==='saved'?'ЛОКАЛНО ЗАПАЗЕНО':saveStatus==='restored'?'ВЪЗСТАНОВЕНО':saveStatus==='offline'?'ОФЛАЙН АРХИВ':'AUTO-SAVE'}</span></div>
         </main>
 
         <aside className="inspector">
