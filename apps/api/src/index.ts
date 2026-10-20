@@ -778,6 +778,7 @@ app.post('/api/accusation', async (req, res) => {
   catch { return void res.status(503).json({ error: 'Финалното заключение не можа да бъде записано.' }); }
   res.json({ ...verdict, score: finalScore, ...(verdict.status === 'solved' ? { report: session.finalReport } : {}) });
 });
+app.use('/api/community', communityRouter);
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
 initializeStorage().then(storageMode => {
