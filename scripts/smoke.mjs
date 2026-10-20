@@ -43,6 +43,12 @@ try {
   assert.equal(session.status, 201);
   const token = session.json.sessionId;
   assert.ok(token);
+  const firstRelease=await request('/release10','GET',undefined,token);
+  assert.equal(firstRelease.status,200);
+  assert.equal(firstRelease.json.case2.puzzles.length,3);
+  assert.equal(firstRelease.json.case2.canAccuse,false);
+  assert.equal(firstRelease.json.beats['case-001'].length,1);
+  assert.equal((await request('/release10/action','POST',{kind:'puzzle',id:'archive-lock',answer:'2339'},token)).status,403);
   const initial09=await request('/game09','GET',undefined,token);
   assert.equal(initial09.status,200);
   assert.equal(initial09.json.puzzles.length,6);
@@ -73,6 +79,17 @@ try {
   assert.equal(caseWin.status,200);
   assert.equal(caseWin.json.story.verdict,'solved');
   assert.match(caseWin.json.story.ending,/Борис/);
+  const puzzleFirst=await request('/release10/action','POST',{kind:'puzzle',id:'archive-lock',answer:'2339'},token);
+  assert.equal(puzzleFirst.status,200);
+  assert.equal(puzzleFirst.json.progress.case2.puzzles.find(x=>x.id==='archive-lock').solved,true);
+  assert.equal((await request('/release10/action','POST',{kind:'puzzle',id:'archive-film',answer:'guess'},token)).status,422);
+  const puzzleSecond=await request('/release10/action','POST',{kind:'puzzle',id:'archive-film',answer:'2347-2352'},token);
+  assert.equal(puzzleSecond.status,200);
+  assert.equal(puzzleSecond.json.progress.case2.canAccuse,true);
+  assert.equal((await request('/release10/action','POST',{kind:'accuse002',suspectId:'boris',evidenceIds:['C2','C3','C9']},token)).status,403);
+  const releaseVerdict=await request('/release10/action','POST',{kind:'accuse002',suspectId:'boris',evidenceIds:['C2','C3','C4','C6']},token);
+  assert.equal(releaseVerdict.status,200);
+  assert.equal(releaseVerdict.json.progress.case2.verdict,'solved');
   const openArchiveScene=await request('/cinematic/action','POST',{kind:'location',id:'lift'},token);
   assert.equal(openArchiveScene.status,200);
   const case2Choice=await request('/cinematic/action','POST',{kind:'branch',id:'follow-camera'},token);
@@ -358,6 +375,9 @@ try {
   assert.equal(portable.status,200);
   assert.equal(portable.json.format,'casefiles-backup-v1');
   assert.equal(portable.json.solved,true);
+  assert.ok(portable.json.game09.missionsDone.includes('v1:archive-lock'));
+  assert.ok(portable.json.game09.missionsDone.includes('v1:archive-film'));
+
   assert.equal(portable.json.game09.selectedRoom,'study');
   assert.ok(portable.json.game09.solved.includes('bonus'));
 
@@ -387,6 +407,10 @@ try {
   assert.equal(restoredExpansion.json.difficulty,'expert');
   assert.equal(restoredExpansion.json.suspicions.martin,75);
   assert.equal(restoredExpansion.json.attempts.length,1);
+  const restoredRelease=await request('/release10','GET',undefined,restoredToken);
+  assert.equal(restoredRelease.status,200);
+  assert.equal(restoredRelease.json.case2.puzzles.find(x=>x.id==='archive-lock').solved,true);
+  assert.equal(restoredRelease.json.case2.verdict,'solved');
   const restored09=await request('/game09','GET',undefined,restoredToken);
   assert.equal(restored09.status,200);
   assert.equal(restored09.json.selectedRoom,'study');
