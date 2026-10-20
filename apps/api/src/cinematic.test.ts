@@ -4,10 +4,11 @@ import {initialProgress} from './expansion.js';
 import {newImmersiveState} from './immersive.js';
 import {initialLiving} from './living.js';
 import type {StoredSession} from './storage.js';
+import {newGame09} from './game09.js';
 function session():StoredSession {
  return {id:'1db60037-59a8-40ac-9946-f715cd44528f',found:new Set(['E01','E03','E04']),links:new Set(),notes:[],verified:new Set(),
  analyses:new Set(),pressure:{},hintsUsed:0,accusationCount:0,finalReport:null,expansion:initialProgress(),immersive:newImmersiveState(),
- living:initialLiving(),cinematic:initialCinematic(),messages:{},disclosed:{},lastActive:Date.now(),interviewCount:0,aiCalls:25,interviewBusy:false};
+ living:initialLiving(),cinematic:initialCinematic(),game09:newGame09(),messages:{},disclosed:{},lastActive:Date.now(),interviewCount:0,aiCalls:25,interviewBusy:false};
 }
 describe('Cinematic and Digital Investigation 0.8',()=>{
  it('prevents access to locked smartphone records',()=>{
