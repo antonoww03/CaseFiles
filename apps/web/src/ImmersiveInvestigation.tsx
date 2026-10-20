@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  Archive, ArrowRight, BookOpen, BriefcaseBusiness, Check, CheckCircle2,
+  ArrowRight, BookOpen, BriefcaseBusiness, Check, CheckCircle2,
   ChevronLeft, ChevronRight, CircleDot, Combine, Eye, Fingerprint,
   FolderSearch, KeyRound, LampDesk, LockKeyhole, MapPin, MessageSquareText,
-  Minus, Plus, ScanSearch, Search, ShieldCheck, Terminal, UserRound,
-  WandSparkles, X
+  Minus, Plus, ScanSearch, Search, ShieldCheck, Terminal, X
 } from 'lucide-react';
 import './immersive.css';
 
