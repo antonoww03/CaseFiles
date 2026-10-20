@@ -36,7 +36,7 @@ async function read<T>(kind:string,id:string):Promise<{value:T;version:number}|n
   const db=storagePool();
   if(!db){const entry=fallback.get(key(kind,id));return entry?{value:structuredClone(entry.value) as T,version:entry.version}:null;}
   const result=await db.query<{payload:T;version:string}>(
-    'SELECT payload,version FROM casefiles.community_records WHERE kind=$1 AND id=$2 AND (kind <> \'room\' OR updated_at > now() - interval \'30 days\')',
+    'SELECT payload,version FROM casefiles.community_records WHERE kind=$1 AND id=$2',
     [kind,id]);
   return result.rows.length?{value:result.rows[0].payload,version:Number(result.rows[0].version)}:null;
 }
