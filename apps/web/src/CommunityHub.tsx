@@ -4,7 +4,7 @@ import './community.css';
 
 type StoryBrief={id:string;title:string;setting:string;briefing:string;author:string;clues:number};
 type Clue={id:string;title:string;description:string|null;location:string;found:boolean;available:boolean};
-type Room={id:string;kind:string;title:string;setting:string;briefing:string;clues:Clue[];suspects:{id:string;name:string;alibi:string}[];players:{name:string}[];found:string[];interviews:string[];attempts:number;verdict:string|null;solvedBy:string|null;ending:string|null};
+type Room={id:string;kind:string;title:string;setting:string;briefing:string;clues:Clue[];suspects:{id:string;name:string;alibi:string|null}[];players:{name:string}[];found:string[];interviews:string[];attempts:number;verdict:string|null;solvedBy:string|null;ending:string|null};
 type Profile={id:string;name:string;xp:number;level:number;completedCases:number;achievements:string[]};
 type Editor={title:string;setting:string;briefing:string;suspects:{id:string;name:string;alibi:string}[];clues:{id:string;title:string;description:string;location:string}[];solution:{suspectId:string;clueIds:string[];explanation:string}};
 type View='cases'|'room'|'editor'|'profile';
