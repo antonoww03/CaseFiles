@@ -69,7 +69,7 @@ function useSfx(){
   }catch{}
  };
 }
-export function Home10({session,busy,onStart,onContinue,onLegacy}:{session:string;busy:boolean;onStart:(id:CaseId)=>void;onContinue:()=>void;onLegacy:()=>void}){
+export function Home10({session,busy,onStart,onContinue,onLegacy,onCommunity}:{session:string;busy:boolean;onStart:(id:CaseId)=>void;onContinue:()=>void;onLegacy:()=>void;onCommunity:()=>void}){
  const [selected,setSelected]=useState<CaseId>(()=>localStorage.getItem('cf10-selected-case')==='case-002'?'case-002':'case-001');
  const [menu,setMenu]=useState<'cases'|'settings'|'none'>('none');
  const [skipIntro,setSkipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
@@ -84,7 +84,7 @@ export function Home10({session,busy,onStart,onContinue,onLegacy}:{session:strin
      <button className="r10-gold" disabled={busy} onClick={()=>onStart(selected)} type="button"><Play size={19}/> Започни разследването <ArrowRight size={18}/></button>
      <button className="r10-outline" onClick={onContinue} type="button" disabled={!session||busy}><Save size={18}/> Продължи</button>
     </div>
-    <div className="r10-home-options"><button onClick={()=>setMenu(menu==='cases'?'none':'cases')} type="button"><FolderOpen size={16}/> Избери случай</button><button onClick={()=>setMenu(menu==='settings'?'none':'settings')} type="button"><Settings2 size={16}/> Настройки</button><button onClick={onLegacy} type="button"><Fingerprint size={16}/> Разширен режим</button></div>
+    <div className="r10-home-options"><button onClick={onCommunity} type="button"><FolderOpen size={16}/> Екипна игра / нови случаи</button><button onClick={()=>setMenu(menu==='cases'?'none':'cases')} type="button"><FolderOpen size={16}/> Избери случай</button><button onClick={()=>setMenu(menu==='settings'?'none':'settings')} type="button"><Settings2 size={16}/> Настройки</button><button onClick={onLegacy} type="button"><Fingerprint size={16}/> Разширен режим</button></div>
     {menu==='cases'&&<div className="r10-select" role="group" aria-label="Избор на случай">{(['case-001','case-002'] as const).map(id=><button type="button" key={id} className={selected===id?'active':''} onClick={()=>{setSelected(id);localStorage.setItem('cf10-selected-case',id);setMenu('none');}}><span>{id==='case-001'?'CASE 001':'CASE 002'}</span><strong>{caseNames[id]}</strong><small>{caseMeta[id].location}</small></button>)}</div>}
     {menu==='settings'&&<div className="r10-settings"><label><input type="checkbox" checked={skipIntro} onChange={e=>{setSkipIntro(e.target.checked);localStorage.setItem('cf10-skip-intro',String(e.target.checked));}}/> Пропускай сюжетните въведения</label><label><input type="checkbox" checked={noMotion} onChange={e=>{setNoMotion(e.target.checked);localStorage.setItem('cf10-reduce-motion',String(e.target.checked));}}/> Намалени анимации</label><p>Звукът е изключен по подразбиране и се включва само в игровия екран.</p></div>}
    </div>
