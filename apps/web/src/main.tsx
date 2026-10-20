@@ -172,6 +172,12 @@ function App() {
     await loadCaseExtras(token);
   };
 
+  const restorePortableBackup = async (archive: unknown): Promise<void> => {
+    const result = await call<{sessionId:string}>('/session','POST');
+    await call('/backup/restore','POST',archive,result.sessionId);
+    await restoreSessionAccess(result.sessionId);
+  };
+
   const start = async () => {
     setBusy(true); setError('');
     try {
@@ -432,7 +438,7 @@ function App() {
 
             {view === 'advanced' && <>
               <SectionHeader kicker="CASEFILES / РАЗШИРЕНИ ИНСТРУМЕНТИ" title="Детективски център" description="Нови криминалистични миниигри, карта, логическа проверка, реконструкция, история на решенията и постижения." extra={<span className="tag"><Fingerprint size={13}/> DIGITAL INVESTIGATION</span>} />
-              <InvestigationExpansion session={session} foundCount={found.length} onRestoreSession={restoreSessionAccess}/>
+              <InvestigationExpansion session={session} foundCount={found.length} onRestoreSession={restoreSessionAccess} onRestoreBackup={restorePortableBackup}/>
             </>}
             {view === 'report' && <>
               <SectionHeader kicker="ЗАКЛЮЧИТЕЛЕН ДОКЛАД / СЛУЧАЙ 001" title="Реконструкция на случая" description="Пълната хронология и пропуснатите улики се показват само след успешно обосновано обвинение." extra={<span className="tag"><ShieldCheck size={13}/> {finalReport?'СЛУЧАЙ ПРИКЛЮЧЕН':'ЗАПЕЧАТАНО ДОСИЕ'}</span>}/>
