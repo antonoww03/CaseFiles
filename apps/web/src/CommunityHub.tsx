@@ -101,7 +101,7 @@ export function CommunityHub(){
       setView('cases');void loadStories();
     });
   }
-  const roomReady=!!room&&!!memberToken;
+  
   return <div className="cf-community">
     <div className="community-head"><div><span className="community-kicker">CASEFILES / SHARED INVESTIGATIONS</span><h2>Общност на детективите</h2><p>Разследвай с приятели, генерирай нов случай, публикувай собствена мистерия и трупай XP.</p></div><div className="community-storage"><span className={'community-led '+(status==='postgres'?'live':'')}/>{status==='postgres'?'PostgreSQL · постоянно':status==='memory'?'Памет на сървъра · временно':'Проверка на съхранението'}</div></div>
     <nav className="community-tabs" aria-label="Общност">
@@ -125,7 +125,7 @@ export function CommunityHub(){
         {stories.length===0?<p className="community-muted">Още няма публикувани истории. Създай първата от раздел „Редактор“.</p>:<div className="community-stories">{stories.map(s=><article key={s.id}><strong>{s.title}</strong><small>{s.setting} · Автор: {s.author} · {s.clues} улики</small><p>{s.briefing}</p><button disabled={busy} onClick={()=>void newRoom('community',s.id)}>Разследвай историята</button></article>)}</div>}
       </section>
     </div>}
-    {view==='room'&&(!roomReady?<div className="community-card"><h3>Нямаш активна стая</h3><p>Създай стая или въведи код за покана.</p><button onClick={()=>setView('cases')}>Избери случай</button></div>:
+    {view==='room'&&(!room||!memberToken?<div className="community-card"><h3>Нямаш активна стая</h3><p>Създай стая или въведи код за покана.</p><button onClick={()=>setView('cases')}>Избери случай</button></div>:
       <div className="community-layout">
         <section className="community-card community-wide"><div className="community-room-title"><div><small>КОД НА СТАЯТА: {room.id}</small><h3>{room.title}</h3><p>{room.setting} · {room.briefing}</p></div><button onClick={()=>void navigator.clipboard?.writeText(room.id)}><ClipboardCopy size={17}/> Копирай код</button></div>
           <div className="community-team"><Users size={18}/> {room.players.map((p,i)=><span key={i}>{p.name}</span>)} <button aria-label="Обнови" onClick={()=>void loadRoom(room.id)}><RefreshCcw size={15}/></button></div>
