@@ -1,22 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import {
-  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen,
-  Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair,
-  FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen,
-  Gavel, Info, Link2, LockKeyhole, MapPin, MapPinned, Menu, MessageSquareText,
-  Microscope, Network, Plus, Radar, Scale, ScanSearch, Search,
-  Send, ShieldCheck, ShieldQuestion, Sparkles, TerminalSquare, UserRound,
-  type LucideIcon
+  ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, type LucideIcon
 } from 'lucide-react';
 import './style.css';
+import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
+import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
 type Evidence = { id: string; title: string; type: string; detail: string; icon: string };
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation';
+type View = 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
@@ -25,13 +20,15 @@ const tabs: Tab[] = [
   { id: 'scene', name: 'Местопрестъпление', hint: 'Апартамент 407', icon: ScanSearch },
   { id: 'lab', name: 'Криминалистика', hint: 'Анализи и материали', icon: Microscope },
   { id: 'evidence', name: 'Доказателства', hint: 'Събрани улики', icon: Files },
+  { id: 'notebook', name: 'Бележник', hint: 'Лични хипотези', icon: BookOpen },
+  { id: 'dossiers', name: 'Заподозрени', hint: 'Лични досиета', icon: UserRound },
+  { id: 'alibis', name: 'Алибита', hint: 'Проверки на показания', icon: ShieldQuestion },
   { id: 'board', name: 'Връзки', hint: 'Логически заключения', icon: Network },
   { id: 'timeline', name: 'Хронология', hint: 'Последователност', icon: Clock3 },
   { id: 'interview', name: 'Разпити', hint: 'Свидетели и заподозрени', icon: MessageSquareText },
   { id: 'accusation', name: 'Обвинение', hint: 'Финално заключение', icon: Gavel }
 ];
 
-const sceneIds = ['E01', 'E03', 'E04', 'E08', 'E09'];
 const labIds = ['E05', 'E06', 'E07', 'E10', 'E02'];
 const allEvidence: Evidence[] = [
   ['E01', 'Протокол от огледа', 'Документ', 'Апартаментът е намерен заключен. Няма следи от взлом.', '▤'],
@@ -90,6 +87,9 @@ function App() {
   const [found, setFound] = useState<string[]>([]);
   const [messages, setMessages] = useState<Record<string, Chat[]>>({});
   const [deductions, setDeductions] = useState<Deduction[]>([]);
+  const [notes, setNotes] = useState<InvestigatorNote[]>([]);
+  const [suspects, setSuspects] = useState<SuspectDossier[]>([]);
+  const [alibiChecks, setAlibiChecks] = useState<AlibiCheck[]>([]);
   const [linkA, setLinkA] = useState('');
   const [linkB, setLinkB] = useState('');
   const [linkNotice, setLinkNotice] = useState('');
@@ -104,7 +104,7 @@ function App() {
   const [motive, setMotive] = useState('');
   const [sequence, setSequence] = useState('');
   const [checked, setChecked] = useState<string[]>([]);
-  const [verdict, setVerdict] = useState<{ status: string; title: string; explanation: string } | null>(null);
+  const [verdict, setVerdict] = useState<{ status: string; title: string; explanation: string; score: DetectiveScore } | null>(null);
   const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState('Всички');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -121,6 +121,7 @@ function App() {
         setFound(s.found);
         setMessages(s.messages);
         void call<Deduction[]>('/deductions', 'GET', undefined, old).then(setDeductions).catch(() => setDeductions([]));
+        void loadCaseExtras(old);
       }).catch(() => localStorage.removeItem(storageKey));
   }, []);
 
@@ -134,6 +135,22 @@ function App() {
     setSidebarOpen(false);
   };
 
+  const loadCaseExtras = async (token: string) => {
+    const results = await Promise.allSettled([
+      call<InvestigatorNote[]>('/notes', 'GET', undefined, token),
+      call<SuspectDossier[]>('/suspects', 'GET', undefined, token),
+      call<AlibiCheck[]>('/contradictions', 'GET', undefined, token)
+    ]);
+    if (results[0].status === 'fulfilled') setNotes(results[0].value);
+    if (results[1].status === 'fulfilled') setSuspects(results[1].value);
+    if (results[2].status === 'fulfilled') setAlibiChecks(results[2].value);
+  };
+
+  const refreshClues = (token: string) => {
+    void call<AlibiCheck[]>('/contradictions','GET',undefined,token).then(setAlibiChecks).catch(()=>{});
+    void call<SuspectDossier[]>('/suspects','GET',undefined,token).then(setSuspects).catch(()=>{});
+  };
+
   const start = async () => {
     setBusy(true); setError('');
     try {
@@ -141,6 +158,8 @@ function App() {
       localStorage.setItem(storageKey, data.sessionId);
       setSession(data.sessionId); setFound([]); setMessages({}); setDeductions([]);
       setSelected(null); setLinkA(''); setLinkB(''); setLinkNotice('');
+      setNotes([]); setAlibiChecks([]); setSuspects([]);
+      void loadCaseExtras(data.sessionId);
       setChecked([]); setVerdict(null); go('scene');
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
@@ -152,7 +171,7 @@ function App() {
     setBusy(true); setError('');
     try {
       const data = await call<{ found: string[] }>('/discover/' + item.id, 'POST', {}, session);
-      setFound(data.found); setSelected(item);
+      setFound(data.found); setSelected(item); refreshClues(session);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   };
@@ -167,7 +186,7 @@ function App() {
         { personId: activePerson, message: text, ...(present ? { evidenceId: present } : {}) }, session
       );
       setMessages(m => ({ ...m, [activePerson]: [...(m[activePerson] || []), { role: 'player', text }, { role: 'npc', text: data.reply }] }));
-      setFound(data.found); setAiMode(data.mode); setQuestion(''); setPresent('');
+      setFound(data.found); setAiMode(data.mode); setQuestion(''); setPresent(''); refreshClues(session);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
 
@@ -182,6 +201,38 @@ function App() {
     finally { setBusy(false); }
   };
 
+  const saveNote = async (payload: NoteInput, id?: string): Promise<void> => {
+    if (!session) throw Error('Първо започни разследването.');
+    setBusy(true);
+    try {
+      const data = await call<{notes: InvestigatorNote[]}>(id ? '/notes/'+id : '/notes', id ? 'PUT' : 'POST', payload, session);
+      setNotes(data.notes);
+    } finally { setBusy(false); }
+  };
+  const deleteNote = async (id: string): Promise<void> => {
+    if (!session) return;
+    setBusy(true);
+    try {
+      const data = await call<{notes: InvestigatorNote[]}>('/notes/'+id,'DELETE',undefined,session);
+      setNotes(data.notes);
+    } catch(e) { setError(e instanceof Error?e.message:String(e)); }
+    finally { setBusy(false); }
+  };
+  const verifyAlibi = async (id: string): Promise<void> => {
+    if (!session) return;
+    setBusy(true); setError('');
+    try {
+      await call('/contradictions/'+id,'POST',{},session);
+      const updates = await call<AlibiCheck[]>('/contradictions','GET',undefined,session);
+      setAlibiChecks(updates);
+    } catch(e) { setError(e instanceof Error?e.message:String(e)); }
+    finally { setBusy(false); }
+  };
+  const pickBoard = (id: string) => {
+    if (!linkA || linkB || linkA===id) { setLinkA(id); setLinkB(''); }
+    else setLinkB(id);
+    setLinkNotice('');
+  };
   const accuse = async () => {
     if (!session || busy) return;
     setBusy(true); setError('');
@@ -225,7 +276,7 @@ function App() {
         <div className="sidebar-case-meta"><MapPin size={12} /> СОФИЯ <span className="meta-separator">/</span> #001</div>
       </div>
 
-      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 08</span></div>
+      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 11</span></div>
       <nav className="main-nav" aria-label="Навигация по разследването">
         {tabs.map(t => {
           const Icon = t.icon;
@@ -296,28 +347,8 @@ function App() {
             </>}
 
             {view === 'scene' && <>
-              <SectionHeader kicker="ЛОКАЦИЯ 01 / МЕСТОПРЕСТЪПЛЕНИЕ" title="Апартамент 407" description="Огледай стаята внимателно. Използвай активните маркери, за да изследваш предметите и документите." extra={<span className="tag"><MapPin size={13} /> СОФИЯ · ЕТАЖ 4</span>} />
-              <div className="scene-toolbar"><div><Radar size={17} /><strong>ОГЛЕД НА ПОМЕЩЕНИЕТО</strong></div><span><span className="pulse-point" /> ИНТЕРАКТИВНА СЦЕНА</span></div>
-              <div className="scene">
-                <div className="scene-scanlines" /><div className="scene-light" />
-                <span className="scene-label"><Crosshair size={14} /> ОБЕКТ 407 / ПЪРВОНАЧАЛЕН ОГЛЕД</span>
-                <div className="scene-room">
-                  <div className="scene-floor" /><div className="scene-wall scene-wall-top" /><div className="scene-wall scene-wall-left" />
-                  <div className="scene-window" /><div className="scene-cabinet" /><div className="scene-rug" /><div className="scene-sofa" />
-                  <div className="scene-coffee-table" /><div className="scene-desk" /><div className="scene-chair" /><div className="scene-door" /><div className="scene-body-outline" />
-                </div>
-                {sceneIds.map((id, i) => {
-                  const item = allEvidence.find(e => e.id === id)!;
-                  const done = found.includes(id);
-                  return <button type="button" key={id} className={'scene-hotspot hotspot-' + i + (done ? ' examined' : '')} onClick={() => void discover(item)} aria-label={'Разгледай: ' + item.title} title={item.title}>
-                    {done ? <Check size={17} strokeWidth={2.5} /> : <Plus size={18} strokeWidth={2.2} />}
-                  </button>;
-                })}
-                <div className="scene-bottom"><span><MapPinned size={13} /> ЕТАЖ 04 / КОРПУС А</span><span>КЛИКНИ ВЪРХУ МАРКЕРИТЕ <ArrowDownRight size={13} /></span></div>
-              </div>
-              <div className="scene-summary"><span><CircleDot size={15} /> АКТИВНИ ТОЧКИ НА ИНТЕРЕС</span><strong>{sceneIds.filter(id => found.includes(id)).length} <span>/ {sceneIds.length} проверени</span></strong></div>
-              <div className="subsection-title"><div><h2>Събрани на място</h2><p>Доказателствата от огледа се добавят автоматично в досието.</p></div></div>
-              {sceneIds.some(id => found.includes(id)) ? evidenceCards(sceneIds.filter(id => found.includes(id))) : <EmptyState icon={ScanSearch} title="Огледът още не е започнал" description="Избери осветен маркер върху стаята, за да откриеш първата улика." />}
+              <SectionHeader kicker="ЛОКАЦИЯ 01 / МЕСТОПРЕСТЪПЛЕНИЕ" title="Апартамент 407" description="Разгледай всекидневната, работния кът и антрето. Намери петте ключови материала от огледа." extra={<span className="tag"><MapPin size={13} /> 3 ЗОНИ ЗА ОГЛЕД</span>} />
+              <ExpandedScene found={found} clues={allEvidence} loading={busy} onDiscover={discover} onView={setSelected} />
             </>}
 
             {view === 'lab' && <>
@@ -334,21 +365,22 @@ function App() {
             </>}
 
             {view === 'board' && <>
-              <SectionHeader kicker="АНАЛИТИЧЕН МОДУЛ / ЛОГИЧЕСКИ ВРЪЗКИ" title="Дъска на доказателствата" description="Съпоставяй независими източници. Убедителната теория се изгражда от доказуеми връзки." extra={<span className="tag"><Network size={13} /> {deductions.length} ЗАКЛЮЧЕНИЯ</span>} />
-              <div className="deduction-workbench">
-                <div className="workbench-heading"><span className="workbench-emblem"><Link2 size={20} /></span><div><h3>Нова логическа връзка</h3><p>Избери две вече открити доказателства</p></div></div>
-                <div className="connection-row">
-                  <label className="connection-slot"><span>ИЗТОЧНИК А</span><select value={linkA} onChange={e => setLinkA(e.target.value)} aria-label="Първо доказателство"><option value="">Избери улика...</option>{allEvidence.filter(e => found.includes(e.id)).map(e => <option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select></label>
-                  <div className="connection-symbol"><Link2 size={19} /></div>
-                  <label className="connection-slot"><span>ИЗТОЧНИК Б</span><select value={linkB} onChange={e => setLinkB(e.target.value)} aria-label="Второ доказателство"><option value="">Избери улика...</option>{allEvidence.filter(e => found.includes(e.id)).map(e => <option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select></label>
-                </div>
-                <div className="workbench-bottom"><span><Info size={14} /> Не всяка комбинация води до заключение</span><button className="primary" type="button" disabled={!session || busy || !linkA || !linkB || linkA === linkB} onClick={() => void connect()}><Link2 size={16} /> Провери връзката</button></div>
-                {linkNotice && <div className="notice" role="status"><Sparkles size={16} /> {linkNotice}</div>}
-              </div>
-              <div className="subsection-title"><div><h2>Установени заключения</h2><p>Всички потвърдени връзки се запазват в досието.</p></div><span className="small-counter">{deductions.length} ОТКРИТИ</span></div>
-              {deductions.length ? <div className="board-list">{deductions.map(d => <article key={d.id} className="board-card"><div className="board-card-top"><span className="board-check"><CheckCheck size={18} /></span><span className="board-number">{d.id}</span></div><div className="board-node-row"><span>{d.evidenceIds[0]}</span><span className="board-node-line" /><Link2 size={14} /><span className="board-node-line" /><span>{d.evidenceIds[1]}</span></div><h3>{d.title}</h3><p>{d.explanation}</p><div className="board-card-foot"><Check size={13} /> ПОТВЪРДЕНА ВРЪЗКА</div></article>)}</div> : <EmptyState icon={Network} title="Дъската очаква първата връзка" description="Събери поне две улики и провери дали си противоречат или се подкрепят." />}
+              <SectionHeader kicker="АНАЛИТИЧЕН МОДУЛ / ДОКАЗАТЕЛСТВА" title="Визуална дъска" description="Плъзни карта върху друга или избери две улики последователно. Провери логическата връзка със сървъра." extra={<span className="tag"><Network size={13} /> {deductions.length} ЗАКЛЮЧЕНИЯ</span>} />
+              <VisualEvidenceBoard clues={allEvidence.filter(e=>found.includes(e.id))} deductions={deductions} first={linkA} second={linkB} notice={linkNotice} loading={busy} onChoose={pickBoard} onPair={(a,b)=>{setLinkA(a);setLinkB(b);setLinkNotice('');}} onVerify={connect}/>
             </>}
 
+            {view === 'notebook' && <>
+              <SectionHeader kicker="ЛИЧНИ ЗАПИСКИ / CASE #001" title="Детективски бележник" description="Организирай собствените си хипотези и въпроси. Бележките остават в игровата сесия." extra={<span className="tag"><BookOpen size={13}/> {notes.length} БЕЛЕЖКИ</span>} />
+              <NotebookPanel notes={notes} enabled={!!session} saving={busy} onSave={saveNote} onDelete={deleteNote}/>
+            </>}
+            {view === 'dossiers' && <>
+              <SectionHeader kicker="ОПЕРАТИВНИ ДОСИЕТА / ЛИЦА" title="Заподозрени" description="Преглеждай известните данни, сравнявай алибитата и преминавай директно към разпит." extra={<span className="tag"><UserRound size={13}/> 3 ДОСИЕТА</span>} />
+              <DossiersPanel suspects={suspects} found={found} checks={alibiChecks} onInterview={id=>{setActivePerson(id);go('interview');}} />
+            </>}
+            {view === 'alibis' && <>
+              <SectionHeader kicker="АНАЛИЗ НА ПОКАЗАНИЯ / ПРОТИВОРЕЧИЯ" title="Алибита и противоречия" description="Сравни твърденията с уликите, но не бъркай подозрението с доказана вина." extra={<span className="tag"><ShieldQuestion size={13}/> {alibiChecks.filter(c=>c.verified).length} ПРОВЕРКИ</span>} />
+              <AlibiPanel checks={alibiChecks} suspects={suspects} loading={busy} onVerify={verifyAlibi}/>
+            </>}
             {view === 'timeline' && <>
               <SectionHeader kicker="ХРОНОЛОГИЯ / РЕКОНСТРУКЦИЯ" title="Последователност на събитията" description="Подреди нощта на престъплението. Показват се само събития, подкрепени от открити доказателства." extra={<span className="tag"><Clock3 size={13} /> {visibleTimeline.length} / {timeline.length} СЪБИТИЯ</span>} />
               <div className="timeline-head"><span><Clock3 size={17} /> НОЩТА НА 14 ОКТОМВРИ 2026</span><span>РЕКОНСТРУКЦИЯ / 001</span></div>
@@ -374,10 +406,11 @@ function App() {
                 <div className="form-section"><div className="form-section-heading"><span>03</span><div><h3>Каква е твоята версия?</h3><p>Обясни мотив и последователност</p></div></div><label htmlFor="motive" className="field-label">ПРЕДПОЛАГАЕМ МОТИВ</label><textarea id="motive" value={motive} onChange={e => setMotive(e.target.value)} placeholder="Опиши защо заподозреният би извършил престъплението..." maxLength={1200} /><label htmlFor="sequence" className="field-label">ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ</label><textarea id="sequence" value={sequence} onChange={e => setSequence(e.target.value)} placeholder="Посочи последователността на събитията и как доказателствата ги подкрепят..." maxLength={1200} /></div>
                 <div className="accusation-bottom"><div><LockKeyhole size={15} /> ЗАКЛЮЧЕНИЕТО СЕ ОЦЕНЯВА ПО ДОКАЗАТЕЛСТВАТА</div><button className="primary" disabled={!session || busy || checked.length < 3 || motive.trim().length < 12 || sequence.trim().length < 12} onClick={() => void accuse()} type="button">Предай заключението <ArrowRight size={16} /></button></div>
                 {verdict && <div className={'verdict ' + verdict.status} role="status"><div className="verdict-symbol">{verdict.status === 'solved' ? <CheckCheck size={24} /> : <Info size={24} />}</div><div><strong>{verdict.title}</strong><p>{verdict.explanation}</p></div></div>}
+                {verdict?.score && <ScoreReport score={verdict.score} status={verdict.status}/>}
               </div>
             </>}
           </div>
-          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.2</span></div>
+          <div className="main-footer"><span>CASEFILES <span className="footer-separator">/</span> CRIMINAL INVESTIGATION SYSTEM</span><span>CASE #001 <span className="footer-separator">·</span> VERSION 0.3</span></div>
         </main>
 
         <aside className="inspector">
