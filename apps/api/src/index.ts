@@ -18,6 +18,7 @@ import {worldSnapshot,examineSchema,executeWorld} from './experience11.js';
 import {directorView,directorSchema,applyDirector} from './director12.js';
 import {detective13View,detective13Schema,submitDetective13} from './detective13.js';
 import { deskView, deskActionSchema, performDeskAction, type DeskCaseId } from './desk14.js';
+import { initialUniverse, universeView, universeActionSchema, executeUniverse, type UniverseCaseId } from './universe.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
 import communityRouter from './community.js';
 
@@ -84,7 +85,7 @@ app.post('/api/session', async (req, res) => {
   }
   const id = randomUUID();
   sessions.set(id, {
-    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), cinematic: initialCinematic(), game09: newGame09(), messages: {}, disclosed: {}, lastActive: Date.now(),
+    id, found: new Set(), links: new Set(), notes: [], verified: new Set(), analyses: new Set(), pressure: {}, hintsUsed: 0, accusationCount: 0, finalReport: null, expansion: initialProgress(), immersive: newImmersiveState(), living: initialLiving(), cinematic: initialCinematic(), game09: newGame09(), universe: initialUniverse(), messages: {}, disclosed: {}, lastActive: Date.now(),
     interviewCount: 0, aiCalls: 0, interviewBusy: false
   });
   try { await saveSession(sessions.get(id)!); } catch {
@@ -215,6 +216,28 @@ app.get('/api/cinematic',(req,res)=>{
  const s=getSession(req,res);if(s)res.json(cinematicOverview(s));
 });
 const validDeskCase = (id:string):id is DeskCaseId => id==='case-001'||id==='case-002';
+const validUniverseCase=(id:string):id is UniverseCaseId=>id==='case-001'||id==='case-002';
+app.get('/api/universe/:caseId',(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ if(!validUniverseCase(req.params.caseId))return void res.status(404).json({error:'Непознат случай.'});
+ res.json(universeView(session,req.params.caseId));
+});
+app.post('/api/universe/:caseId/action',async(req,res)=>{
+ const session=getSession(req,res);if(!session)return;
+ if(!validUniverseCase(req.params.caseId))return void res.status(404).json({error:'Непознат случай.'});
+ if(!useQuota('universe:'+req.ip,140,60*60*1000))return void res.status(429).json({error:'Превишен лимит на игрови действия.'});
+ const parsed=universeActionSchema.safeParse(req.body);
+ if(!parsed.success)return void res.status(400).json({error:'Невалидно игрово действие.'});
+ const before=structuredClone(session.universe[req.params.caseId]);
+ const result=executeUniverse(session,req.params.caseId,parsed.data);
+ if(result.status!==200)return void res.status(result.status).json({error:result.message});
+ try{await saveSession(session);}catch{
+  session.universe[req.params.caseId]=before;
+  return void res.status(503).json({error:'Промяната не е запазена.'});
+ }
+ res.json({message:result.message,world:universeView(session,req.params.caseId)});
+});
+
 app.get('/api/desk14/:caseId',(req,res)=>{
  const s=getSession(req,res);if(!s)return;
  if(!validDeskCase(req.params.caseId))return void res.status(404).json({error:'Непознато досие.'});
