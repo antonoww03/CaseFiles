@@ -25,6 +25,18 @@ No new API keys, paid services or accounts are needed for these features. The ex
 
 **Known limitation:** In the current deployment, `/api/health` still reports `storage: memory` until `DATABASE_URL` is configured. All server-side progress, including notes and checked contradictions, can therefore be lost when the backend restarts.
 
+## CASEFILES 0.4 — Forensic Update
+
+- **Interactive CCTV analysis:** two illustrated, timestamped frame sequences (not recorded video files). Scrub and step through timestamps, examine available visual details and submit a frame observation. The backend decides whether E06 or E07 is earned; direct discovery is blocked.
+- **Document examination:** investigate pages of a fictional financial draft and entry-access report. E09 and E10 now require opening the right documents and inspecting their relevant pages. Merely clicking on the corresponding evidence ID does not grant them.
+- **Progressive evidence discovery:** E08 also requires the initial scene protocol and phone clue (E01 and E03). Existing case facts, witness testimony and deterministic verdict rules remain unchanged.
+- **Interrogation strategies:** neutral, empathy and challenge affect a bounded server-side pressure value. Evidence-led challenge can unlock a more direct scripted response. The interview screen defaults to **scripted-only mode** so using it never requires an OpenAI key or incurs model usage.
+- **Hints:** up to three server-side hints per session; hint count and last hint are saved. Each used hint reduces the final detective score.
+- **Sealed final report:** only an adequately supported, correct accusation unlocks the complete event sequence, known/omitted evidence and a scored report. The report survives session restoration when PostgreSQL storage is configured.
+- **Validation:** the API build runs unit tests and an HTTP smoke test including video/document gating, interview strategy, hints, session state and final report access.
+
+None of the forensic content represents real CCTV or real people. The correct solution remains in the public repository source code; a future production version needs a private story-content backend to prevent out-of-game spoilers.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
