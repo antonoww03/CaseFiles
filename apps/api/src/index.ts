@@ -63,7 +63,7 @@ app.use('/api', async (req, res, next) => {
 function getSession(req: express.Request, res: express.Response): Session | undefined {
   const id = req.header('x-case-session');
   const session = id ? sessions.get(id) : undefined;
-  if (!session || Date.now() - session.lastActive > SESSION_TTL_MS) {
+  if (!session || (!persistentStorageEnabled() && Date.now() - session.lastActive > SESSION_TTL_MS)) {
     if (id) sessions.delete(id);
     res.status(401).json({ error: 'Невалидна или изтекла сесия.' });
     return undefined;
@@ -76,6 +76,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, mode: configuredMode(
 app.get('/api/case', (_req, res) => res.json(publicCase));
 app.post('/api/session', async (req, res) => {
   cleanExpired();
+  if (sessions.size >= 500 && persistentStorageEnabled()) cleanExpired();
   if (sessions.size >= 500 || !useQuota('new-session:' + req.ip, process.env.CASEFILES_E2E === 'true' ? 100 : 10, 60 * 60 * 1000)) {
     return void res.status(429).json({ error: 'Твърде много нови сесии. Опитай по-късно.' });
   }
