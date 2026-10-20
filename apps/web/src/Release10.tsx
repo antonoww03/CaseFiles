@@ -67,7 +67,7 @@ function useSfx(){
 export function Home10({session,busy,onStart,onContinue,onLegacy}:{session:string;busy:boolean;onStart:(id:CaseId)=>void;onContinue:()=>void;onLegacy:()=>void}){
  const [selected,setSelected]=useState<CaseId>('case-001');
  const [menu,setMenu]=useState<'cases'|'settings'|'none'>('none');
- const [skipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
+ const [skipIntro,setSkipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
  const [noMotion,setNoMotion]=useState(()=>localStorage.getItem('cf10-reduce-motion')==='true');
  return <div className={'r10-home '+(noMotion?'r10-still':'')}>
   <div className="r10-home-bg" style={{backgroundImage:'url('+caseMeta[selected].image+')'}}/>
@@ -96,7 +96,7 @@ export function FullGame10({session,caseId,found,onFound,onHome,onLegacy}:{sessi
  const [motive,setMotive]=useState('Финансови несъответствия по фактурите и натиск около оригиналните документи.');
  const [sequence,setSequence]=useState('Първо входният код, после асансьорът, разговорът, приблизителният интервал и изходът.');
  const [report,setReport]=useState<Report|null>(null),[audio,setAudio]=useState(false);
- const [skipIntro,setSkipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
+ const [skipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
  const [intro,setIntro]=useState(!skipIntro),[mobileNav,setMobileNav]=useState(false);
  const sound=useSfx();
  const meta=caseMeta[caseId],isFirst=caseId==='case-001';
