@@ -34,9 +34,9 @@ describe('CASEFILES 1.5-1.7 Detective Universe',()=>{
  it('caps simultaneous assignments and keeps reports free from spoilers',()=>{
   const s=session();const d=s.universe['case-001'];
   for(const id of ['E02','E03','E04','E09','E06','E07'])s.found.add(id);
-  expect(executeUniverse(s,'case-001',{kind:'assign',id:'medical'}).status).toBe(200);
   expect(executeUniverse(s,'case-001',{kind:'assign',id:'cameras'}).status).toBe(200);
-  expect(executeUniverse(s,'case-001',{kind:'assign',id:'finance'}).status).toBe(409);
+  expect(executeUniverse(s,'case-001',{kind:'assign',id:'finance'}).status).toBe(200);
+  expect(executeUniverse(s,'case-001',{kind:'assign',id:'medical'}).status).toBe(409);
   expect(d.jobs).toHaveLength(2);
   expect(universeView(s,'case-001').missions.find(x=>x.id==='finance')?.report).toBe(null);
  });
