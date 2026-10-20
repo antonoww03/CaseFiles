@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  Activity, Camera, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, type LucideIcon
+  Activity, Camera, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, Users, type LucideIcon
 } from 'lucide-react';
 import './style.css';
 import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
@@ -330,7 +330,7 @@ function App() {
     </button>;
   })}</div>;
 
-  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('community')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
+  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')} onCommunity={()=>go('community')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
   if(view==='community')return <div className="cf-community-page"><button className="r10-return" type="button" onClick={()=>go('home10')}>← Главно меню</button><React.Suspense fallback={<div className="empty-state">Зареждане на общността...</div>}><CommunityHub/></React.Suspense></div>;
   if(view==='play10')return <FullGame10 session={session} caseId={case10} found={found} onFound={setFound} onHome={()=>go('home10')} onLegacy={dest=>go(dest as View)}/>;
   
