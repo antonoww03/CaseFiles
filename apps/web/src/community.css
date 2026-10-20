@@ -1,3 +1,5 @@
+#fix-cf-community-page{display:block}
+.cf-community-page{min-height:100vh;background:#101716;padding:clamp(16px,3vw,42px)}
 .cf-community{color:#eae5d6;display:grid;gap:22px;padding-bottom:40px}
 .community-head{display:flex;align-items:start;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .community-head h2{font-size:clamp(27px,3vw,38px);margin:8px 0 5px;color:#f1e8d1}
