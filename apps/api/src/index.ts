@@ -72,7 +72,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, mode: configuredMode(
 app.get('/api/case', (_req, res) => res.json(publicCase));
 app.post('/api/session', async (req, res) => {
   cleanExpired();
-  if (sessions.size >= 500 || !useQuota('new-session:' + req.ip, 10, 60 * 60 * 1000)) {
+  if (sessions.size >= 500 || !useQuota('new-session:' + req.ip, process.env.CASEFILES_E2E === 'true' ? 100 : 10, 60 * 60 * 1000)) {
     return void res.status(429).json({ error: 'Твърде много нови сесии. Опитай по-късно.' });
   }
   const id = randomUUID();
