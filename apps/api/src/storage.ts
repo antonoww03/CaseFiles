@@ -3,6 +3,7 @@ import type { InterviewLine } from './interview.js';
 import type { Note } from './gameplay.js';
 import { initialProgress, type InvestigationProgress } from './expansion.js';
 import { newImmersiveState, type ImmersiveState } from './immersive.js';
+import { initialLiving, type LivingState } from './living.js';
 
 export type StoredSession = {
   id: string;
@@ -17,6 +18,7 @@ export type StoredSession = {
   finalReport: Record<string, unknown> | null;
   expansion: InvestigationProgress;
   immersive: ImmersiveState;
+  living: LivingState;
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   lastActive: number;
@@ -37,6 +39,7 @@ type Persisted = {
   finalReport?: Record<string, unknown> | null;
   expansion?: InvestigationProgress;
   immersive?: ImmersiveState;
+  living?: LivingState;
   messages: Record<string, InterviewLine[]>;
   disclosed: Record<string, string[]>;
   interviewCount: number;
@@ -90,6 +93,7 @@ export async function saveSession(session: StoredSession): Promise<void> {
     finalReport: session.finalReport,
     expansion: session.expansion,
     immersive: session.immersive,
+    living: session.living,
     messages: session.messages,
     disclosed: session.disclosed,
     interviewCount: session.interviewCount,
@@ -125,6 +129,7 @@ export async function restoreSession(id: string): Promise<StoredSession|null> {
     finalReport: saved.finalReport || null,
     expansion: saved.expansion || initialProgress(),
     immersive: saved.immersive || newImmersiveState(),
+    living: saved.living || initialLiving(),
     messages: saved.messages || {},
     disclosed: saved.disclosed || {},
     lastActive: row.last_active.getTime(),
