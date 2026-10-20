@@ -150,17 +150,18 @@ export function FinalReport({report}:{report:FinalReportData|null}) {
 
 export function HintStation({session}:{session:string}) {
  const [used,setUsed]=useState(0);
+ const [max,setMax]=useState(3);
  const [hint,setHint]=useState<{level:number;title:string;text:string}|null>(null);
  const [error,setError]=useState('');
  const [busy,setBusy]=useState(false);
- useEffect(()=>{if(!session){setUsed(0);setHint(null);return;}void request<{used:number;lastHint:{level:number;title:string;text:string}|null}>(session,'/hints').then(data=>{setUsed(data.used);setHint(data.lastHint);}).catch(()=>{});},[session]);
+ useEffect(()=>{if(!session){setUsed(0);setMax(3);setHint(null);return;}void request<{used:number;max:number;lastHint:{level:number;title:string;text:string}|null}>(session,'/hints').then(data=>{setUsed(data.used);setMax(data.max);setHint(data.lastHint);}).catch(()=>{});},[session]);
  async function take(){
    setBusy(true);setError('');
    try{const data=await request<{hint:{level:number;title:string;text:string};used:number}>(session,'/hints','POST',{});setHint(data.hint);setUsed(data.used);}
    catch(e){setError(e instanceof Error?e.message:String(e));}
    finally{setBusy(false);}
  }
- return <div className="f04-hints"><div><CircleHelp size={19}/><strong>Нужна е насока?</strong></div><p>Три степени на помощ. Всяка използвана подсказка намалява крайния резултат.</p>{hint&&<div className="f04-hint-text"><span>ПОДСКАЗКА {hint.level} · {hint.title}</span><p>{hint.text}</p></div>}
-  <button type="button" className="secondary" disabled={!session||used>=3||busy} onClick={()=>void take()}>{used>=3?'Няма повече подсказки':'Разкрий подсказка ('+(3-used)+' остават)'}</button>{error&&<span className="f04-hint-error">{error}</span>}
+ return <div className="f04-hints"><div><CircleHelp size={19}/><strong>Нужна е насока?</strong></div><p>Броят подсказки зависи от избраната трудност. Всяка използвана подсказка намалява крайния резултат.</p>{hint&&<div className="f04-hint-text"><span>ПОДСКАЗКА {hint.level} · {hint.title}</span><p>{hint.text}</p></div>}
+  <button type="button" className="secondary" disabled={!session||used>=max||busy} onClick={()=>void take()}>{used>=max?'Няма повече подсказки':'Разкрий подсказка ('+(max-used)+' остават)'}</button>{error&&<span className="f04-hint-error">{error}</span>}
  </div>;
 }
