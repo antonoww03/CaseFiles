@@ -110,7 +110,10 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
  const immersive=newImmersiveState();
  if(value.immersive){
   const visited=new Set(value.immersive.inspected);
-  immersive.inspected=sceneObjects.filter(o=>visited.has(o.id)&&(!o.prerequisite||found.has(o.prerequisite))).map(o=>o.id);
+  immersive.inspected=sceneObjects.filter(o=>
+   visited.has(o.id)&&(!o.prerequisite||found.has(o.prerequisite))&&
+   (!o.requiresItem||sceneObjects.some(other=>other.item===o.requiresItem&&visited.has(other.id)))
+  ).map(o=>o.id);
   const unlocked=new Set(sceneObjects.filter(o=>immersive.inspected.includes(o.id)).map(o=>o.item));
   immersive.inventory=sceneTools.filter(t=>unlocked.has(t.id)).map(t=>t.id);
   immersive.discoveries=combinations.filter(co=>value.immersive!.discoveries.includes(co.id)&&
