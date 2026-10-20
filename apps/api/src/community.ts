@@ -15,6 +15,7 @@ type Room = {
 type Profile = { id:string; name:string; xp:number; completed:string[]; createdAt:string };
 type Published = { id:string; story:CaseTemplate; author:string; createdAt:string };
 type RecordValue = { value:unknown; version:number };
+class RuleError extends Error {constructor(public readonly status:number,message:string){super(message);}}
 const fallback = new Map<string,RecordValue>();
 const rate = new Map<string,{used:number;start:number}>();
 const router=Router();
@@ -59,7 +60,7 @@ async function modify<T>(kind:string,id:string,fn:(value:T)=>T):Promise<T|null> 
     const next=fn(existing.value);
     if(await write(kind,id,next,existing.version))return next;
   }
-  throw Error('Конфликт на едновременни промени. Опитай пак.');
+  throw new RuleError(409,'Конфликт на едновременни промени. Опитай пак.');
 }
 const pick=(seed:number,n:number)=>Math.abs((Math.imul(seed|0,1664525)+1013904223)|0)%n;
 export function randomTemplate(seed:number):CaseTemplate {
@@ -124,7 +125,7 @@ export function applyRoomAction(room:Room,action:z.infer<typeof actionSchema>,me
   if(room.verdict==='solved')room.solvedBy=member;
   return {status:200,message:room.verdict==='solved'?'Екипът разкри случая!':'Обвинението е отхвърлено. Продължете разследването.'};
 }
-function fail(res:import('express').Response,error:unknown){res.status(503).json({error:error instanceof Error?error.message:'Временна грешка на сървъра.'});}
+function fail(res:import('express').Response,error:unknown){res.status(error instanceof RuleError?error.status:503).json({error:error instanceof RuleError?error.message:'Временна грешка на сървъра.'});}
 router.get('/status',(_req,res)=>res.json({storage:storagePool()?'postgres':'memory',coop:true,procedural:true,editor:true}));
 router.post('/profile',async(req,res)=>{
   const parsed=z.object({name:nick}).safeParse(req.body);
@@ -175,7 +176,7 @@ router.post('/rooms/:id/join',async(req,res)=>{
   const memberToken=randomUUID();
   try{
     const joined=await modify<Room>('room',id,room=>{
-      if(room.players.length>=6)throw Error('Стаята има максимум шестима играчи.');
+      if(room.players.length>=6)throw new RuleError(409,'Стаята има максимум шестима играчи.');
       room.players.push({token:memberToken,name:parsed.data.name,joinedAt:new Date().toISOString()});room.updatedAt=new Date().toISOString();return room;
     });
     if(!joined)return void res.status(404).json({error:'Не е открита стая с този код.'});
@@ -195,7 +196,7 @@ router.post('/rooms/:id/action',async(req,res)=>{
     let solvedNow=false,player='';
     const changed=await modify<Room>('room',id,room=>{
       const found=room.players.find(p=>p.token===memberToken);
-      if(!found)throw Error('Няма достъп до действията в тази стая.');
+      if(!found)throw new RuleError(403,'Няма достъп до действията в тази стая.');
       player=found.name;
       outcome=applyRoomAction(room,action.data,player);
       if(outcome.status===200){solvedNow=room.verdict==='solved';room.updatedAt=new Date().toISOString();}
