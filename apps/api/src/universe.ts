@@ -159,6 +159,7 @@ export function executeUniverse(s:StoredSession,caseId:UniverseCaseId,action:z.i
   if(!canAccess(s,caseId,task.requires))return {status:403,message:'Липсват нужните доказателства.'};
   if(d.jobs.some(j=>j.id===task.id))return {status:409,message:'Тази задача е възложена.'};
   if(d.jobs.filter(j=>!j.done).length>=2)return {status:409,message:'Екипът може да изпълнява най-много две задачи едновременно.'};
+  if(d.turn+task.duration>60)return {status:409,message:'До края на игровата нощ няма време за тази експертиза.'};
   if(d.credits<task.cost)return {status:409,message:'Недостатъчен бюджет за експертиза.'};
   d.credits-=task.cost;d.jobs.push({id:task.id,started:d.turn,finish:d.turn+task.duration,done:false});
   advance(d);
