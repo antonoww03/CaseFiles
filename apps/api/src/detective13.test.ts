@@ -50,6 +50,13 @@ describe('CASEFILES 1.3 Detective Instinct',()=>{
   expect(v.challenges.find(x=>x.id==='access')?.completed).toBe(true);
   expect(v.progress.solved).toBe(1);
  });
+ it('requires two real selected items before accepting a matched evidence comparison',()=>{
+  const s=fresh();s.found.add('E04');s.found.add('E09');s.found.add('E03');
+  expect(submitDetective13(s,'case-001',{id:'financial',answer:'invoices'}).status).toBe(403);
+  expect(submitDetective13(s,'case-001',{id:'financial',answer:'invoices',evidenceIds:['E04','E04']}).status).toBe(403);
+  expect(submitDetective13(s,'case-001',{id:'financial',answer:'invoices',evidenceIds:['E04','E03']}).status).toBe(422);
+  expect(submitDetective13(s,'case-001',{id:'financial',answer:'invoices',evidenceIds:['E04','E09']}).status).toBe(200);
+ });
  it('case two respects prerequisites and does not infer identity from CCTV',()=>{
   const s=fresh();s.living.case2.found=['C2','C3','C4','C6'];
   expect(submitDetective13(s,'case-002',{id:'archiveclaim',answer:'C4'}).status).toBe(422);
