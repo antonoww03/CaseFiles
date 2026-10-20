@@ -12,12 +12,10 @@ test('CASEFILES 0.7 warrants and forensic clock are gated by evidence',async({pa
 });
 
 test('CASEFILES 0.7 playable second case has independent evidence',async({page})=>{
- page.on('pageerror',error=>console.log('CASELIB PAGE ERROR:',error.message));
  await page.goto('/');
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Живо разследване/}).click();
  await page.getByRole('button',{name:/Библиотека със случаи/}).click();
- console.log('CASELIB AFTER CLICK', (await page.locator('body').innerText()).slice(-3200));
  await expect(page.getByRole('heading',{name:'Библиотека с криминални случаи'})).toBeVisible();
  await page.getByRole('button',{name:/Изчезналият архив/}).click();
  await expect(page.getByRole('heading',{name:'Изчезналият архив'})).toBeVisible();
