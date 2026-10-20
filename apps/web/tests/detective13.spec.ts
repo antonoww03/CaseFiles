@@ -38,7 +38,7 @@ test('Case 002 evidence-gated reasoning supports wrong theories and verifies cor
  await expect(page.getByRole('status').filter({hasText:/Нужен е документът/})).toBeVisible();
  await page.getByRole('group',{name:'Възможни заключения'}).getByRole('button',{name:/Разписката за резервния ключ/}).click();
  await page.getByRole('button',{name:/Провери заключението/}).click();
- await expect(page.getByText(/Подписът свързва служител/)).toBeVisible();
+ await expect(page.getByText(/Подписът свързва служител/).first()).toBeVisible();
  await expect(page.getByRole('navigation',{name:'Предизвикателства'}).getByRole('button',{name:/Кой е имал възможност/})).toContainText('РАЗРЕШЕНО');
 });
 
