@@ -53,7 +53,7 @@ const formatTime=(value:string)=>new Date(value).toLocaleString('bg-BG',{dateSty
 export function LivingInvestigation({session,found}:{session:string;found:string[]}) {
  const [section,setSection]=useState<Section>('warrants');
  const [living,setLiving]=useState<Living|null>(null);
- const [catalog,setCatalog]=useState<Catalog>([]);
+ const [catalog,setCatalog]=useState<Catalog>([{id:'case-001',title:'Последното обаждане',setting:'Апартамент 407',briefing:'Оригиналното разследване.',status:'active'},{id:'case-002',title:'Изчезналият архив',setting:'Пловдив · нощна смяна',briefing:'Изчезнал договор и противоречиви показания в градски архив.',status:'playable'}]);
  const [story,setStory]=useState<Story|null>(null);
  const [caseId,setCaseId]=useState('case-002');
  const [chosen,setChosen]=useState<string[]>([]);
@@ -62,7 +62,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
  const [notice,setNotice]=useState('');
  const [busy,setBusy]=useState(false);
  const [template,setTemplate]=useState(demoTemplate);
- useEffect(()=>{void request<Catalog>('','/cases').then(setCatalog).catch(()=>{});},[]);
+ useEffect(()=>{void request<Catalog>('','/cases').then(data=>{if(data.length)setCatalog(data);}).catch(()=>{});},[]);
  async function refresh(){
   if(!session)return;
   try {setLiving(await request<Living>(session,'/living'));}
