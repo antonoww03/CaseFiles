@@ -38,6 +38,24 @@ export function DirectorStage12({session,caseId,found,room,onRoom}:{session:stri
  const [data,setData]=useState<Director|null>(null),[playing,setPlaying]=useState<Beat|null>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
  const [voiceOn,setVoiceOn]=useState(false);
  const ctx=useRef<AudioContext|null>(null);
+ const ambience=useRef<{ctx:AudioContext;tones:OscillatorNode[]}|null>(null);
+ useEffect(()=>{
+  if(!voiceOn)return;
+  let soundtrack:{ctx:AudioContext;tones:OscillatorNode[]}|null=null;
+  try{
+   const audio=new AudioContext(),tones:OscillatorNode[]=[];
+   const mood=data?.mood||'quiet',base=mood==='tense'?48:mood==='rising'?62:55;
+   for(const [index,multiplier] of [1,1.5,2].entries()){
+    const osc=audio.createOscillator(),gain=audio.createGain(),filter=audio.createBiquadFilter();
+    osc.type=index===0?'sine':'triangle';osc.frequency.value=base*multiplier;
+    filter.type='lowpass';filter.frequency.value=mood==='tense'?180:330;
+    gain.gain.value=index===0?.008:.0025;
+    osc.connect(filter);filter.connect(gain);gain.connect(audio.destination);osc.start();tones.push(osc);
+   }
+   soundtrack={ctx:audio,tones};ambience.current=soundtrack;
+  }catch{}
+  return()=>{if(soundtrack){soundtrack.tones.forEach(o=>{try{o.stop();}catch{}});void soundtrack.ctx.close();if(ambience.current===soundtrack)ambience.current=null;}};
+ },[voiceOn,data?.mood]);
  const tick=useCallback((cue:string)=>{
   if(!voiceOn)return;
   try{const audio=ctx.current&&ctx.current.state!=='closed'?ctx.current:new AudioContext();ctx.current=audio;
