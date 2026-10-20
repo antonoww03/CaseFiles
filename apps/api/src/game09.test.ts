@@ -5,8 +5,9 @@ import {newImmersiveState} from './immersive.js';
 import {initialLiving} from './living.js';
 import {initialCinematic} from './cinematic.js';
 import type {StoredSession} from './storage.js';
+import {initialUniverse} from './universe.js';
 const mock=():StoredSession=>({
- id:'d3c3f8da-b78b-478b-8786-d03b680b7893',found:new Set(),links:new Set(),notes:[],verified:new Set(),analyses:new Set(),pressure:{},hintsUsed:0,accusationCount:0,finalReport:null,expansion:initialProgress(),immersive:newImmersiveState(),living:initialLiving(),cinematic:initialCinematic(),game09:newGame09(),messages:{},disclosed:{},lastActive:Date.now(),interviewCount:0,aiCalls:0,interviewBusy:false
+ id:'d3c3f8da-b78b-478b-8786-d03b680b7893',found:new Set(),links:new Set(),notes:[],verified:new Set(),analyses:new Set(),pressure:{},hintsUsed:0,accusationCount:0,finalReport:null,expansion:initialProgress(),immersive:newImmersiveState(),living:initialLiving(),cinematic:initialCinematic(),game09:newGame09(),universe:initialUniverse(),messages:{},disclosed:{},lastActive:Date.now(),interviewCount:0,aiCalls:0,interviewBusy:false
 });
 describe('CASEFILES 0.9 game mechanics',()=>{
  it('validates all action payload types',()=>{

@@ -6,10 +6,11 @@ import {initialCinematic} from './cinematic.js';
 import {newImmersiveState} from './immersive.js';
 import {initialProgress} from './expansion.js';
 import type {StoredSession} from './storage.js';
+import {initialUniverse} from './universe.js';
 function create():StoredSession{return {
  id:'426721a1-39b1-4f0d-8596-8e18e81f0009',found:new Set(),links:new Set(),verified:new Set(),notes:[],analyses:new Set(),
  pressure:{},hintsUsed:0,accusationCount:0,finalReport:null,expansion:initialProgress(),immersive:newImmersiveState(),
- living:initialLiving(),game09:newGame09(),cinematic:initialCinematic(),messages:{},disclosed:{},interviewCount:0,
+ living:initialLiving(),game09:newGame09(),universe:initialUniverse(),cinematic:initialCinematic(),messages:{},disclosed:{},interviewCount:0,
  aiCalls:0,interviewBusy:false,lastActive:Date.now()
 };}
 describe('CASEFILES 1.0 release progression',()=>{

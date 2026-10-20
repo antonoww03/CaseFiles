@@ -318,3 +318,18 @@ The primary CASEFILES 1.x game adds **Следствено бюро** next to De
 - **Checks:** \`apps/api/src/desk14.test.ts\` covers spoiler prevention, evidence gating, immutable editorial choice, reputation and independent progress for the two cases. Run \`npm run typecheck && npm test && npm run build\`, plus the Playwright suite, before releasing.
 
 New cases and profile rules remain manually authored, not automatically validated real-world forensics or AI-generated facts.
+
+
+## CASEFILES 1.5–1.7 — Detective Universe
+
+**All three upgrades are connected in the primary Case #001 and Case #002 game screen**, under the new **Детективски свят** tab:
+
+- **1.5 Partner & Dispatch:** scripted inspector Алекс Димов recommends leads based on already discovered evidence. Each case has four evidence-locked delegated investigations with a point budget, at most two concurrently active tasks, deterministic completion after additional *in-game* turns, and written reports. Delegated missions do not fabricate, add, or auto-discover story evidence. No paid AI API is required.
+- **1.6 District Map:** a responsive, original schematic city map of Sofia / Plovdiv with seven distinct locations per case, evidence-gated addresses, visit history, and one-action travel. This is a navigable **2D district prototype**, not a streamed photorealistic open world, actual GPS or live transit.
+- **1.7 Suspect Behavior:** six pre-written suspects follow three-location schedules that change every two game turns. Talk to them only when co-located; make a one-time empathy, verified-evidence, or challenge choice. A challenge/verification demands both its character-specific discovered clues. Each choice yields a different grounded statement and persistent attitude. These are bounded deterministic NPCs, not language-model agents or real-person surveillance.
+- **Shared game clock:** one action advances 20 simulated minutes. The display, assignments, movement and NPC responses derive exclusively from the server's per-case state (60 actions maximum per case); no real-world waiting. The existing main-case suspect evidence and accusation logic are unchanged.
+- **Persistence:** new universe state is included in StoredSession, PostgreSQL JSONB serialization, and validated portable backup export/import; restoring rechecks gated locations and tasks against actual found evidence. This requires a working DATABASE_URL on Render for **automatic cloud persistence**; without it the game continues to use browser backup / server memory. Database schema and credentials remain unchanged.
+- **Security and compatibility:** case ID validation, Zod strict action schemas, per-IP limits, no duplicate task payouts or repeat conversations, budget limits, save rollback on storage failures, and no new evidence generation. Each save has independent state for both cases. Old saves initialize these mechanics automatically.
+- **Tests:** apps/api/src/universe.test.ts checks gating, budgets, synchronized task completion, movement, conversation restrictions, restoration and limits; apps/web/tests/universe.spec.ts covers primary navigation, locked assignments, solving their prerequisites and timed completion.
+
+**Future work** for 2.0: actually explorable buildings with room transitions, more authored NPC branches and full real-time synchronized multi-player investigations would need separate content and testing. No such features are claimed in 1.5–1.7.
