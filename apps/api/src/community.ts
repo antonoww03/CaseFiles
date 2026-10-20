@@ -35,7 +35,7 @@ async function read<T>(kind:string,id:string):Promise<{value:T;version:number}|n
   const db=storagePool();
   if(!db){const entry=fallback.get(key(kind,id));return entry?{value:structuredClone(entry.value) as T,version:entry.version}:null;}
   const result=await db.query<{payload:T;version:string}>(
-    'SELECT payload,version FROM casefiles.community_records WHERE kind=$1 AND id=$2 AND updated_at > now() - interval \'90 days\'',
+    'SELECT payload,version FROM casefiles.community_records WHERE kind=$1 AND id=$2 AND (kind <> \'room\' OR updated_at > now() - interval \'30 days\')',
     [kind,id]);
   return result.rows.length?{value:result.rows[0].payload,version:Number(result.rows[0].version)}:null;
 }
@@ -90,7 +90,7 @@ export function randomTemplate(seed:number):CaseTemplate {
 }
 export function roomView(room:Room) {
   return {id:room.id,kind:room.kind,storyId:room.storyId,title:room.story.title,setting:room.story.setting,briefing:room.story.briefing,
-    suspects:room.story.suspects,players:room.players.map(p=>({name:p.name,joinedAt:p.joinedAt})),
+    suspects:room.story.suspects.map(s=>({...s,alibi:room.interviews.includes(s.id)?s.alibi:null})),players:room.players.map(p=>({name:p.name,joinedAt:p.joinedAt})),
     clues:room.story.clues.map((c,i)=>({id:c.id,title:room.found.includes(c.id)?c.title:'Неоткрита следа',description:room.found.includes(c.id)?c.description:null,location:c.location,found:room.found.includes(c.id),available:i<3||room.found.length>=2})),
     found:room.found,interviews:room.interviews,attempts:room.attempts,verdict:room.verdict,solvedBy:room.solvedBy,
     ending:room.verdict==='solved'?room.story.solution.explanation:null,updatedAt:room.updatedAt};
