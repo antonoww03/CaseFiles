@@ -8,7 +8,7 @@ type Challenge={id:string;title:string;kind:Category;chapter:number;person:strin
 type Snapshot={caseId:CaseId;chapter:number;chapters:{number:number;title:string;active:boolean}[];objective:{id:string;text:string;target:string};tasks:{id:string;text:string;done:boolean;target:string}[];challenges:Challenge[];progress:{solved:number;total:number;wrongAttempts:number;found:number;reviewUnlocked:boolean};review:{title:string;solved:number;missed:{id:string;title:string;requires:string[]}[];mistakes:number;ending:string;branchDecisions:string[];recommendations:string}|null;replay:{available:boolean;enabled:boolean}};
 const typeLabels:Record<Category,string>={reason:'ДЕТЕКТИВСКА ЛОГИКА',challenge:'ОСПОРИ ПОКАЗАНИЕ',compare:'СЪПОСТАВИ УЛИКИ',theory:'ПОСТРОЙ ТЕОРИЯ'};
 const imageIds:Record<string,string>={E01:'evidence',E02:'evidence',E03:'phone',E04:'papers',E05:'terminal',E06:'cctv',E07:'cctv',E08:'safe',E09:'documents',E10:'terminal',E11:'evidence',E12:'evidence',C1:'contract',C2:'terminal',C3:'logbook',C4:'cctv',C5:'cart',C6:'contract'};
-async function api<T>(session:string,caseId:CaseId,payload?:{id:string;answer:string}):Promise<T>{
+async function api<T>(session:string,caseId:CaseId,payload?:{id:string;answer:string;evidenceIds?:string[]}):Promise<T>{
  const r=await fetch((import.meta.env.VITE_API_URL||'')+'/api/detective13/'+caseId+(payload?'/action':''),{method:payload?'POST':'GET',headers:{'Content-Type':'application/json','x-case-session':session},...(payload?{body:JSON.stringify(payload)}:{})});
  const data=await r.json();
  if(!r.ok)throw new Error(data.error||data.message||'Нещо се обърка при проверката.');
@@ -47,7 +47,7 @@ export function Detective13({session,caseId,found,clues,onNavigate}:{session:str
  const send=async()=>{
   if(!current||!choice||busy)return;setBusy(true);setFeedback('');setError('');
   try{
-   const r=await api<{message:string;progress:Snapshot}>(session,caseId,{id:current.id,answer:choice});
+   const r=await api<{message:string;progress:Snapshot}>(session,caseId,{id:current.id,answer:choice,...(current.kind==='compare'?{evidenceIds:[compareA,compareB]}:{})});
    setSnapshot(r.progress);setFeedback(r.message);setCorrect(true);
   }catch(e){const message=e instanceof Error?e.message:String(e);setFeedback(message);setCorrect(false);
    // A wrong decision is saved by the server; read updated attempt totals.
@@ -64,7 +64,7 @@ export function Detective13({session,caseId,found,clues,onNavigate}:{session:str
    {current.kind==='compare'&&<div className="d13-comparison"><strong><Files size={16}/> СЪПОСТАВИ ДВА ДОКУМЕНТА</strong><div>{[compareA,compareB].map((value,i)=><label key={i}>УЛИКА {i+1}<select aria-label={'Улика '+(i+1)} value={value} onChange={e=>(i===0?setCompareA:setCompareB)(e.target.value)}><option value="">Избери намерена улика...</option>{clues.map(c=><option key={c.id} value={c.id}>{c.id} — {c.title}</option>)}</select></label>)}</div><div className="d13-evidence-pair">{checked.map(c=><article key={c.id}><img src={'/art/objects/'+(imageIds[c.id]==='documents'?'papers':imageIds[c.id]||'evidence')+'.svg'} alt={'Илюстрация на '+c.title}/><strong>{c.title}</strong><p>{c.detail}</p></article>)}</div></div>}
    <div className="d13-answers" role="group" aria-label="Възможни заключения">{current.options.map((option,i)=><button type="button" key={option.id} aria-pressed={choice===option.id} className={choice===option.id?'selected':''} disabled={current.completed} onClick={()=>setChoice(option.id)}><span>{String.fromCharCode(65+i)}</span>{option.label}</button>)}</div>
    {current.completed&&<div className="d13-feedback success"><CheckCircle2 size={18}/>{current.explanation}</div>}
-   {!current.completed&&<button type="button" className="d13-verify" disabled={!choice||busy} onClick={()=>void send()}><Scale size={18}/> {busy?'Проверявам...':'Провери заключението'}</button>}
+   {!current.completed&&<button type="button" className="d13-verify" disabled={!choice||busy||(current.kind==='compare'&&(!compareA||!compareB||compareA===compareB))} onClick={()=>void send()}><Scale size={18}/> {busy?'Проверявам...':'Провери заключението'}</button>}
    {feedback&&<div className={'d13-feedback '+(correct?'success':'warning')} role="status">{correct?<CheckCircle2 size={18}/>:<ShieldAlert size={18}/>} {feedback}</div>}
    {current.attempts>0&&<small>Опити за преразглеждане: {current.attempts}. Неправилните теории не прекъсват разследването.</small>}
   </>:<div className="d13-empty"><Eye size={37}/><h2>Избери следствен въпрос</h2><p>Намерете уликите в основните помещения. Заключенията се отключват, когато има реална доказателствена основа.</p><button type="button" onClick={()=>onNavigate('scene')}>Към местопрестъплението <ArrowRight size={16}/></button></div>}</div></div>
