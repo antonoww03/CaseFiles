@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { evidence } from './case.js';
+import { evidence, evaluate } from './case.js';
 import { deductions } from './deductions.js';
-import { contradictions, noteSchema } from './gameplay.js';
-import { puzzles, witnesses, timelineItems, classificationTargets, tutorial, difficultySchema, initialProgress } from './expansion.js';
+import { contradictions, noteSchema, scoreCase, availableContradictions } from './gameplay.js';
+import { puzzles, witnesses, timelineItems, classificationTargets, tutorial, difficultySchema, initialProgress, outcome } from './expansion.js';
+import { actualCaseTimeline } from './forensics.js';
 import type { StoredSession } from './storage.js';
 
 const lineSchema = z.object({role:z.enum(['player','npc']),text:z.string().min(1).max(2500)});
@@ -18,6 +19,7 @@ export const backupSchema = z.object({
  messages:z.record(z.array(lineSchema).max(40)),
  pressure:z.record(z.number().int().min(0).max(100)),
  hintsUsed:z.number().int().min(0).max(3),
+ solved:z.boolean(),
  expansion:z.object({
   difficulty:difficultySchema,
   milestones:z.array(z.string().max(35)).max(20),
@@ -25,7 +27,9 @@ export const backupSchema = z.object({
   placements:z.record(z.string().max(30)),
   classifications:z.record(z.enum(['observation','testimony','hypothesis'])),
   tutorial:z.array(z.string().max(30)).max(4),
-  uiSettings:z.object({sound:z.boolean(),reducedMotion:z.boolean()})
+  uiSettings:z.object({sound:z.boolean(),reducedMotion:z.boolean()}),
+  actions:z.array(z.object({at:z.string().max(40),kind:z.string().max(30),text:z.string().max(300)})).max(120),
+  attempts:z.array(z.object({at:z.string().max(40),result:z.enum(['solved','incorrect','insufficient']),selected:z.enum(['martin','elena','petar'])})).max(30)
  })
 }).strict();
 export type PortableBackup = z.infer<typeof backupSchema>;
@@ -36,7 +40,7 @@ export function exportBackup(session:StoredSession):PortableBackup {
   found:[...session.found],links:[...session.links],verified:[...session.verified],
   analyses:[...session.analyses],notes:session.notes,
   messages:session.messages as PortableBackup['messages'],
-  pressure:session.pressure,hintsUsed:session.hintsUsed,
+  pressure:session.pressure,hintsUsed:session.hintsUsed,solved:!!session.finalReport,
   expansion:{
    difficulty:session.expansion.difficulty,
    milestones:session.expansion.milestones,
@@ -44,7 +48,9 @@ export function exportBackup(session:StoredSession):PortableBackup {
    placements:session.expansion.placements,
    classifications:session.expansion.classifications as PortableBackup['expansion']['classifications'],
    tutorial:session.expansion.tutorial,
-   uiSettings:session.expansion.uiSettings
+   uiSettings:session.expansion.uiSettings,
+   actions:session.expansion.actions,
+   attempts:session.expansion.attempts
   }
  };
 }
@@ -68,6 +74,8 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
  next.classifications=Object.fromEntries(Object.entries(value.expansion.classifications).filter(([id,answer])=>classificationTargets.some(t=>t.id===id&&t.correct===answer&&(t.id==='H01'||found.has(t.id)))));
  next.tutorial=[...new Set(value.expansion.tutorial.filter(x=>tutorial.some(t=>t.id===x)))];
  next.uiSettings=value.expansion.uiSettings;
+ next.actions=value.expansion.actions;
+ next.attempts=value.expansion.attempts;
  const allowedHints=({rookie:3,detective:2,expert:1})[next.difficulty];
  session.found=found;
  session.links=links;
@@ -75,14 +83,31 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
  session.notes=value.notes;
  session.messages=Object.fromEntries(Object.entries(value.messages).filter(([id])=>['martin','elena','petar'].includes(id)));
  session.disclosed={};
- session.analyses=new Set(value.analyses.filter(x=>/^video:(elevator|exit)$|^document:(draft|access)$/.test(x)));
+ session.analyses=new Set(value.analyses.filter(x=>{
+  const required=({ 'video:elevator':'E06', 'video:exit':'E07', 'document:draft':'E09', 'document:access':'E10' } as Record<string,string>)[x];
+  return !!required&&found.has(required);
+ }));
  session.pressure=Object.fromEntries(Object.entries(value.pressure).filter(([id])=>['martin','elena','petar'].includes(id)));
  session.hintsUsed=Math.min(value.hintsUsed,allowedHints);
  session.expansion=next;
  session.finalReport=null;
- session.accusationCount=0;
+ session.accusationCount=next.attempts.length;
  session.aiCalls=25;
  session.interviewCount=Math.min(80,Object.values(session.messages).reduce((count,lines)=>count+Math.floor(lines.length/2),0));
+ if(value.solved && evaluate('martin',[...found],'Финансови несъответствия в документите','Последователност на записите от вечерта',[...links]).status==='solved'){
+  const score=scoreCase({found,links,interviews:session.messages,verified,verdict:'solved'});
+  const penalty=Math.min(20,session.hintsUsed*({rookie:2,detective:4,expert:6})[next.difficulty]+Math.max(0,session.accusationCount-1)*3);
+  const finalScore={...score,total:Math.max(0,score.total-penalty),penalty};
+  session.finalReport={
+   status:'solved',headline:'Разследването е приключено',
+   conclusion:'Съвкупността от финансовия мотив, времевите записи и доказателствените връзки подкрепя обвинението срещу Мартин Русев.',
+   timeline:actualCaseTimeline,collected:[...found],
+   missed:evidence.filter(x=>!found.has(x.id)).map(x=>({id:x.id,title:x.title})),
+   verifiedFindings:availableContradictions(found).filter(x=>verified.has(x.id)).map(x=>({id:x.id,title:x.title,finding:x.finding})),
+   score:finalScore,hintsUsed:session.hintsUsed,accusations:session.accusationCount,
+   ending:outcome(true,next.attempts.filter(x=>x.result==='incorrect').length,finalScore.total)
+  };
+ }
  session.lastActive=Date.now();
  return [...found];
 }
