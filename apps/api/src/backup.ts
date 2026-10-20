@@ -6,7 +6,8 @@ import { puzzles, witnesses, timelineItems, classificationTargets, tutorial, dif
 import { actualCaseTimeline } from './forensics.js';
 import { newImmersiveState, sceneObjects, tools as sceneTools, combinations, dialogueOptions } from './immersive.js';
 import type { StoredSession } from './storage.js';
-import { initialLiving, caseTemplateSchema, case002, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions, type LivingState } from './living.js';
+import { initialLiving, caseTemplateSchema, case002, warrantDefinitions, expertDefinitions, confrontationDefinitions, transactions } from './living.js';
+import { initialCinematic, phoneRecords, dramaticChoices, case2Locations, case2Decisions } from './cinematic.js';
 
 const lineSchema = z.object({role:z.enum(['player','npc']),text:z.string().min(1).max(2500)});
 const noteBackup = noteSchema.extend({id:z.string().uuid(),updatedAt:z.string().max(40)});
@@ -52,6 +53,7 @@ export const backupSchema = z.object({
  solved:z.boolean(),
  immersive:immersiveBackup.optional(),
  living:livingBackupSchema.optional(),
+ cinematic:z.object({opened:z.array(z.string().max(50)).max(6),decrypted:z.array(z.string().max(30)).max(1),decisions:z.array(z.string().max(45)).max(10),moods:z.record(z.string().max(15)),chapterVisits:z.array(z.string().max(30)).max(6),choiceConsequences:z.array(z.string().max(40)).max(10),effectsPlayed:z.number().int().min(0).max(9999)}).optional(),
  expansion:z.object({
   difficulty:difficultySchema,
   milestones:z.array(z.string().max(35)).max(20),
@@ -75,6 +77,7 @@ export function exportBackup(session:StoredSession):PortableBackup {
   pressure:session.pressure,hintsUsed:session.hintsUsed,solved:!!session.finalReport,
   immersive:session.immersive,
   living:session.living,
+  cinematic:session.cinematic,
   expansion:{
    difficulty:session.expansion.difficulty,
    milestones:session.expansion.milestones,
@@ -177,6 +180,17 @@ export function applyBackup(session:StoredSession,raw:unknown):string[] {
   }
  }
  session.living=living;
+ const cinematic=initialCinematic();
+ if(value.cinematic){
+  cinematic.opened=phoneRecords.filter(x=>value.cinematic!.opened.includes(x.id)&&x.needs.every(n=>found.has(n))).map(x=>x.id);
+  cinematic.decrypted=value.cinematic.decrypted.includes('sms-fragment')&&found.has('E03')&&found.has('E04')?['sms-fragment']:[];
+  cinematic.decisions=[...new Set(value.cinematic.decisions.filter(id=>dramaticChoices.some(c=>c.id===id&&c.needs.every(n=>found.has(n)))||case2Decisions.some(c=>c.id===id&&c.requires.every(n=>living.case2.found.includes(n)))))] as string[];
+  cinematic.chapterVisits=case2Locations.filter(x=>value.cinematic!.chapterVisits.includes(x.id)&&x.chapter<=Math.min(2,Math.floor(living.case2.found.length/2))).map(x=>x.id);
+  cinematic.choiceConsequences=value.cinematic.choiceConsequences.filter(x=>['block:martin','block:elena','block:petar','admission:martin','admission:elena','admission:petar','block-boris','path:camera','path:paper'].includes(x));
+  cinematic.moods=Object.fromEntries(Object.entries(value.cinematic.moods).filter(([id,mood])=>['martin','elena','petar'].includes(id)&&['neutral','sad','angry','nervous'].includes(mood)));
+  cinematic.effectsPlayed=value.cinematic.effectsPlayed;
+ }
+ session.cinematic=cinematic;
  session.finalReport=null;
  session.accusationCount=next.attempts.length;
  session.aiCalls=25;
