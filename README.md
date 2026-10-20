@@ -113,6 +113,27 @@ New progress persists with the session when PostgreSQL is enabled, and is includ
 
 **All warrants, prosecutor decisions, finance records and crime events are fictional in-game simulations, not a statement of Bulgarian legal process or connected police/banking data.**
 
+## CASEFILES 0.8 — Quality & Immersion
+
+All 0.7 gameplay modes remain available. New **Кинематографичен свят** tab contains:
+
+1. **2.5D scene:** CSS perspective, layered rooms, pointer-dependent camera tilt, three scene selections, zoom, interactive descriptive hotspots (game evidence is still collected in the established interactive investigation screen).
+2. **Illustrated characters:** vector-like CSS portraits for Martin, Elena and Petar with neutral/sad/nervous/angry facial-expression variations.
+3. **Cinematic dialogues:** typewriter text reveal, branch choices saved on the server, prerequisite clue checks, one-time choices and irreversible refusal paths.
+4. **Sound:** a user-activated, generated rain ambience based on Web Audio. No sound plays automatically; no downloaded audio required.
+5. **Victim smartphone:** gated message threads, email, last call, photo, notes, and a reconstructable deleted fragment based on prior evidence. Fictional data stays server-side until unlocked.
+6. **Extended Case #002:** six named localities, three narrative chapters, choices with consequences; the original 0.7 Case #002 evidence and accusation flows remain in the case library.
+7. **Story branches:** financial/document and camera leads, plus a risky unsubstantiated confrontation that closes a line of inquiry.
+8. **Visual case editor:** text fields and repeatable clue cards for custom cases, with suspects, required evidence and correct resolution; JSON is no longer required.
+9. **Detective profile:** per-session XP, level, statistics and milestone badges calculated from real saved progress in both cases.
+10. **Automatic saving and recovery:** the browser periodically exports a portable session snapshot to localStorage, and will attempt to import the matching snapshot after a known session is lost due to a Render restart. Data is stored **on that device and browser only**, and cannot guarantee recovery on a cleared cache, blocked storage, or across different devices.
+11. **Performance and mobile:** the heavy 0.7 and 0.8 panels load on demand using React.lazy. New components implement responsive breakpoints and reduced-motion support.
+12. **Browser regression:** Playwright tests cover the 2.5D camera, phone gating, profile, chapters and visual editor as well as existing features.
+
+**Important limitations:** These are illustrated interactive prototypes, not realistic 3D models, motion-captured animations or recorded cinematic cutscenes. The audio is procedurally synthesized, not a professional sound library. The game still needs more authored narrative scenes and artwork to feel like a finished release. No subscription AI requests are necessary for these features.
+
+**Database:** The backend already supports persistent PostgreSQL sessions when \`DATABASE_URL\` is supplied. A free Render database \`casefiles-db\` is available, but the connector does **not expose** its password or internal connection URL and therefore this update does not silently link it. The free instance is due to expire on **2026-11-18** unless renewed/upgraded. Until connected, Render continues to use memory storage plus local snapshots; don't confuse local autosave with cross-device PostgreSQL persistence.
+
 ## Local development
 
 Requires Node.js 20.19+ and npm 10+.
