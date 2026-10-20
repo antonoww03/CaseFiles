@@ -90,14 +90,7 @@ try {
   assert.equal(case2First.json.clues[0].description,null);
   assert.equal((await request('/living/case/action','POST',{caseId:'case-002',action:'discover',id:'C4'},token)).status,403);
   for(const id of ['C1','C2','C3','C4','C6'])assert.equal((await request('/living/case/action','POST',{caseId:'case-002',action:'discover',id},token)).status,200);
-  const detectiveCase2=await request('/detective13/case-002','GET',undefined,token);
-  assert.equal(detectiveCase2.status,200);
-  assert.ok(detectiveCase2.json.challenges.find(x=>x.id==='archiveaccess').available);
-  assert.equal((await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C1'},token)).status,422);
-  const detectivePass=await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C3'},token);
-  assert.equal(detectivePass.status,200);
-  assert.ok(detectivePass.json.progress.challenges.find(x=>x.id==='archiveaccess').completed);
-  assert.equal((await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C3'},token)).status,409);
+
   const caseInterview=await request('/living/case/action','POST',{caseId:'case-002',action:'interview',id:'raya'},token);
   assert.equal(caseInterview.status,200);
   assert.match(caseInterview.json.message,/ателие/);
@@ -175,6 +168,14 @@ try {
   assert.equal(difficulty.json.difficulty,'expert');
   const hintedExpert = await request('/hints','GET',undefined,token);
   assert.equal(hintedExpert.json.max,1);
+  const detectiveCase2=await request('/detective13/case-002','GET',undefined,token);
+  assert.equal(detectiveCase2.status,200);
+  assert.ok(detectiveCase2.json.challenges.find(x=>x.id==='archiveaccess').available);
+  assert.equal((await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C1'},token)).status,422);
+  const detectivePass=await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C3'},token);
+  assert.equal(detectivePass.status,200);
+  assert.ok(detectivePass.json.progress.challenges.find(x=>x.id==='archiveaccess').completed);
+  assert.equal((await request('/detective13/case-002/action','POST',{id:'archiveaccess',answer:'C3'},token)).status,409);
   const forbiddenPuzzle = await request('/expansion/action','POST',{kind:'puzzle',id:'audio',answer:'1'},token);
   assert.equal(forbiddenPuzzle.status,403);
   const unsafeScore = await request('/expansion/action','POST',{kind:'suspect',id:'martin',score:101},token);
