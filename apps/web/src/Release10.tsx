@@ -66,7 +66,7 @@ function useSfx(){
  };
 }
 export function Home10({session,busy,onStart,onContinue,onLegacy}:{session:string;busy:boolean;onStart:(id:CaseId)=>void;onContinue:()=>void;onLegacy:()=>void}){
- const [selected,setSelected]=useState<CaseId>('case-001');
+ const [selected,setSelected]=useState<CaseId>(()=>localStorage.getItem('cf10-selected-case')==='case-002'?'case-002':'case-001');
  const [menu,setMenu]=useState<'cases'|'settings'|'none'>('none');
  const [skipIntro,setSkipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
  const [noMotion,setNoMotion]=useState(()=>localStorage.getItem('cf10-reduce-motion')==='true');
@@ -81,10 +81,10 @@ export function Home10({session,busy,onStart,onContinue,onLegacy}:{session:strin
      <button className="r10-outline" onClick={onContinue} type="button" disabled={!session||busy}><Save size={18}/> Продължи</button>
     </div>
     <div className="r10-home-options"><button onClick={()=>setMenu(menu==='cases'?'none':'cases')} type="button"><FolderOpen size={16}/> Избери случай</button><button onClick={()=>setMenu(menu==='settings'?'none':'settings')} type="button"><Settings2 size={16}/> Настройки</button><button onClick={onLegacy} type="button"><Fingerprint size={16}/> Разширен режим</button></div>
-    {menu==='cases'&&<div className="r10-select" role="group" aria-label="Избор на случай">{(['case-001','case-002'] as const).map(id=><button type="button" key={id} className={selected===id?'active':''} onClick={()=>{setSelected(id);setMenu('none');}}><span>{id==='case-001'?'CASE 001':'CASE 002'}</span><strong>{caseNames[id]}</strong><small>{caseMeta[id].location}</small></button>)}</div>}
+    {menu==='cases'&&<div className="r10-select" role="group" aria-label="Избор на случай">{(['case-001','case-002'] as const).map(id=><button type="button" key={id} className={selected===id?'active':''} onClick={()=>{setSelected(id);localStorage.setItem('cf10-selected-case',id);setMenu('none');}}><span>{id==='case-001'?'CASE 001':'CASE 002'}</span><strong>{caseNames[id]}</strong><small>{caseMeta[id].location}</small></button>)}</div>}
     {menu==='settings'&&<div className="r10-settings"><label><input type="checkbox" checked={skipIntro} onChange={e=>{setSkipIntro(e.target.checked);localStorage.setItem('cf10-skip-intro',String(e.target.checked));}}/> Пропускай сюжетните въведения</label><label><input type="checkbox" checked={noMotion} onChange={e=>{setNoMotion(e.target.checked);localStorage.setItem('cf10-reduce-motion',String(e.target.checked));}}/> Намалени анимации</label><p>Звукът е изключен по подразбиране и се включва само в игровия екран.</p></div>}
    </div>
-   <aside className="r10-home-files"><span>ДОСИЕТА / ПОВЕРИТЕЛНО</span>{(['case-001','case-002'] as const).map((id,i)=><button key={id} type="button" onClick={()=>setSelected(id)} className={id===selected?'active':''}><small>0{i+1} / {id==='case-001'?'СОФИЯ':'ПЛОВДИВ'}</small><strong>{caseNames[id]}</strong><span>{id===selected?'АКТИВНО ДОСИЕ':'ИЗБЕРИ'}</span></button>)}<p>Две отделни истории. Без задължителен AI.</p></aside>
+   <aside className="r10-home-files"><span>ДОСИЕТА / ПОВЕРИТЕЛНО</span>{(['case-001','case-002'] as const).map((id,i)=><button key={id} type="button" onClick={()=>{setSelected(id);localStorage.setItem('cf10-selected-case',id);}} className={id===selected?'active':''}><small>0{i+1} / {id==='case-001'?'СОФИЯ':'ПЛОВДИВ'}</small><strong>{caseNames[id]}</strong><span>{id===selected?'АКТИВНО ДОСИЕ':'ИЗБЕРИ'}</span></button>)}<p>Две отделни истории. Без задължителен AI.</p></aside>
   </main><footer className="r10-home-footer"><span>CASEFILES • INVESTIGATE / DEDUCE / DECIDE</span><span>DESKTOP + MOBILE</span></footer>
  </div>;
 }
