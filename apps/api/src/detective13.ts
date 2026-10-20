@@ -18,7 +18,7 @@ export const challenges:Challenge[]=[
  {id:'archivemotive',caseId:'case-002',kind:'compare',chapter:3,title:'Два документа за интерес',prompt:'Кой документ подкрепя предварителен интерес към липсващия договор?',options:[{id:'C6',label:'Вътрешното писмо за оценка на оригинала'},{id:'C2',label:'Рестартът на контролера'},{id:'C5',label:'Етикетът от количката'}],answer:'C6',requires:['C5','C6'],explained:'Писмото дава контекст за мотива, докато транспортната следа показва движение.',wrong:'Не бъркай техническо събитие с документ за предварителен интерес.'},
  {id:'archivetheory',caseId:'case-002',kind:'theory',chapter:4,title:'Обоснована архивна теория',prompt:'Коя версия комбинира независимо достъп, време и предишен интерес?',options:[{id:'alibi',label:'Един рестарт доказва кой е изнесъл договора'},{id:'mixed',label:'Подпис, рестарт, камера и писмо образуват проверима, но косвена верига'},{id:'dismiss',label:'Камерата е достатъчна за еднозначно лицево разпознаване'}],answer:'mixed',requires:['C2','C3','C4','C6'],explained:'Комбинацията подкрепя проверима версия, без да преувеличава качеството на отделните улики.',wrong:'Добрата теория отчита ограниченията на всеки източник.'}
 ];
-export const detective13Schema=z.object({id:z.string().min(2).max(32),answer:z.string().min(1).max(32)}).strict();
+export const detective13Schema=z.object({id:z.string().min(2).max(32),answer:z.string().min(1).max(32),evidenceIds:z.array(z.string().min(2).max(10)).length(2).optional()}).strict();
 const mark=(caseId:CaseId,id:string)=>'d13:'+caseId+':'+id;
 const records=(s:StoredSession)=>s.expansion.actions.filter(a=>a.kind==='detective13');
 const passed=(s:StoredSession,caseId:CaseId,id:string)=>records(s).some(r=>r.text===mark(caseId,id)+':pass');
@@ -74,6 +74,14 @@ export function submitDetective13(s:StoredSession,caseId:CaseId,answer:z.infer<t
  if(!challenge)return {status:404,message:'Невалидно предизвикателство.'};
  if(!challenge.requires.every(x=>allFound(s,caseId).has(x)))return {status:403,message:'Първо открий необходимите доказателства.'};
  if(passed(s,caseId,challenge.id))return {status:409,message:'Заключението вече е потвърдено.'};
+ if(challenge.kind==='compare'){
+  const ids=answer.evidenceIds;
+  if(!ids||new Set(ids).size!==2||ids.some(x=>!allFound(s,caseId).has(x)))
+   return {status:403,message:'Избери две различни, вече открити доказателства за сравнение.'};
+  if(challenge.requires.some(x=>!ids.includes(x)))
+   return {status:422,message:'Тези два материала не подкрепят исканото сравнение. Избери независимите източници.'};
+ }
+
  if(!challenge.options.some(o=>o.id===answer.answer))return {status:400,message:'Невалиден избор.'};
  const valid=answer.answer===challenge.answer;
  if(s.expansion.actions.length>=120){
