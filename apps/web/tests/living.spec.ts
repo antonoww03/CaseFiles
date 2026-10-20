@@ -16,6 +16,7 @@ test('CASEFILES 0.7 playable second case has independent evidence',async({page})
  await page.getByRole('button',{name:/Започни разследването/}).click();
  await page.getByRole('button',{name:/Живо разследване/}).click();
  await page.getByRole('button',{name:/Библиотека със случаи/}).click();
+ await expect(page.getByRole('heading',{name:'Библиотека с криминални случаи'})).toBeVisible();
  await page.getByRole('button',{name:/Изчезналият архив/}).click();
  await expect(page.getByRole('heading',{name:'Изчезналият архив'})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Откриване на доказателства'})).toBeVisible();
