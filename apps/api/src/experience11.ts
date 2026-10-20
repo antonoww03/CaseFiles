@@ -2,7 +2,7 @@ import {z} from 'zod';
 import type {StoredSession} from './storage.js';
 import {sceneObjects,tools,interaction} from './immersive.js';
 import {case002} from './living.js';
-import {findDeduction} from './deductions.js';
+import {findDeduction,deductions} from './deductions.js';
 import {archivePuzzles} from './release10.js';
 import {game09Puzzles,travelLocations} from './game09.js';
 
@@ -54,7 +54,7 @@ export function worldSnapshot(s:StoredSession){
   inventory:tools.filter(t=>s.immersive.inventory.includes(t.id)),
   sceneItems:sceneObjects.map(o=>({id:o.id,title:o.title,room:o.room,inspected:s.immersive.inspected.includes(o.id),requiresItem:o.requiresItem,prerequisite:o.prerequisite,available:(!o.prerequisite||s.found.has(o.prerequisite)),x:o.x,y:o.y})),
   recordings:audioFiles.map(r=>({id:r.id,title:r.title,available:r.requires.every(x=>found.has(x)),voice:r.requires.every(x=>found.has(x))?r.voice:null})),
-  board:[...s.links].map(id=>({id,confirmed:true})),
+  board:[...s.links].map(id=>({id,confirmed:true,evidenceIds:deductions.find(d=>d.id===id)?.evidenceIds||[]})),
   journal,
   event:lastBeat,
   hints:{suggestion:hint,failedAttempts:Object.values(s.game09.attempts).reduce((sum,n)=>sum+n,0)},
