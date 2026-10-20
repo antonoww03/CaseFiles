@@ -9,8 +9,8 @@ import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
 import { ForensicWorkbench, FinalReport, HintStation, type FinalReportData } from './ForensicPanels';
 import { InvestigationExpansion } from './ExpansionPanel';
 import { ImmersiveInvestigation } from './ImmersiveInvestigation';
-import { LivingInvestigation } from './LivingInvestigation';
-import { CinematicCenter } from './CinematicCenter';
+const LivingInvestigation=React.lazy(()=>import('./LivingInvestigation').then(m=>({default:m.LivingInvestigation})));
+const CinematicCenter=React.lazy(()=>import('./CinematicCenter').then(m=>({default:m.CinematicCenter})));
 import { autosaveKey, saveLocalSnapshot, readLocalSnapshot, recoverLocalSnapshot } from './autosave';
 
 type Person = { id: string; name: string; role: string; initial: string; opening: string };
@@ -417,11 +417,11 @@ function App() {
             </>}
             {view === 'living' && <>
               <SectionHeader kicker="CASEFILES 0.7 / LIVING INVESTIGATION" title="Живо разследване" description="Разрешения за обиск, проверка на доказателства, експертизи, събития и последствия, финансови следи, съдебен процес и нови криминални случаи." extra={<span className="tag"><Scale size={13}/> CASE #001 + #002</span>} />
-              <LivingInvestigation session={session} found={found}/>
+              <React.Suspense fallback={<div className="empty-state">Зареждане на разследването...</div>}><LivingInvestigation session={session} found={found}/></React.Suspense>
             </>}
             {view === 'cinematic' && <>
               <SectionHeader kicker="CASEFILES 0.8 / QUALITY & IMMERSION" title="Кинематографичен свят" description="2.5D оглед, динамични портрети, звукова атмосфера, цифрови доказателства, сюжетни глави и профил на детектива." extra={<span className="tag"><Camera size={13}/> NEW 0.8</span>}/>
-              <CinematicCenter session={session} found={found}/>
+              <React.Suspense fallback={<div className="empty-state">Зареждане на кинематографичния свят...</div>}><CinematicCenter session={session} found={found}/></React.Suspense>
             </>}
             {view === 'lab' && <>
               <SectionHeader kicker="ЛАБОРАТОРИЯ / АНАЛИЗИ" title="Криминалистика" description="Превъртай записа кадър по кадър и изследвай страници от документи. Само потвърдените наблюдения отключват нови улики." extra={<span className="tag"><FlaskConical size={13}/> FORENSIC UPDATE 0.4</span>}/>
