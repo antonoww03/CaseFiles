@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen, CalendarDays,
+  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen,
   Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair,
   FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen,
   Gavel, Info, Link2, LockKeyhole, MapPin, MapPinned, Menu, MessageSquareText,
-  Microscope, Network, Play, Plus, Radar, Scale, ScanSearch, Search,
+  Microscope, Network, Plus, Radar, Scale, ScanSearch, Search,
   Send, ShieldCheck, ShieldQuestion, Sparkles, TerminalSquare, UserRound,
   type LucideIcon
 } from 'lucide-react';
