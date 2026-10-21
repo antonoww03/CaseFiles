@@ -59,10 +59,14 @@ test('0.9 forensic puzzles validate dependencies, wrong answers, controls, and c
  expect(created.status()).toBe(201);
  const {sessionId}=await created.json() as {sessionId:string};
  const headers={'x-case-session':sessionId};
- for(const id of ['E01','E03','E04','E05','E06','E08','E11']){
+ for(const id of ['E01','E03','E04','E05','E08']){
   const response=await request.post(`${api}/discover/${id}`,{headers,data:{}});
   expect(response.status(),`local fixture discovery ${id}`).toBe(200);
  }
+ const camera=await request.post(`${api}/forensics/clips/elevator/analyze`,{headers,data:{second:120,detail:'презрамка'}});
+ expect(camera.status(),'local fixture obtains E06 through the forensic camera workflow').toBe(200);
+ const interview=await request.post(`${api}/interview`,{headers,data:{personId:'elena',message:'Какво чу по телефона?',scriptedOnly:true,interviewStyle:'neutral'}});
+ expect(interview.status(),'local fixture obtains interview evidence through scripted interview').toBe(200);
  await page.addInitScript(id=>localStorage.setItem('casefiles-demo-session',id),sessionId);
  await page.goto('/');
  await page.getByRole('button',{name:/Класически инструменти/}).click();
