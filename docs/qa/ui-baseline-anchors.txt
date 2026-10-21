@@ -1,0 +1,21 @@
+# CASEFILES source-inventory baseline, audit SHA 46780e627ce1d776d3762aba3112e172b4d3f316
+# Extracted from uploaded CASEFILES_UI_INVENTORY(1).csv: 345 rows, 17 TSX files.
+# Each entry is 1-based JSX line + tag code, in CSV order; repeated entries are distinct declarations.
+# b=button i=input t=textarea s=select d=div form=form
+CasePanels.tsx 68b 71i 75b 76b 78i 80t 82b 82b 87b 87b 109b 126b
+CinematicCenter.tsx 63i 63b 63b 63b 63b 63b 74b 80b 81b 81b 101b 102b 105b 105b 106b 106b 106i 106b 107b 107b
+CommunityHub.tsx 108b 110b 113i 115b 116b 121i 122b 125b 128b 130b 131b 134b 136b 138s 140i 141b 145i 145b 147t 147i 148i 148t 149i 149i 149t 150s 151i 152t 153b
+Detective13.tsx 21b 21b 21b 61b 62b 64s 65b 67b 70b 71b 72b 73b 74b
+Director12.tsx 77b 78b 79b 80b 82b 82b 95b 95i 95i 95b 95b
+ExpansionPanel.tsx 100b 101b 111i 112b 121b 124b 124b 127s 127b 129i 129b 139b 142b 142b 144b 145i 145b 147b
+Experience09.tsx 86b 87b 88b 91b 91b 95b 96b 97b 98b 98b 100b 101b 102b 102b 102b 102b 103b 103b 105b 108b 109b 109b 110i 110b 111b 111b 112b 113b 114b 115b 115b 119b 119b 120b 120b 120b 120b 121b 122b 122i 122i 102d
+Experience11.tsx 14b 30b 30b 30b 32b 33b 34b 34i 34i 34b 34b 35b 35b 35b 35b 37b 48b 54b 56b 64b 64b 64b 64b 70b
+ForensicPanels.tsx 88b 89b 92b 107b 108i 109b 113s 113b 117b 121b 123b 165b
+ImmersiveInvestigation.tsx 109b 113b 117b 122b 126b 127b 131b 134b 134b 134b 143b 143b 143b 154i 166i 174b 176b 183form 183i 183b 129d 130d
+InvestigationDesk14.tsx 66b 74s 77b 84b 85b 86b 87b
+InvestigationTools.tsx 37b 48b 51b 51b 52b 53b 75b 88b
+InvestigationUniverse.tsx 48b 49b 50b 61b 68b 70b 70b 73b 73b 79b 93s 97b 100b 100b 100b
+LivingInvestigation.tsx 101b 102b 111b 119b 121b 124b 130b 133b 133b 134i 135b 141b 141b 145b 147b 149i 150s 151b
+Release10.tsx 81b 86b 87b 89b 89b 89b 89b 90b 91i 91i 93b 183b 183b 183b 185b 185b 186b 188b 193b 193b 196b 196b 199b 199b 199b 204b 206s 207s 208b 211b 211b 212b 212b 212s 212i 212b 213b 213t 213b 213b 215b 215b 215b 215b 220b 220s 220t 220t 220b 220b 220i
+VisualCaseEditor.tsx 16i 17i 17i 18t 19i 19i 19t 20b 20b 20i 20i 20i 20t 21s 21i 21t 22b 22b
+main.tsx 324b 334b 339b 355b 376b 389b 401b 451i 451s 452b 480b 484s 488b 490i 492form 492i 492b 509s 510i 511t 511t 512b 515b 532b 533b
