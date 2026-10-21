@@ -142,8 +142,13 @@ export async function saveSession(session: StoredSession): Promise<void> {
   );
 }
 
+export function isValidSessionId(id: string): boolean {
+  // Reject malformed bearer tokens BEFORE PostgreSQL's uuid cast (401, not 503).
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
 export async function restoreSession(id: string): Promise<StoredSession|null> {
-  if (!pool || !/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if (!pool || !isValidSessionId(id)) return null;
   const result = await pool.query<{ id: string; state: Persisted; last_active: Date }>(
     "SELECT id, state, last_active FROM casefiles.sessions WHERE id = $1::uuid",
     [id]
