@@ -366,10 +366,70 @@ test('Legacy Case 002 gates clues and interview, then validates selected evidenc
   await suspect.selectOption('boris');
   const court = page.locator('.liv-court');
   for (const id of ['C2', 'C3', 'C4']) {
-    await court.getByLabel(new RegExp(`^${id} `)).check();
+    const evidenceLabel = court.locator('.liv-evidence-picker label').filter({ has: court.getByText(id, { exact: true }) });
+    await expect(evidenceLabel).toHaveCount(1);
+    await evidenceLabel.locator('input[type="checkbox"]').check();
   }
   await expect(accusation).toBeEnabled();
   await accusation.click();
   await expect(court.locator('.liv-verdict')).toContainText('Случаят е разрешен');
   await expect(court.locator('.liv-verdict')).toContainText(/Борис/);
+});
+
+test('Community story form edits repeated fields, gates publish, and recovers after a server error', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /Екипна игра \/ нови случаи/ }).click();
+  await page.getByRole('button', { name: 'Редактор' }).click();
+  const form = page.locator('.community-editor');
+  const mainFields = form.locator(':scope > label');
+  await mainFields.nth(0).getByRole('textbox').fill('Audit mystery');
+  await mainFields.nth(1).getByRole('textbox').fill('Test archive');
+  await mainFields.nth(2).getByRole('textbox').fill('An isolated fictional QA story.');
+
+  const suspects = form.locator('.community-editor-grid').nth(0).locator('fieldset');
+  await expect(suspects).toHaveCount(3);
+  for (let i = 0; i < 3; i++) {
+    await suspects.nth(i).getByRole('textbox').nth(0).fill(`QA Suspect ${i + 1}`);
+    await suspects.nth(i).getByRole('textbox').nth(1).fill(`QA alibi ${i + 1}`);
+  }
+
+  const clues = form.locator('.community-editor-grid').nth(1).locator('fieldset');
+  await expect(clues).toHaveCount(5);
+  for (let i = 0; i < 5; i++) {
+    await clues.nth(i).getByRole('textbox').nth(0).fill(`QA clue ${i + 1}`);
+    await clues.nth(i).getByRole('textbox').nth(1).fill(`QA location ${i + 1}`);
+    await clues.nth(i).getByRole('textbox').nth(2).fill(`QA description ${i + 1}`);
+  }
+  const solutionSuspect = form.getByRole('combobox');
+  await solutionSuspect.selectOption({ index: 1 });
+  await expect(solutionSuspect).toHaveValue(/.+/);
+  const evidence = form.locator('.community-evidence-checks input[type="checkbox"]');
+  await expect(evidence).toHaveCount(5);
+  for (let i = 0; i < 5; i++) await evidence.nth(i).uncheck();
+  const publish = form.getByRole('button', { name: 'Публикувай в общността' });
+  await expect(publish).toBeDisabled();
+  for (let i = 0; i < 3; i++) await evidence.nth(i).check();
+  await expect(publish).toBeEnabled();
+  await form.locator(':scope > label').last().getByRole('textbox').fill('A QA-only fictional resolution.');
+
+  let failed = false;
+  let delayed = false;
+  await page.route('**/api/community/stories', async route => {
+    if (!failed) {
+      failed = true;
+      return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Тестова грешка при публикуване.' }) });
+    }
+    if (!delayed) {
+      delayed = true;
+      await new Promise(resolve => setTimeout(resolve, 400));
+    }
+    return route.continue();
+  });
+  await publish.click();
+  await expect(page.getByRole('status')).toContainText('Тестова грешка при публикуване.');
+  await expect(publish).toBeEnabled();
+  await publish.click();
+  await expect(publish).toBeDisabled();
+  await expect(page.getByRole('status')).toContainText('Публикуван случай');
+  await expect(page.getByText('Audit mystery', { exact: true }).first()).toBeVisible();
 });
