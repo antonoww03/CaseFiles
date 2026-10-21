@@ -56,11 +56,24 @@ type Persisted = {
 };
 let pool: Pool | undefined;
 
+/**
+ * pg 8 currently treats sslmode=require like verify-full, but pg 9 will not.
+ * Preserve full certificate and hostname validation without changing the
+ * stored DATABASE_URL secret in Render or logging its contents.
+ */
+export function secureDatabaseUrl(value: string): string {
+  const url = new URL(value);
+  if (url.searchParams.get('sslmode')?.toLowerCase() === 'require') {
+    url.searchParams.set('sslmode', 'verify-full');
+  }
+  return url.toString();
+}
+
 export async function initializeStorage(): Promise<'postgres'|'memory'> {
   const uri = process.env.DATABASE_URL?.trim();
   if (!uri) return 'memory';
   const instance = new Pool({
-    connectionString: uri,
+    connectionString: secureDatabaseUrl(uri),
     max: 4,
     idleTimeoutMillis: 15000,
     connectionTimeoutMillis: 10000
