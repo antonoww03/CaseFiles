@@ -333,3 +333,14 @@ New cases and profile rules remain manually authored, not automatically validate
 - **Tests:** apps/api/src/universe.test.ts checks gating, budgets, synchronized task completion, movement, conversation restrictions, restoration and limits; apps/web/tests/universe.spec.ts covers primary navigation, locked assignments, solving their prerequisites and timed completion.
 
 **Future work** for 2.0: actually explorable buildings with room transitions, more authored NPC branches and full real-time synchronized multi-player investigations would need separate content and testing. No such features are claimed in 1.5–1.7.
+
+
+## Production verification & Neon backups (2026-10-21)
+
+- Render's API is now connected to Neon `morning-thunder-82303245 / production / neondb`. Health must return `storage: postgres`. This is distinct from the retired/free 30-day Render database.
+- The existing `pg` driver now interprets a configured `sslmode=require` as `verify-full` when setting up the connection, preserving certificate chain **and hostname verification** without printing credentials. Other SSL modes are not silently changed.
+- `scripts/production-smoke.mjs` verifies the public static frontend, health/CORS, Neon storage, both authored cases, community status, authentication/validation of game actions, a small disposable QA session, and portable backup. Run with `node scripts/production-smoke.mjs`. The bearer token is never printed.
+- `npm run test:e2e:prod -w apps/web` tests the **actual hosted Render site**, in both desktop and 390px mobile Chromium. Uses a separate Playwright config without dev servers; cannot substitute for a Safari/iPhone device test.
+- GitHub CI runs local typecheck, 100+ unit tests, API smoke, local Playwright, production API smoke and live desktop/mobile Playwright. Production checks create a small number of separate QA sessions/rooms; they never delete an existing player's session.
+- The Neon **Free** plan includes **one manual snapshot** and a limited restoration window, but **scheduled snapshot backups require a paid plan**. A manual pre-QA snapshot was created: `casefiles-before-production-qa-2026-10-21`. No automatic backup schedule or paid service was enabled.
+- Since direct live HTTP access can be restricted in some testing environments, GitHub Actions runs the production network tests from its own runner and records pass/fail evidence. Deploy success alone is not an end-to-end gameplay test.
