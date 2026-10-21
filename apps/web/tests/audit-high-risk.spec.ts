@@ -285,3 +285,53 @@ test('Forensic workbench verifies video frames and gates document pages on disco
   await lab.getByRole('button', { name: 'Анализирай страницата' }).click();
   await expect(lab.getByRole('status')).toContainText('Разчетена ключова следа E10');
 });
+
+test('Community Case 002 gates interviews and accusation, then records wrong and correct verdicts', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /Екипна игра \/ нови случаи/ }).click();
+  await page.getByRole('textbox', { name: 'Име на детектива' }).fill('Audit Detective');
+  await page.getByRole('button', { name: /Case #002 — Изчезналият архив/ }).click();
+
+  const room = page.locator('.community-room-title');
+  await expect(room.getByRole('heading', { name: 'Изчезналият архив' })).toBeVisible();
+  await expect(room.getByText(/КОД НА СТАЯТА: [A-F0-9]{10}/)).toBeVisible();
+
+  const clues = page.locator('.community-clues article');
+  const clue = (id: string) => clues.filter({ hasText: new RegExp(`^${id} ·`) });
+  const discover = (id: string) => clue(id).getByRole('button');
+  const suspectCards = page.locator('.community-suspect');
+  const interview = suspectCards.first().getByRole('button', { name: 'Разпитай' });
+  await expect(interview).toBeDisabled();
+  await expect(clue('C4').getByRole('button')).toBeDisabled();
+
+  for (const id of ['C2', 'C3']) {
+    await expect(discover(id)).toBeEnabled();
+    await discover(id).click();
+    await expect(clue(id)).toHaveClass(/discovered/);
+  }
+  await expect(interview).toBeEnabled();
+  await expect(discover('C4')).toBeEnabled();
+  await interview.click();
+  await expect(suspectCards.first()).not.toContainText('Разпитай след две открити улики.');
+
+  await discover('C4').click();
+  await expect(clue('C4')).toHaveClass(/discovered/);
+  const suspect = page.locator('.community-card').filter({ has: page.getByRole('heading', { name: 'Финално обвинение' }) }).getByRole('combobox');
+  await suspect.selectOption('raya');
+  const checks = page.locator('.community-evidence-checks input[type="checkbox"]');
+  const accuse = page.getByRole('button', { name: 'Предай обвинението' });
+  await expect(accuse).toBeDisabled();
+  await checks.nth(0).check();
+  await expect(accuse).toBeDisabled();
+  await checks.nth(1).check();
+  await expect(accuse).toBeDisabled();
+  await checks.nth(2).check();
+  await expect(accuse).toBeEnabled();
+  await accuse.click();
+  await expect(page.locator('.community-outcome')).toContainText('ОБВИНЕНИЕТО Е ОТХВЪРЛЕНО');
+
+  await suspect.selectOption('boris');
+  await accuse.click();
+  await expect(page.locator('.community-outcome')).toContainText('СЛУЧАЯТ Е РАЗКРИТ');
+  await expect(page.locator('.community-outcome')).toContainText('Audit Detective');
+});
