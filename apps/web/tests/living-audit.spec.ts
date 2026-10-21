@@ -53,7 +53,9 @@ test('Living finance and court controls enforce gates, selection and accepted ar
 
   const rows = court.locator('.liv-evidence-picker label');
   await expect(rows).toHaveCount(6);
-  const checkbox = (id: string) => rows.filter({ hasText: new RegExp(`^${id}\\b`) }).locator('input[type="checkbox"]');
+  const fixtureEvidenceIds = ['E01', 'E03', 'E04', 'E05', 'E09', 'E10'];
+  await expect(rows.locator('strong')).toHaveText(fixtureEvidenceIds);
+  const checkbox = (id: string) => rows.nth(fixtureEvidenceIds.indexOf(id)).locator('input[type="checkbox"]');
   const present = court.getByRole('button', { name: 'Представи аргументацията' });
   await expect(present).toBeDisabled();
   await checkbox('E04').check();
