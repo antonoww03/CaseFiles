@@ -71,3 +71,71 @@ test('Living finance and court controls enforce gates, selection and accepted ar
   await expect(court.locator('.liv-verdict')).toContainText('Приети доказателства');
   await expect(court.locator('.liv-verdict')).toContainText(/финансовия път/);
 });
+
+test('Living experts, confrontations and one-time decisions expose dependency and irreversible states', async ({ page, request }) => {
+  const api = 'http://127.0.0.1:3001/api';
+  const created = await request.post(`${api}/session`);
+  expect(created.status()).toBe(201);
+  const { sessionId } = await created.json() as { sessionId: string };
+  const headers = { 'x-case-session': sessionId };
+  for (const id of ['E02', 'E03', 'E04']) {
+    const found = await request.post(`${api}/discover/${id}`, { headers, data: {} });
+    expect(found.status(), `isolated fixture discovery ${id}`).toBe(200);
+  }
+  const e09 = await request.post(`${api}/forensics/documents/draft/inspect`, { headers, data: { pageId: 'signature' } });
+  expect(e09.status()).toBe(200);
+  expect((await e09.json() as { clueId: string }).clueId).toBe('E09');
+
+  await page.addInitScript(id => localStorage.setItem('casefiles-demo-session', id), sessionId);
+  await page.goto('/');
+  await page.getByRole('button', { name: /Класически инструменти/ }).click();
+  await page.getByRole('button', { name: /Продължи разследването/ }).click();
+  await page.getByRole('button', { name: /Живо разследване/ }).click();
+  const nav = page.getByRole('navigation', { name: 'Разширени разследвания' });
+  await nav.getByRole('button', { name: 'Разследване' }).click();
+
+  const medical = page.locator('.liv-card').filter({ hasText: 'Съдебномедицинска експертиза' });
+  const appoint = medical.getByRole('button', { name: 'Назначи експертиза' });
+  await expect(appoint).toBeEnabled();
+  await expect(page.locator('.liv-card').filter({ hasText: 'Видео идентификация' }).getByRole('button')).toBeDisabled();
+  await appoint.click();
+  await expect(page.getByRole('status')).toContainText('Експертизата е назначена');
+  const checkExpert = medical.getByRole('button', { name: 'Провери резултата' });
+  await expect(checkExpert).toBeEnabled();
+
+  const contact = page.locator('.liv-card').filter({ hasText: 'Елена ↔ телефонен регистър' });
+  const invoices = page.locator('.liv-card').filter({ hasText: 'Мартин ↔ финансови документи' });
+  const confront = (card: ReturnType<typeof page.locator>) => card.getByRole('button', { name: 'Съпостави показанията' });
+  await expect(confront(contact)).toBeDisabled();
+  await expect(confront(invoices)).toBeEnabled();
+
+  const policies = page.locator('.liv-grid.three').last();
+  const decision = (title: string) => policies.locator('.liv-card').filter({ hasText: title }).getByRole('button');
+  for (const title of ['Спазвай процедурата', 'Разпространи обвинения', 'Използвай натиск']) await expect(decision(title)).toBeEnabled();
+  await decision('Използвай натиск').click();
+  await expect(page.getByRole('status')).toContainText('затвори една линия на разпит');
+  await expect(decision('Използвай натиск')).toBeDisabled();
+  await expect(invoices.getByText('ЗАТВОРЕНА ЛИНИЯ')).toBeVisible();
+  await expect(confront(invoices)).toBeDisabled();
+
+  const interview = await request.post(`${api}/interview`, {
+    headers,
+    data: { personId: 'elena', message: 'Какво чу по телефона?', scriptedOnly: true, interviewStyle: 'neutral' }
+  });
+  expect(interview.status()).toBe(200);
+  await decision('Спазвай процедурата').click();
+  await expect(contact.getByRole('button', { name: 'Съпостави показанията' })).toBeEnabled();
+  await expect(page.locator('.liv-overview')).toContainText('50 / 100');
+  await contact.getByRole('button', { name: 'Съпостави показанията' }).click();
+  await expect(contact).toContainText('Елена признава разговора');
+  await expect(contact.getByRole('button', { name: 'Съпостави показанията' })).toBeDisabled();
+
+  await checkExpert.click();
+  await expect(medical).toContainText('Интервалът 01:20–01:25 е приблизителен');
+  await expect(medical.getByRole('button', { name: 'Готово' })).toBeDisabled();
+  await decision('Разпространи обвинения').click();
+  await expect(page.getByRole('status')).toContainText('намали репутацията');
+  await expect(decision('Спазвай процедурата')).toBeDisabled();
+  await expect(decision('Разпространи обвинения')).toBeDisabled();
+  await expect(page.locator('.liv-overview')).toContainText('25 / 100');
+});

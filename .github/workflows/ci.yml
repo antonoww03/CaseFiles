@@ -40,4 +40,4 @@ jobs:
       - run: npm run typecheck -w apps/web
       - run: node --check scripts/ui-coverage-report.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -w apps/web -- --grep "Living finance and court controls enforce gates, selection and accepted argumentation"
+      - run: npm run test:e2e -w apps/web -- --grep "Living experts, confrontations and one-time decisions expose dependency and irreversible states"
