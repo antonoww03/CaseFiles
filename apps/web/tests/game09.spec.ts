@@ -52,3 +52,91 @@ test('0.9 mobile navigates phone map and detective vision without runtime errors
  await expect(page.getByRole('heading',{name:'Телефонът на Никола'})).toBeVisible();
  expect(errors).toEqual([]);
 });
+
+test('0.9 forensic puzzles validate dependencies, wrong answers, controls, and confirmed results',async({page,request})=>{
+ const api='http://127.0.0.1:3001/api';
+ const created=await request.post(`${api}/session`);
+ expect(created.status()).toBe(201);
+ const {sessionId}=await created.json() as {sessionId:string};
+ const headers={'x-case-session':sessionId};
+ for(const id of ['E01','E03','E04','E05','E06','E08','E11']){
+  const response=await request.post(`${api}/discover/${id}`,{headers,data:{}});
+  expect(response.status(),`local fixture discovery ${id}`).toBe(200);
+ }
+ await page.addInitScript(id=>localStorage.setItem('casefiles-demo-session',id),sessionId);
+ await page.goto('/');
+ await page.getByRole('button',{name:/Класически инструменти/}).click();
+ await page.getByRole('button',{name:/Започни разследването/}).click();
+ await page.getByRole('button',{name:/Играй CASEFILES 0.9/}).click();
+ const nav=page.getByRole('navigation',{name:'Бърза игрова навигация'});
+ await nav.getByRole('button',{name:'Лаборатория'}).click();
+ const workbench=page.locator('.g9-workbench');
+ await expect(page.getByRole('heading',{name:'Криминалистични миниигри'})).toBeVisible();
+ const puzzle=(name:string)=>page.locator('.g9-puzzle-tabs').getByRole('button',{name,exact:false});
+ await expect(puzzle('Наслагване на отпечатъци')).toBeEnabled();
+ await expect(puzzle('CCTV — засечи детайла')).toBeEnabled();
+
+ await puzzle('Скъсаното писмо').click();
+ const fragments=workbench.locator('.g9-fragments button');
+ await expect(fragments).toHaveCount(3);
+ await expect(workbench.getByRole('button',{name:/Провери решението/})).toBeEnabled();
+ await workbench.getByRole('button',{name:'Подсказка'}).click();
+ await expect(workbench.locator('.g9-hint')).toContainText('оригиналните');
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(page.getByRole('status')).toContainText('Това решение не съвпада');
+ await fragments.nth(0).getByText('→').click();
+ await expect(fragments.nth(0)).toContainText('Провери');
+ await fragments.nth(2).getByText('←').click();
+ await expect(fragments.nth(1)).toContainText('оригиналните');
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
+ await expect(page.getByRole('status')).toContainText('Възстановеният документ');
+
+ await puzzle('Наслагване на отпечатъци').click();
+ await workbench.getByRole('button',{name:'Образец B'}).click();
+ await expect(workbench.getByRole('button',{name:'Образец B'})).toHaveClass(/active/);
+ await workbench.getByRole('button',{name:'Завърти 90°'}).click();
+ await expect(workbench.getByText('ОБРАЗЕЦ B / 90°')).toBeVisible();
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
+
+ await puzzle('CCTV — засечи детайла').click();
+ const seek=workbench.getByLabel('Време във видеозаписа');
+ await seek.evaluate((node)=>{
+  const input=node as HTMLInputElement;
+  const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set;
+  setter?.call(input,'120');
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await expect(workbench.locator('.g9-cctv')).toContainText('Фигура с презрамка');
+ await workbench.getByRole('button',{name:'Презрамка'}).click();
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
+ await expect(page.getByRole('status')).toContainText('Не може да се извлече самоличност');
+
+ await puzzle('Две свидетелски версии').click();
+ await workbench.getByRole('button',{name:'Отричането на разговора'}).click();
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
+ await expect(page.getByRole('status')).toContainText('противоречие');
+
+ await puzzle('Шифър на сейфа').click();
+ for(let i=0;i<3;i++)await workbench.getByRole('button',{name:'Увеличи код 1'}).click();
+ for(let i=0;i<7;i++)await workbench.getByRole('button',{name:'Увеличи код 2'}).click();
+ await workbench.getByRole('button',{name:'Увеличи код 3'}).click();
+ await expect(workbench.locator('.g9-dials')).toContainText('371');
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(page.getByRole('status')).toContainText('Не е разчетена UV следата');
+
+ await puzzle('Реконструкция на нощта').click();
+ const order=workbench.locator('.g9-reconstruction button');
+ await expect(order).toHaveCount(4);
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(page.getByRole('status')).toContainText('Това решение не съвпада');
+ for(let i=0;i<3;i++)await workbench.getByRole('button',{name:'Премести Временен входен код нагоре'}).click();
+ await expect(order.nth(0)).toContainText('Временен входен код');
+ await workbench.getByRole('button',{name:/Провери решението/}).click();
+ await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
+ await expect(page.getByRole('status')).toContainText('доказателствена последователност');
+});
