@@ -136,3 +136,74 @@ test('Evidence Board supports clue dragging, server-confirmed pairs, and invalid
   await verify.click();
   await expect(board.getByRole('status')).toContainText('Няма доказуема връзка между тези две улики');
 });
+
+test('Case 002 suspect interviews recover from error and expose each scripted alibi', async ({ page, request }) => {
+  const api = 'http://127.0.0.1:3001/api';
+  const created = await request.post(`${api}/session`);
+  expect(created.status()).toBe(201);
+  const { sessionId } = await created.json() as { sessionId: string };
+  const headers = { 'x-case-session': sessionId };
+  for (const id of ['C1', 'C2']) {
+    const result = await request.post(`${api}/living/case/action`, {
+      headers,
+      data: { caseId: 'case-002', action: 'discover', id }
+    });
+    expect(result.status(), `local Case 002 fixture discovery ${id}`).toBe(200);
+  }
+
+  await page.addInitScript(id => {
+    localStorage.setItem('casefiles-demo-session', id);
+    localStorage.setItem('cf10-selected-case', 'case-002');
+    localStorage.setItem('cf10-skip-intro', 'true');
+  }, sessionId);
+  const restored = page.waitForResponse(response => response.url().endsWith('/api/session') && response.request().method() === 'GET' && response.status() === 200);
+  await page.goto('/');
+  await restored;
+  await page.getByRole('button', { name: 'Продължи' }).click();
+  const nav = page.locator('.r10-navigation');
+  await nav.getByRole('button', { name: 'Разпити' }).click();
+  const ask = page.getByRole('button', { name: 'Задай въпрос' });
+  await expect(ask).toBeEnabled();
+
+  let injectedFailure = false;
+  let delayedSuccess = false;
+  await page.route('**/api/living/case/action', async route => {
+    const body = route.request().postDataJSON() as { action?: string };
+    if (body.action !== 'interview') return route.continue();
+    if (!injectedFailure) {
+      injectedFailure = true;
+      return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Тестова временна грешка.' }) });
+    }
+    if (!delayedSuccess) {
+      delayedSuccess = true;
+      await new Promise(resolve => setTimeout(resolve, 450));
+    }
+    return route.continue();
+  });
+
+  const raya = page.getByRole('button', { name: /Рая Милева/ });
+  await raya.click();
+  await expect(raya).toHaveClass(/active/);
+  await ask.click();
+  await expect(page.getByRole('status')).toContainText('Тестова временна грешка.');
+
+  const rayaRequest = page.waitForRequest(req => req.url().endsWith('/api/living/case/action') && req.method() === 'POST');
+  await ask.click();
+  const pending = await rayaRequest;
+  await expect(ask).toBeDisabled();
+  await expect(page.getByText('Била е в реставрационното ателие до 23:30; протоколът има пропуснат час.')).toBeVisible();
+
+  const teodor = page.getByRole('button', { name: /Теодор Колев/ });
+  await teodor.click();
+  await expect(teodor).toHaveClass(/active/);
+  await expect(page.getByText('Била е в реставрационното ателие до 23:30; протоколът има пропуснат час.')).toHaveCount(0);
+  await ask.click();
+  await expect(page.getByText('Поддържал е сървъра от другия край на сградата.')).toBeVisible();
+
+  const boris = page.getByRole('button', { name: /Борис Генов/ });
+  await boris.click();
+  await expect(boris).toHaveClass(/active/);
+  await ask.click();
+  await expect(page.getByText('Твърди, че е напуснал архива преди полунощ и не е имал достъп до фонда.')).toBeVisible();
+  expect(pending.postDataJSON()).toMatchObject({ caseId: 'case-002', action: 'interview', id: 'raya' });
+});
