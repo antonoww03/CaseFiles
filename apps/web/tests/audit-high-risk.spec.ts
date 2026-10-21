@@ -245,6 +245,10 @@ test('Forensic workbench verifies video frames and gates document pages on disco
 
   await seek.press('ArrowRight');
   await expect(lab.getByText('01:12:00')).toBeVisible();
+  await lab.getByRole('button', { name: 'Назад с един кадър' }).click();
+  await expect(lab.getByText('01:11:00')).toBeVisible();
+  await lab.getByRole('button', { name: 'Напред с един кадър' }).click();
+  await expect(lab.getByText('01:12:00')).toBeVisible();
   await detail.selectOption('презрамка');
   await analyze.click();
   await expect(lab.getByRole('status')).toContainText('добавено в досието');
