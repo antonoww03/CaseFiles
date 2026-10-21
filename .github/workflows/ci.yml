@@ -31,4 +31,5 @@ jobs:
         with:
           name: casefiles-ui-audit
           path: .ui-evidence/
-          if-no-files-found: warn
+          include-hidden-files: true
+          if-no-files-found: error
