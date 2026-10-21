@@ -145,7 +145,7 @@ export function FullGame10({session,caseId,found,onFound,onHome,onLegacy}:{sessi
   if(result)setNotice(result.message);
  }
  async function interrogate(){
-  if(!interviewText.trim())return;
+  if(isFirst&&!interviewText.trim())return;
   if(isFirst){
    const result=await act<{reply:string;found:string[]}>('/interview',{personId:suspect,message:interviewText,scriptedOnly:true,interviewStyle:'neutral'});
    if(result){setInterviewReply(result.reply);onFound(result.found);setInterviewText('');}
