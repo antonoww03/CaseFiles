@@ -111,7 +111,9 @@ test('Evidence Board supports clue dragging, server-confirmed pairs, and invalid
   await page.goto('/');
   await restored;
   await page.getByRole('button', { name: /Класически инструменти/ }).click();
-  await page.getByRole('button', { name: 'Връзки', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Навигация по разследването' })
+    .getByRole('button', { name: /Връзки/ })
+    .click();
   await expect(page.getByRole('heading', { name: 'Визуална дъска' })).toBeVisible();
 
   const board = page.locator('.v03-board');
