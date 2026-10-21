@@ -76,13 +76,13 @@ const entries = new Map(inventory.map(item=>[item.id,{
 const tagNames = {b:'button',i:'input',s:'select',t:'textarea',d:'div',form:'form'};
 const baselineIds = new Set();
 const baselineText = readFileSync(join(repo,'docs/qa/ui-baseline-anchors.txt'),'utf8');
-for (const line of baselineText.split('\\n')) {
+for (const line of baselineText.split('\n')) {
   const trimmed=line.trim();
   if (!trimmed || trimmed.startsWith('#'))continue;
-  const [basename,...anchors]=trimmed.split(/\\s+/);
+  const [basename,...anchors]=trimmed.split(/\s+/);
   const occurrences=new Map();
   for(const anchor of anchors){
-    const found=anchor.match(/^(\\d+)(form|[bistd])$/);
+    const found=anchor.match(/^(\d+)(form|[bistd])$/);
     if(!found)throw new Error('Invalid baseline anchor: '+anchor);
     const [_,lineNumber,code]=found;
     const tag=tagNames[code];
