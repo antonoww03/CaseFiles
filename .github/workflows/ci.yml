@@ -40,4 +40,4 @@ jobs:
       - run: npm run typecheck -w apps/web
       - run: node --check scripts/ui-coverage-report.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -w apps/web -- --grep "0.9 forensic puzzles validate dependencies, wrong answers, controls, and confirmed results"
+      - run: npm run test:e2e -w apps/web -- --grep "Living finance and court controls enforce gates, selection and accepted argumentation"
