@@ -48,6 +48,11 @@ function cleanExpired() {
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  next();
+});
 app.use(cors({ origin: process.env.WEB_ORIGIN || 'http://localhost:5173' }));
 app.use('/api/backup/restore', express.json({ limit: '512kb' }));
 app.use(express.json({ limit: '16kb' }));

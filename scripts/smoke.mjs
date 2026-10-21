@@ -11,14 +11,14 @@ const child = spawn(process.execPath, ['apps/api/dist/index.js'], {
   stdio: 'ignore'
 });
 
-async function request(path, method = 'GET', body, session) {
+async function request(path, method = 'GET', body, session, extraHeaders = {}) {
   const response = await fetch(origin + '/api' + path, {
     method,
-    headers: { 'Content-Type': 'application/json', ...(session ? { 'x-case-session': session } : {}) },
+    headers: { 'Content-Type': 'application/json', ...(session ? { 'x-case-session': session } : {}), ...extraHeaders },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(5000)
   });
-  return { status: response.status, json: await response.json() };
+  return { status: response.status, json: await response.json(), headers: response.headers };
 }
 
 async function ready() {
@@ -34,6 +34,11 @@ async function ready() {
 
 try {
   await ready();
+  const secureHealth = await request('/health', 'GET', undefined, undefined, { 'x-forwarded-proto': 'https' });
+  assert.equal(secureHealth.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(secureHealth.headers.get('strict-transport-security'), 'max-age=31536000');
+  const localHealth = await request('/health');
+  assert.equal(localHealth.headers.get('strict-transport-security'), null);
   const caseData = await request('/case');
   assert.equal(caseData.status, 200);
   assert.equal(caseData.json.people.length, 3);
