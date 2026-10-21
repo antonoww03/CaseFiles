@@ -20,8 +20,6 @@ test('Living finance and court controls enforce gates, selection and accepted ar
     const warrant = await request.post(`${api}/living/action`, { headers, data: { kind: 'warrant', id } });
     expect(warrant.status(), `fixture warrant ${id}`).toBe(200);
   }
-  const analyzed = await request.post(`${api}/living/action`, { headers, data: { kind: 'finance', id: 'T02' } });
-  expect(analyzed.status()).toBe(200);
   for (let i = 0; i < 2; i++) {
     const expert = await request.post(`${api}/living/action`, { headers, data: { kind: 'expert', id: 'financial' } });
     expect(expert.status()).toBe(200);
@@ -34,11 +32,14 @@ test('Living finance and court controls enforce gates, selection and accepted ar
   await page.getByRole('button', { name: /Живо разследване/ }).click();
   await page.getByRole('navigation', { name: 'Разширени разследвания' }).getByRole('button', { name: 'Финанси и съд' }).click();
 
-  const transaction = page.locator('.liv-transfer').filter({ hasText: 'Консулт ЕООД' });
-  const inspect = transaction.getByRole('button', { name: 'Анализирано' });
+  const transaction = page.locator('.liv-transfer').filter({ hasText: /€4800/ });
+  const inspect = transaction.getByRole('button', { name: 'Изследвай' });
+  await expect(transaction).toContainText('Детайлите изискват служебно разрешение.');
+  await expect(inspect).toBeEnabled();
+  await inspect.click();
   await expect(transaction).toContainText('Плащане без посочено приложение към фактурата.');
   await expect(transaction).toContainText('Необичаен поток');
-  await expect(inspect).toBeDisabled();
+  await expect(transaction.getByRole('button', { name: 'Анализирано' })).toBeDisabled();
 
   const court = page.locator('.liv-court');
   const financialRoute = court.getByRole('button', { name: 'Финансов мотив' });
