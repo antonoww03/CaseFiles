@@ -143,8 +143,12 @@ test('0.9 forensic puzzles validate dependencies, wrong answers, controls, and c
  await expect(order).toHaveCount(4);
  await workbench.getByRole('button',{name:/Провери решението/}).click();
  await expect(page.getByRole('status')).toContainText('Това решение не съвпада');
- for(let i=0;i<3;i++)await workbench.getByRole('button',{name:'Премести Временен входен код нагоре'}).click();
+ for(let i=0;i<3;i++)await order.filter({hasText:'Временен входен код'}).getByText('↑').click();
  await expect(order.nth(0)).toContainText('Временен входен код');
+ await order.nth(0).getByText('↑').click();
+ await expect(order.nth(0)).toContainText('Временен входен код');
+ await order.nth(3).getByText('↓').click();
+ await expect(order.nth(3)).toContainText('Автоматично заключване');
  await workbench.getByRole('button',{name:/Провери решението/}).click();
  await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
  await expect(page.getByRole('status')).toContainText('доказателствена последователност');
