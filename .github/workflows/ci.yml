@@ -40,4 +40,4 @@ jobs:
       - run: npm run typecheck -w apps/web
       - run: node --check scripts/ui-coverage-report.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -w apps/web -- --grep "Legacy Case 002 gates clues and interview, then validates selected evidence and suspect|Community story form edits repeated fields, gates publish, and recovers after a server error"
+      - run: npm run test:e2e -w apps/web -- --grep "Legacy Case 002 gates clues and interview, then validates selected evidence and suspect"

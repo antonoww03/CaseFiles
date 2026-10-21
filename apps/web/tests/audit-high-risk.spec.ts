@@ -365,10 +365,14 @@ test('Legacy Case 002 gates clues and interview, then validates selected evidenc
   const suspect = page.getByRole('combobox', { name: 'Посочи заподозрян' });
   await suspect.selectOption('boris');
   const court = page.locator('.liv-court');
+  const evidenceRows = court.locator('.liv-evidence-picker label');
+  await expect(evidenceRows).toHaveCount(3);
+  await expect(evidenceRows.locator('strong').nth(0)).toHaveText('C2');
+  await expect(evidenceRows.locator('strong').nth(1)).toHaveText('C3');
+  await expect(evidenceRows.locator('strong').nth(2)).toHaveText('C4');
   for (const id of ['C2', 'C3', 'C4']) {
-    const evidenceLabel = court.locator('.liv-evidence-picker label').filter({ has: court.getByText(id, { exact: true }) });
-    await expect(evidenceLabel).toHaveCount(1);
-    await evidenceLabel.locator('input[type="checkbox"]').check();
+    const index = ['C2', 'C3', 'C4'].indexOf(id);
+    await evidenceRows.nth(index).locator('input[type="checkbox"]').check();
   }
   await expect(accusation).toBeEnabled();
   await accusation.click();
