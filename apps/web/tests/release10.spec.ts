@@ -59,3 +59,13 @@ test('1.0 mobile navigation and cinematic menu settings work',async({page})=>{
  await expect(page.getByRole('heading',{name:/Очите не лъжат/})).toBeVisible();
  expect(errors).toEqual([]);
 });
+
+test('mobile investigation keeps discovered clue count readable in the sticky header',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/');
+ await page.getByRole('button',{name:/Започни разследването/}).click();
+ await page.getByRole('button',{name:/Влез в разследването/}).click();
+ await page.getByRole('button',{name:'Изследвай E01'}).click();
+ await page.getByRole('button',{name:/Събери улика/}).click();
+ await expect(page.locator('.r10-header-right').getByText('1 УЛИКИ')).toBeVisible();
+});
