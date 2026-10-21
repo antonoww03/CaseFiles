@@ -335,3 +335,41 @@ test('Community Case 002 gates interviews and accusation, then records wrong and
   await expect(page.locator('.community-outcome')).toContainText('СЛУЧАЯТ Е РАЗКРИТ');
   await expect(page.locator('.community-outcome')).toContainText('Audit Detective');
 });
+
+test('Legacy Case 002 gates clues and interview, then validates selected evidence and suspect', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /Класически инструменти/ }).click();
+  await page.getByRole('button', { name: /Започни разследването/ }).click();
+  await page.getByRole('button', { name: /Живо разследване/ }).click();
+  await page.getByRole('button', { name: /Библиотека със случаи/ }).click();
+  const caseCard = page.locator('.liv-case').filter({ hasText: 'Изчезналият архив' });
+  await caseCard.click();
+  await expect(page.getByText('Открити следи: 0/6')).toBeVisible();
+
+  const clue = (id: string) => page.locator('.liv-card').filter({ hasText: new RegExp(`^${id} ·`) });
+  const investigate = (id: string) => clue(id).getByRole('button', { name: 'Изследвай материала' });
+  await expect(investigate('C4')).toBeDisabled();
+  const accusation = page.getByRole('button', { name: 'Обвини заподозрения' });
+  await expect(accusation).toBeDisabled();
+  await investigate('C2').click();
+  await investigate('C3').click();
+  await expect(page.getByText('Открити следи: 2/6')).toBeVisible();
+  await expect(investigate('C4')).toBeEnabled();
+
+  const raya = page.locator('.liv-grid.three .liv-card').filter({ hasText: 'Рая Милева' });
+  await expect(raya.getByRole('button', { name: 'Попитай за алибито' })).toBeEnabled();
+  await raya.getByRole('button', { name: 'Попитай за алибито' }).click();
+  await expect(raya).toContainText('Била е в реставрационното ателие до 23:30');
+  await investigate('C4').click();
+
+  const suspect = page.getByRole('combobox', { name: 'Посочи заподозрян' });
+  await suspect.selectOption('boris');
+  const court = page.locator('.liv-court');
+  for (const id of ['C2', 'C3', 'C4']) {
+    await court.getByLabel(new RegExp(`^${id} `)).check();
+  }
+  await expect(accusation).toBeEnabled();
+  await accusation.click();
+  await expect(court.locator('.liv-verdict')).toContainText('Случаят е разрешен');
+  await expect(court.locator('.liv-verdict')).toContainText(/Борис/);
+});
