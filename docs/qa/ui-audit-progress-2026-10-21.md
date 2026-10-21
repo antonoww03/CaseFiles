@@ -14,7 +14,7 @@
 1. Add targeted Playwright tests for previously unverified home and game controls and state transitions. Record source anchors only when all assertions in a test **pass**.
 2. Add a TypeScript AST audit tool that compares source declarations against prior inventory counts and combines manual production evidence with passing local test evidence.
 3. Emit a machine-readable `.ui-evidence/summary.json` to enumerate the proven and remaining source controls. If AST and original CSV extraction counts disagree, the percentage is **not** considered accurate until reconciled.
-4. Keep production code and database unchanged. These tests are on a GitHub QA branch; no released behaviour changes are implied.
+4. Fix a confirmed malformed-session-token bug: strict UUID validation happens before PostgreSQL's UUID cast, preventing malformed 36-character tokens from causing a spurious 503. Add regression tests. No database mutation has been performed. The code change is **not released** until review and merge.
 
 ## Product decision and known limitation
 
