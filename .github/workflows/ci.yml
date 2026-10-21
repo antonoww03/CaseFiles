@@ -24,3 +24,11 @@ jobs:
       - run: npm run test:e2e -w apps/web
       - run: node scripts/production-smoke.mjs
       - run: npm run test:e2e:prod -w apps/web
+      - if: always()
+        run: node scripts/ui-audit-report.mjs
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: casefiles-ui-audit
+          path: .ui-evidence/
+          if-no-files-found: warn
