@@ -52,7 +52,7 @@ for (const basename of readdirSync(src).filter(name=>name.endsWith('.tsx')).sort
       const tag = node.tagName.getText(sf);
       const hasHandler = node.attributes.properties.some(attr=>
         ts.isJsxAttribute(attr) && /^on[A-Z]/.test(attr.name.getText(sf)));
-      if (staticTags.has(tag) || hasHandler) {
+      if (/^[a-z]/.test(tag) && (staticTags.has(tag) || hasHandler)) {
         const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
         const key = `${line}:${tag}`;
         const ordinal = (seen.get(key) || 0) + 1;
@@ -70,6 +70,32 @@ for (const basename of readdirSync(src).filter(name=>name.endsWith('.tsx')).sort
 const entries = new Map(inventory.map(item=>[item.id,{
   ...item,evidence:[],states: new Set()
 }]));
+
+// Lossless compact index from the uploaded 345-row CSV. Every duplicate is
+// intentional and gets its own 1-based ordinal; no fuzzy selector matching.
+const tagNames = {b:'button',i:'input',s:'select',t:'textarea',d:'div',form:'form'};
+const baselineIds = new Set();
+const baselineText = readFileSync(join(repo,'docs/qa/ui-baseline-anchors.txt'),'utf8');
+for (const line of baselineText.split('\\n')) {
+  const trimmed=line.trim();
+  if (!trimmed || trimmed.startsWith('#'))continue;
+  const [basename,...anchors]=trimmed.split(/\\s+/);
+  const occurrences=new Map();
+  for(const anchor of anchors){
+    const found=anchor.match(/^(\\d+)(form|[bistd])$/);
+    if(!found)throw new Error('Invalid baseline anchor: '+anchor);
+    const [_,lineNumber,code]=found;
+    const tag=tagNames[code];
+    const key=lineNumber+':'+tag;
+    const ordinal=(occurrences.get(key)||0)+1;
+    occurrences.set(key,ordinal);
+    const id='apps/web/src/'+basename+':'+lineNumber+':'+tag+':'+ordinal;
+    if(baselineIds.has(id))throw new Error('Duplicate baseline source ID: '+id);
+    baselineIds.add(id);
+  }
+}
+if(baselineIds.size!==baselineTotal)throw new Error('Baseline manifest row count mismatch');
+
 const unmatched = [];
 
 function credit(id,kind,assertion,state) {
@@ -102,8 +128,13 @@ const byFile = Object.fromEntries(
     return [basename,{expectedCsvDeclarations:expected, astDeclarations:detected, matchedSourceDeclarations:covered}];
   })
 );
-const parity = Object.values(byFile).every(x=>x.expectedCsvDeclarations===x.astDeclarations);
-const uniqueVerifiedBaseline = Math.min(baselineTotal,verified.length);
+const astIds = new Set(inventory.map(x=>x.id));
+const baselineNotInAst = [...baselineIds].filter(id=>!astIds.has(id));
+const astNotInBaseline = [...astIds].filter(id=>!baselineIds.has(id));
+const parity = baselineNotInAst.length===0 && astNotInBaseline.length===0 &&
+  Object.values(byFile).every(x=>x.expectedCsvDeclarations===x.astDeclarations);
+const verifiedBaseline = verified.filter(item=>baselineIds.has(item.id));
+const uniqueVerifiedBaseline = verifiedBaseline.length;
 const summary = {
   status: 'NOT_PASS',
   baselineSha: auditedSha,
@@ -111,14 +142,15 @@ const summary = {
   newAstScan: {declarations:inventory.length,files:readdirSync(src).filter(x=>x.endsWith('.tsx')).length,parityWithOriginalCsv:parity},
   evidence: {
     passingAdditionalTestRuns:testRuns.length,
-    sourceDeclarationsWithAtLeastOneVerifiedAction: verified.length,
+    sourceDeclarationsWithAtLeastOneVerifiedAction: verifiedBaseline.length,
     percentageOfOriginalCsv: Number((uniqueVerifiedBaseline/baselineTotal*100).toFixed(2)),
     caveat: parity?'Declaration-level minimum only; state and dependency coverage unknown.':'Parser and original CSV differ: denominator is NOT a validated 1:1 join; do not treat the percentage as exact coverage.',
-    unverifiedOriginalDeclarations: parity?baselineTotal-verified.length:null,
+    unverifiedOriginalDeclarations: parity?baselineTotal-verifiedBaseline.length:null,
     uniqueActionStateEvidence:verified.reduce((n,x)=>n+x.states.size,0)
   },
   byFile,
   unmatchedSourceAnchors:unmatched,
+  reconciliation: {baselineNotInAst,astNotInBaseline},
   verifiedDeclarations:verified.map(x=>({id:x.id,actions:[...x.states],evidence:x.evidence})),
   remainingAstDeclarations:inventory.filter(x=>!entries.get(x.id).evidence.length),
   missing: [
@@ -131,6 +163,6 @@ const summary = {
 };
 mkdirSync(evidenceDir,{recursive:true});
 writeFileSync(join(evidenceDir,'summary.json'),JSON.stringify(summary,null,2));
-console.log(`CASEFILES UI AUDIT: ${summary.status} | audited CSV ${baselineTotal} | AST ${inventory.length} | direct evidence ${verified.length} | baseline parity ${parity}`);
-console.log(`Source rows without individually verified action: ${parity?baselineTotal-verified.length:'UNKNOWN until reconciliation'}; full runtime state coverage: UNKNOWN`);
+console.log(`CASEFILES UI AUDIT: ${summary.status} | audited CSV ${baselineTotal} | AST ${inventory.length} | direct evidence ${verifiedBaseline.length} | baseline parity ${parity}`);
+console.log(`Source rows without individually verified action: ${parity?baselineTotal-verifiedBaseline.length:'UNKNOWN until reconciliation'}; full runtime state coverage: UNKNOWN`);
 if (unmatched.length)console.log('Unmatched source evidence anchors: '+JSON.stringify(unmatched));
