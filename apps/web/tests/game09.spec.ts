@@ -147,7 +147,11 @@ test('0.9 forensic puzzles validate dependencies, wrong answers, controls, and c
  await expect(order.nth(0)).toContainText('Временен входен код');
  await order.nth(0).getByText('↑').click();
  await expect(order.nth(0)).toContainText('Временен входен код');
+ for(let i=0;i<2;i++)await order.filter({hasText:'Асансьорът'}).getByText('↑').click();
+ await expect(order.nth(1)).toContainText('Асансьорът');
+ const bottomTitle=await order.nth(3).locator('strong').textContent();
  await order.nth(3).getByText('↓').click();
+ await expect(order.nth(3)).toContainText(bottomTitle||'');
  await expect(order.nth(3)).toContainText('Автоматично заключване');
  await workbench.getByRole('button',{name:/Провери решението/}).click();
  await expect(workbench.getByText('РЕШЕНО ✓')).toBeVisible();
