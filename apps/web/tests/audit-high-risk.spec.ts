@@ -207,3 +207,77 @@ test('Case 002 suspect interviews recover from error and expose each scripted al
   await expect(page.getByText('Твърди, че е напуснал архива преди полунощ и не е имал достъп до фонда.')).toBeVisible();
   expect(pending.postDataJSON()).toMatchObject({ caseId: 'case-002', action: 'interview', id: 'raya' });
 });
+
+test('Forensic workbench verifies video frames and gates document pages on discovered clues', async ({ page, request }) => {
+  const api = 'http://127.0.0.1:3001/api';
+  const created = await request.post(`${api}/session`);
+  expect(created.status()).toBe(201);
+  const { sessionId } = await created.json() as { sessionId: string };
+  const headers = { 'x-case-session': sessionId };
+  const clue = await request.post(`${api}/discover/E04`, { headers, data: {} });
+  expect(clue.status()).toBe(200);
+
+  await page.addInitScript(id => {
+    localStorage.setItem('casefiles-demo-session', id);
+    localStorage.setItem('cf10-selected-case', 'case-001');
+    localStorage.setItem('cf10-skip-intro', 'true');
+  }, sessionId);
+  const restored = page.waitForResponse(response => response.url().endsWith('/api/session') && response.request().method() === 'GET' && response.status() === 200);
+  await page.goto('/');
+  await restored;
+  await page.getByRole('button', { name: 'Продължи' }).click();
+  const nav = page.locator('.r10-navigation');
+  await nav.getByRole('button', { name: 'Криминалистика' }).click();
+
+  const lab = page.locator('.f04-lab');
+  const seek = lab.locator('#f04-video-seek');
+  const detail = lab.getByLabel('НАБЛЮДАВАН ДЕТАЙЛ');
+  const analyze = lab.getByRole('button', { name: 'Потвърди наблюдението' });
+  await expect(lab.getByText('01:10:00')).toBeVisible();
+  await expect(analyze).toBeDisabled();
+  await seek.focus();
+  await seek.press('ArrowRight');
+  await expect(lab.getByText('01:11:00')).toBeVisible();
+  await detail.selectOption('врати');
+  await expect(analyze).toBeEnabled();
+  await analyze.click();
+  await expect(lab.getByRole('status')).toContainText('Това наблюдение не е достатъчно');
+
+  await seek.press('ArrowRight');
+  await expect(lab.getByText('01:12:00')).toBeVisible();
+  await detail.selectOption('презрамка');
+  await analyze.click();
+  await expect(lab.getByRole('status')).toContainText('добавено в досието');
+  await expect(lab.getByRole('button', { name: /Камера 04/ }).locator('.f04-dot')).toHaveClass(/done/);
+
+  await lab.getByRole('button', { name: 'Анализ на документи' }).click();
+  const draft = lab.getByRole('button', { name: /Чернова на финансов сигнал/ });
+  const access = lab.getByRole('button', { name: /Регистър на временните пропуски/ });
+  await expect(draft).toBeEnabled();
+  await expect(access).toBeDisabled();
+  await draft.click();
+  await lab.getByRole('button', { name: /СТР\. 3/ }).click();
+  await expect(lab.getByRole('heading', { name: 'Бележка под линия' })).toBeVisible();
+  await lab.getByRole('button', { name: 'Анализирай страницата' }).click();
+  await expect(lab.getByRole('status')).toContainText('Разчетена ключова следа E09');
+
+  const unlock = await request.post(`${api}/discover/E05`, { headers, data: {} });
+  expect(unlock.status()).toBe(200);
+  await lab.getByRole('button', { name: 'Видеозаписи' }).click();
+  await lab.getByRole('button', { name: /Камера 01 — вход/ }).click();
+  await seek.focus();
+  await seek.press('ArrowRight');
+  await seek.press('ArrowRight');
+  await expect(lab.getByText('01:29:00')).toBeVisible();
+  await detail.selectOption('презрамка');
+  await analyze.click();
+  await expect(lab.getByRole('status')).toContainText('добавено в досието');
+
+  await lab.getByRole('button', { name: 'Анализ на документи' }).click();
+  await expect(access).toBeEnabled();
+  await access.click();
+  await lab.getByRole('button', { name: /СТР\. 2/ }).click();
+  await expect(lab.getByRole('heading', { name: 'Регистър' })).toBeVisible();
+  await lab.getByRole('button', { name: 'Анализирай страницата' }).click();
+  await expect(lab.getByRole('status')).toContainText('Разчетена ключова следа E10');
+});
