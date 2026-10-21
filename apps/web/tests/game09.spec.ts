@@ -92,7 +92,7 @@ test('0.9 forensic puzzles validate dependencies, wrong answers, controls, and c
  await workbench.getByRole('button',{name:/Провери решението/}).click();
  await expect(page.getByRole('status')).toContainText('Това решение не съвпада');
  await workbench.getByRole('button',{name:'Подсказка'}).click();
- await expect(workbench.locator('.g9-hint')).toContainText('оригиналните');
+ await expect(workbench.locator('.g9-hint')).toContainText('оригиналите и фактурите');
  await fragments.nth(0).getByText('→').click();
  await expect(fragments.nth(0)).toContainText('Провери');
  await fragments.nth(2).getByText('←').click();
