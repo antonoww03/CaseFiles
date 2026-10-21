@@ -8,6 +8,7 @@ permissions:
   contents: read
 jobs:
   checks:
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[ui-audit]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -24,3 +25,19 @@ jobs:
       - run: npm run test:e2e -w apps/web
       - run: node scripts/production-smoke.mjs
       - run: npm run test:e2e:prod -w apps/web
+
+  ui-audit:
+    if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[ui-audit]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck -w apps/web
+      - run: node --check scripts/ui-coverage-report.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e -w apps/web -- --grep "Case 002 interview becomes actionable|Case 002 mobile navigation opens|Evidence Board supports clue dragging"
