@@ -437,3 +437,55 @@ test('Community story form edits repeated fields, gates publish, and recovers af
   await expect(page.getByRole('status')).toContainText('Публикуван случай');
   await expect(page.getByText('Audit mystery', { exact: true }).first()).toBeVisible();
 });
+
+test('Community empty room fallback, profile nickname, public story room, notice close, and code copy', async ({ page, request }) => {
+  const story = {
+    id: 'custom-audit-room',
+    title: 'QA story demo',
+    setting: 'Test archive',
+    briefing: 'A fictional archive room created only as isolated QA fixture data.',
+    suspects: [
+      { id: 'suspect1', name: 'Audit Suspect One', alibi: 'A fictional alibi for local UI testing.' },
+      { id: 'suspect2', name: 'Audit Suspect Two', alibi: 'Another fictional alibi for local UI testing.' },
+      { id: 'suspect3', name: 'Audit Suspect Three', alibi: 'A third fictional alibi for local UI testing.' }
+    ],
+    clues: ['C1', 'C2', 'C3', 'C4', 'C5'].map((id, i) => ({
+      id,
+      title: `QA clue ${i + 1}`,
+      description: `Fictional evidence detail for QA clue ${i + 1}.`,
+      location: `Archive ${i + 1}`
+    })),
+    solution: { suspectId: 'suspect1', clueIds: ['C1', 'C2', 'C3'], explanation: 'A fictional resolution used only to verify the isolated QA story.' }
+  };
+  const published = await request.post('http://127.0.0.1:3001/api/community/stories', {
+    data: { author: 'Audit Detective', story }
+  });
+  expect(published.status()).toBe(201);
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Екипна игра \/ нови случаи/ }).click();
+  await page.getByRole('button', { name: 'Екипно разследване' }).click();
+  await expect(page.getByRole('heading', { name: 'Нямаш активна стая' })).toBeVisible();
+  await page.getByRole('button', { name: 'Избери случай' }).click();
+
+  await page.getByRole('button', { name: 'Профил' }).click();
+  await page.getByRole('textbox', { name: 'Псевдоним' }).fill('Audit Detective');
+  await page.getByRole('button', { name: 'Създай профил' }).click();
+  await expect(page.getByText('Audit Detective · Ниво 1')).toBeVisible();
+  await page.getByRole('button', { name: 'Случаи' }).click();
+
+  const storyCard = page.locator('.community-stories article').filter({ hasText: 'QA story demo' });
+  await expect(storyCard).toBeVisible();
+  await storyCard.getByRole('button', { name: 'Разследвай историята' }).click();
+  const room = page.locator('.community-room-title');
+  await expect(room.getByRole('heading', { name: 'QA story demo' })).toBeVisible();
+  const notice = page.getByRole('status');
+  await expect(notice).toContainText('Свързан си със стая');
+  await notice.getByRole('button', { name: 'Затвори' }).click();
+  await expect(notice).toHaveCount(0);
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await room.getByRole('button', { name: 'Копирай код' }).click();
+  const code = await page.evaluate(() => navigator.clipboard.readText());
+  expect(code).toMatch(/^[A-F0-9]{10}$/);
+});
