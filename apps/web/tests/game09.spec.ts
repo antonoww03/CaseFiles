@@ -70,7 +70,7 @@ test('0.9 forensic puzzles validate dependencies, wrong answers, controls, and c
  await page.addInitScript(id=>localStorage.setItem('casefiles-demo-session',id),sessionId);
  await page.goto('/');
  await page.getByRole('button',{name:/Класически инструменти/}).click();
- await page.getByRole('button',{name:/Започни разследването/}).click();
+ await page.getByRole('button',{name:/Продължи разследването/}).click();
  await page.getByRole('button',{name:/Играй CASEFILES 0.9/}).click();
  const nav=page.getByRole('navigation',{name:'Бърза игрова навигация'});
  await nav.getByRole('button',{name:'Лаборатория'}).click();
