@@ -88,14 +88,16 @@ async function call<T>(path: string, method = 'GET', body?: unknown, session?: s
 }
 
 function SectionHeader({ kicker, title, description, extra }: { kicker: string; title: string; description: string; extra?: React.ReactNode }) {
+  const {t}=useLanguage();
   return <div className="section-heading">
-    <div className="heading-copy"><div className="eyebrow"><span className="eyebrow-line" />{kicker}</div><h1>{title}</h1><p>{description}</p></div>
+    <div className="heading-copy"><div className="eyebrow"><span className="eyebrow-line" />{t(kicker)}</div><h1>{t(title)}</h1><p>{t(description)}</p></div>
     {extra && <div className="heading-extra">{extra}</div>}
   </div>;
 }
 
 function EmptyState({ icon: Icon, title, description, action }: { icon: LucideIcon; title: string; description: string; action?: React.ReactNode }) {
-  return <div className="empty-state"><div className="empty-icon"><Icon size={24} strokeWidth={1.6} /></div><strong>{title}</strong><p>{description}</p>{action}</div>;
+  const {t}=useLanguage();
+  return <div className="empty-state"><div className="empty-icon"><Icon size={24} strokeWidth={1.6} /></div><strong>{t(title)}</strong><p>{t(description)}</p>{action}</div>;
 }
 
 function App() {
@@ -317,19 +319,19 @@ function App() {
   const person = info?.people.find(p => p.id === activePerson);
   const visibleTimeline = timeline.filter(([, , id]) => found.includes(id));
   const evidenceTypes = ['Всички', ...new Set(allEvidence.filter(e => found.includes(e.id)).map(e => e.type))];
-  const filteredEvidence = allEvidence.filter(e => found.includes(e.id) && (filterType === 'Всички' || e.type === filterType) && (e.title + e.detail + e.id).toLocaleLowerCase('bg').includes(query.toLocaleLowerCase('bg')));
-  const statusText = aiMode === 'ai-live' ? 'Последен отговор: AI' : aiMode === 'ai-configured' ? 'AI ключ · непотвърден' : aiMode === 'checking' ? 'Проверка на AI' : 'Демо диалози';
+  const filteredEvidence = allEvidence.filter(e => found.includes(e.id) && (filterType === 'Всички' || e.type === filterType) && (t(e.title) + t(e.detail) + e.id).toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const statusText = t(aiMode === 'ai-live' ? 'Последен отговор: AI' : aiMode === 'ai-configured' ? 'AI ключ · непотвърден' : aiMode === 'checking' ? 'Проверка на AI' : 'Демо диалози');
 
   const evidenceCards = (ids: string[]) => <div className="evidence-grid">{ids.map(id => {
     const item = allEvidence.find(e => e.id === id);
     if (!item) return null;
     const collected = found.includes(id);
     return <button className={'e-card ' + (collected ? 'collected' : '')} key={id} onClick={() => void discover(item)}>
-      <span className="e-card-top"><span className="evidence-icon"><FileSearch size={23} strokeWidth={1.5} /></span><span className={'evidence-state ' + (collected ? 'is-found' : '')}>{collected ? <><Check size={12} /> ОТКРИТО</> : 'ЗА ПРОВЕРКА'}</span></span>
-      <span className="evidence-id">{item.id} / {item.type}</span>
-      <strong>{item.title}</strong>
-      <span className="e-card-description">{collected ? item.detail : 'Разгледай, за да добавиш материала към досието.'}</span>
-      <span className="e-card-action">{collected ? 'Преглед на уликата' : 'Разгледай материала'} <ArrowUpRight size={15} /></span>
+      <span className="e-card-top"><span className="evidence-icon"><FileSearch size={23} strokeWidth={1.5} /></span><span className={'evidence-state ' + (collected ? 'is-found' : '')}>{collected ? <><Check size={12} /> {t('ОТКРИТО')}</> : t('ЗА ПРОВЕРКА')}</span></span>
+      <span className="evidence-id">{item.id} / {t(item.type)}</span>
+      <strong>{t(item.title)}</strong>
+      <span className="e-card-description">{t(collected ? item.detail : 'Разгледай, за да добавиш материала към досието.')}</span>
+      <span className="e-card-action">{t(collected ? 'Преглед на уликата' : 'Разгледай материала')} <ArrowUpRight size={15} /></span>
     </button>;
   })}</div>;
 
