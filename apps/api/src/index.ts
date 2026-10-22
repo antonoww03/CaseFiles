@@ -20,7 +20,6 @@ import {detective13View,detective13Schema,submitDetective13} from './detective13
 import { deskView, deskActionSchema, performDeskAction, type DeskCaseId } from './desk14.js';
 import { initialUniverse, universeView, universeActionSchema, executeUniverse, type UniverseCaseId } from './universe.js';
 import { initializeStorage, persistentStorageEnabled, restoreSession, saveSession, type StoredSession } from './storage.js';
-import communityRouter from './community.js';
 
 type Session = StoredSession;
 if (existsSync('apps/api/.env')) process.loadEnvFile('apps/api/.env');
@@ -828,7 +827,6 @@ app.post('/api/accusation', async (req, res) => {
   catch { return void res.status(503).json({ error: 'Финалното заключение не можа да бъде записано.' }); }
   res.json({ ...verdict, score: finalScore, ...(verdict.status === 'solved' ? { report: session.finalReport } : {}) });
 });
-app.use('/api/community', communityRouter);
 app.use((_req, res) => res.status(404).json({ error: 'Няма такъв маршрут.' }));
 const port = Number(process.env.PORT || 3001);
 initializeStorage().then(storageMode => {
