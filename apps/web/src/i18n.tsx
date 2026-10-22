@@ -545,6 +545,7 @@ const dictionary: Record<string, Partial<Record<Language,string>>> = {
   "Провери логиката":{en:"Check deduction",de:"Schlussfolgerung prüfen",fr:"Vérifier la déduction",pl:"Sprawdź wnioskowanie",es:"Comprobar deducción"},
   "Установени връзки":{en:"Established connections",de:"Erkannte Verbindungen",fr:"Liens établis",pl:"Ustalone powiązania",es:"Conexiones establecidas"},
   "Все още няма потвърдени логически връзки.":{en:"No logical connections confirmed yet.",de:"Noch keine logischen Verbindungen bestätigt.",fr:"Aucun lien logique confirmé pour le moment.",pl:"Nie potwierdzono jeszcze logicznych powiązań.",es:"Aún no hay conexiones lógicas confirmadas."},
+
   'Активна':{en:'Active',de:'Aktiv',fr:'Active',pl:'Aktywna',es:'Activa'}
 };
 
