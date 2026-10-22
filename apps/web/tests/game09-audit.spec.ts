@@ -41,7 +41,7 @@ test('CASEFILES 0.9 scene controls expose state, dependency, and navigation resu
   await vision.click();
   await expect(page.locator('.g9-vision')).toHaveCount(0);
 
-  const inventoryToggle = page.getByRole('button', { name: /Инвентар/ });
+  const inventoryToggle = page.locator('.g9-tools').getByRole('button', { name: /Инвентар/ });
   await inventoryToggle.click();
   await expect(page.locator('.g9-inventory')).toContainText('Намери предмет при огледа на стаята.');
   await inventoryToggle.click();
