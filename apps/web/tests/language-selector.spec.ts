@@ -37,3 +37,24 @@ test('changing language during investigation does not discard discovered evidenc
  await page.getByRole('button',{name:/Continuer/}).click();
  await expect(page.getByText('1 INDICES')).toBeVisible();
 });
+
+
+test('language switch during an active case preserves evidence progress and locale across reload',async({page})=>{
+ await page.goto('/');
+ await page.locator('.cf-language-selector select').first().selectOption('en');
+ await page.getByRole('button',{name:'Start investigation'}).click();
+ await expect(page.getByRole('dialog',{name:'Case introduction'})).toBeVisible();
+ await page.getByRole('button',{name:'Join investigation'}).click();
+ await expect(page.getByRole('heading',{name:'Apartment 407'})).toBeVisible();
+ await page.getByRole('button',{name:'Inspect E01'}).click();
+ await page.getByRole('button',{name:'Collect evidence'}).click();
+ await expect(page.locator('.r10-header-right').getByText('1 CLUES')).toBeVisible();
+ await page.locator('.cf-language-selector select').last().selectOption('fr');
+ await expect(page.locator('html')).toHaveAttribute('lang','fr');
+ await expect(page.locator('.r10-header-right').getByText('1 INDICES')).toBeVisible();
+ await page.reload();
+ await expect(page.locator('html')).toHaveAttribute('lang','fr');
+ await expect(page.getByRole('heading',{name:/La vérité est/})).toBeVisible();
+ await page.getByRole('button',{name:'Continuer'}).click();
+ await expect(page.locator('.r10-header-right').getByText('1 INDICES')).toBeVisible();
+});
