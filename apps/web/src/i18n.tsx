@@ -945,6 +945,20 @@ const dictionary: Record<string, Partial<Record<Language,string>>> = {
   "ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ":{en:"TIMELINE AND OPPORTUNITY",de:"CHRONOLOGIE UND GELEGENHEIT",fr:"CHRONOLOGIE ET OCCASION",pl:"CHRONOLOGIA I MOŻLIWOŚĆ",es:"CRONOLOGÍA Y OPORTUNIDAD"},
   "ЗАКЛЮЧЕНИЕТО СЕ ОЦЕНЯВА ПО ДОКАЗАТЕЛСТВАТА":{en:"CONCLUSIONS ARE SCORED AGAINST EVIDENCE",de:"SCHLÜSSE WERDEN AN BEWEISEN GEMESSEN",fr:"LES CONCLUSIONS SONT ÉVALUÉES SUR LES PREUVES",pl:"WNIOSKI OCENIA SIĘ NA PODSTAWIE DOWODÓW",es:"LAS CONCLUSIONES SE EVALÚAN SEGÚN LAS PRUEBAS"},
   "Прегледай финалния доклад":{en:"Review final report",de:"Abschlussbericht ansehen",fr:"Lire le rapport final",pl:"Przejrzyj raport końcowy",es:"Revisar informe final"},
+  "КОНТЕКСТЕН ПАНЕЛ":{en:"CONTEXT PANEL",de:"KONTEXTPANEL",fr:"PANNEAU CONTEXTUEL",pl:"PANEL KONTEKSTOWY",es:"PANEL CONTEXTUAL"},
+  "Детайли по случая":{en:"Case details",de:"Falldetails",fr:"Détails de l'affaire",pl:"Szczegóły sprawy",es:"Detalles del caso"},
+  "Оперативна информация в реално време":{en:"Live investigation information",de:"Live-Ermittlungsdaten",fr:"Informations opérationnelles en direct",pl:"Bieżące informacje śledcze",es:"Información de investigación en tiempo real"},
+  "ИЗБРАНО ДОКАЗАТЕЛСТВО":{en:"SELECTED EVIDENCE",de:"AUSGEWÄHLTER BEWEIS",fr:"PREUVE SÉLECTIONNÉE",pl:"WYBRANY DOWÓD",es:"PRUEBA SELECCIONADA"},
+  "СТАТУС":{en:"STATUS",de:"STATUS",fr:"STATUT",pl:"STATUS",es:"ESTADO"},
+  "Предяви при разпит":{en:"Present during interview",de:"Im Verhör vorlegen",fr:"Présenter à l'interrogatoire",pl:"Przedstaw podczas przesłuchania",es:"Presentar en el interrogatorio"},
+  "Изчисти избора":{en:"Clear selection",de:"Auswahl aufheben",fr:"Effacer la sélection",pl:"Wyczyść wybór",es:"Borrar selección"},
+  "ПОЛЕВО ДОСИЕ":{en:"FIELD FILE",de:"EINSATZAKTE",fr:"DOSSIER DE TERRAIN",pl:"AKTA TERENOWE",es:"EXPEDIENTE DE CAMPO"},
+  "Разследване #001":{en:"Investigation #001",de:"Ermittlung #001",fr:"Enquête #001",pl:"Śledztwo #001",es:"Investigación #001"},
+  "Избери доказателство, за да разгледаш информацията, статуса и възможните действия с него.":{en:"Select evidence to see its details, status and available actions.",de:"Wähle einen Beweis, um Details, Status und Aktionen zu sehen.",fr:"Sélectionnez une preuve pour voir les détails, le statut et les actions.",pl:"Wybierz dowód, aby zobaczyć szczegóły, status i działania.",es:"Selecciona una prueba para ver detalles, estado y acciones."},
+  "СЪСТОЯНИЕ НА РАЗСЛЕДВАНЕТО":{en:"INVESTIGATION STATUS",de:"ERMITTLUNGSSTATUS",fr:"ÉTAT DE L'ENQUÊTE",pl:"STAN ŚLEDZTWA",es:"ESTADO DE INVESTIGACIÓN"},
+  "Сесия":{en:"Session",de:"Sitzung",fr:"Session",pl:"Sesja",es:"Sesión"},
+  "ПРОГРЕС":{en:"PROGRESS",de:"FORTSCHRITT",fr:"PROGRESSION",pl:"POSTĘP",es:"PROGRESO"},
+  "Най-добрите заключения идват от две независими улики.":{en:"The strongest conclusions rely on two independent clues.",de:"Die besten Schlüsse beruhen auf zwei unabhängigen Hinweisen.",fr:"Les meilleures conclusions reposent sur deux indices indépendants.",pl:"Najlepsze wnioski opierają się na dwóch niezależnych tropach.",es:"Las mejores conclusiones se basan en dos pistas independientes."},
   'Активна':{en:'Active',de:'Aktiv',fr:'Active',pl:'Aktywna',es:'Activa'}
 };
 
