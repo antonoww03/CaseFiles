@@ -1255,7 +1255,26 @@ export function translate(source:string,language:Language):string {
   return language==='bg'?source:dictionary[source]?.[language]||source;
 }
 
-type LanguageContextValue={language:Language;setLanguage:(language:Language)=>void;t:(source:string)=>string};
+/** Translate only first-party procedural fragments, never player-authored stories. */
+const PROCEDURAL_PARTS=[
+ 'Временният пропуск и подписаното нареждане, съпоставени с прекъсването на контрола, свързват ',
+ ' с изчезналия документ. Това е фиктивен процедурно създаден случай.',
+ ' изчезва ценен документ. Системата е работила с пропуски, а трима служители разказват различни версии. Събери улики и изгради проверимо обвинение.',
+ 'По време на нощната смяна от ','При огледа е намерен пропуск, издаден на ',
+ 'Подписаното нареждане за преместване е свързано с ',' · сценарий #','Фиктивен ',
+ 'крайбрежен музей','театрален архив','планинска обсерватория','университетска библиотека','частна галерия',
+ 'Ирина Петрова','Борис Колев','Николай Маринов','Мая Димитрова','Стефан Попов','Деница Иванова'
+] as const;
+export function translateAuthored(source:string,language:Language):string {
+ if(language==='bg'||!source)return source;
+ const direct=dictionary[source]?.[language];if(direct)return direct;
+ return PROCEDURAL_PARTS.reduce((text,part)=>{
+  const translated=dictionary[part]?.[language];
+  return translated&&text.includes(part)?text.split(part).join(translated):text;
+ },source);
+}
+
+type LanguageContextValue={language:Language;setLanguage:(language:Language)=>void;t:(source:string)=>string;tAuthored:(source:string)=>string};
 const LanguageContext=createContext<LanguageContextValue|null>(null);
 
 export function LanguageProvider({children}:{children:ReactNode}){
@@ -1275,7 +1294,7 @@ export function LanguageProvider({children}:{children:ReactNode}){
       ?'CASEFILES — криминална детективска игра. Разследвай и открий истината.'
       :'CASEFILES — detective mystery game. Investigate, collect clues and uncover the truth.');
   },[language]);
-  const value=useMemo(()=>({language,setLanguage,t:(source:string)=>translate(source,language)}),[language]);
+  const value=useMemo(()=>({language,setLanguage,t:(source:string)=>translate(source,language),tAuthored:(source:string)=>translateAuthored(source,language)}),[language]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
