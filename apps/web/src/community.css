@@ -48,3 +48,7 @@
 .community-notice button{border:0;color:#f1dcba;background:transparent;cursor:pointer;font-size:23px}
 @media(max-width:760px){.community-layout{grid-template-columns:1fr}.community-wide{grid-column:auto}.community-actions{grid-template-columns:1fr}.community-room-title{flex-direction:column}.community-card{padding:15px}.community-head{flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.cf-community *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+.community-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.community-head-actions .cf-language-selector{margin:0;max-width:100%}
+@media(max-width:480px){.community-head-actions{width:100%;justify-content:flex-start}}
