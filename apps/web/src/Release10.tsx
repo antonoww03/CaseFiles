@@ -73,6 +73,7 @@ function useSfx(){
  };
 }
 export function Home10({session,busy,onStart,onContinue,onLegacy,onCommunity}:{session:string;busy:boolean;onStart:(id:CaseId)=>void;onContinue:()=>void;onLegacy:()=>void;onCommunity:()=>void}){
+ const {t}=useLanguage();
  const [selected,setSelected]=useState<CaseId>(()=>localStorage.getItem('cf10-selected-case')==='case-002'?'case-002':'case-001');
  const [menu,setMenu]=useState<'cases'|'settings'|'none'>('none');
  const [skipIntro,setSkipIntro]=useState(()=>localStorage.getItem('cf10-skip-intro')==='true');
@@ -96,6 +97,7 @@ export function Home10({session,busy,onStart,onContinue,onLegacy,onCommunity}:{s
  </div>;
 }
 export function FullGame10({session,caseId,found,onFound,onHome,onLegacy}:{session:string;caseId:CaseId;found:string[];onFound:(ids:string[])=>void;onHome:()=>void;onLegacy:(section:string)=>void}){
+ const {t}=useLanguage();
  const [stage,setStage]=useState<Stage>('scene'),[data,setData]=useState<ReleaseState|null>(null);
  const [scene,setScene]=useState(''),[focus,setFocus]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
  const [suspect,setSuspect]=useState(caseId==='case-002'?'boris':'martin'),[selected,setSelected]=useState<string[]>([]);
