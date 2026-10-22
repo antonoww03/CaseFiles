@@ -1462,7 +1462,7 @@ export function resolveLanguage(value:unknown):Language {
   return languages.some(l=>l.code===value)?value as Language:'en';
 }
 export function translate(source:string,language:Language):string {
-  return language==='bg'?source:dictionary[source]?.[language]||source;
+  return translateAuthored(source,language);
 }
 
 /** Translate only first-party procedural fragments, never player-authored stories. */
@@ -1473,6 +1473,10 @@ const PROCEDURAL_PARTS=[
  'По време на нощната смяна от ','При огледа е намерен пропуск, издаден на ',
  'Подписаното нареждане за преместване е свързано с ',' · сценарий #','Фиктивен ',
  'крайбрежен музей','театрален архив','планинска обсерватория','университетска библиотека','частна галерия',
+ 'Прокурорът приема игровата аргументация по ','финансовия','времевия',' път.',
+ 'Получено е игрово разрешение за ',' — решено','Класификация ','Актуализирано лично подозрение към ',
+ 'Поставено събитие ','Взети показания от ','Камера ','Документ ','Обвинение: ',
+ 'Архивът: ','Успешен анализ: ','. Открита е връзка между материалите.',
  'Ирина Петрова','Борис Колев','Николай Маринов','Мая Димитрова','Стефан Попов','Деница Иванова'
 ] as const;
 export function translateAuthored(source:string,language:Language):string {
