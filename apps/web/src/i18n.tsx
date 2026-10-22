@@ -139,6 +139,19 @@ const dictionary: Record<string, Partial<Record<Language,string>>> = {
   'Разследвай с приятели, генерирай нов случай, публикувай собствена мистерия и трупай XP.':{en:'Investigate with friends, generate cases, publish mysteries and earn XP.',de:'Ermittle mit Freunden, generiere Fälle, veröffentliche Rätsel und sammle XP.',fr:'Enquêtez entre amis, générez des affaires, publiez des mystères et gagnez des XP.',pl:'Prowadź śledztwa ze znajomymi, twórz sprawy, publikuj zagadki i zdobywaj XP.',es:'Investiga con amigos, genera casos, publica misterios y gana XP.'},
   'Още няма публикувани истории. Създай първата от раздел „Редактор“.':{en:'No published stories yet. Create the first one in the Editor tab.',de:'Noch keine veröffentlichten Geschichten. Erstelle die erste im Editor.',fr:"Aucune histoire publiée. Créez la première dans l'éditeur.",pl:'Brak opublikowanych historii. Utwórz pierwszą w edytorze.',es:'Aún no hay historias publicadas. Crea la primera en el editor.'},
   'Само измислени случаи. Публикуваните сценарии са достъпни за други играчи — не въвеждай истински лични данни.':{en:'Fictional cases only. Published stories are visible to other players — do not enter real personal information.',de:'Nur fiktive Fälle. Veröffentlichte Geschichten sind für andere sichtbar – keine echten persönlichen Daten eingeben.',fr:"Affaires fictives uniquement. Les récits publiés sont visibles par d'autres joueurs : ne saisissez pas de données personnelles réelles.",pl:'Tylko fikcyjne sprawy. Opublikowane historie widzą inni gracze — nie podawaj prawdziwych danych osobowych.',es:'Solo casos ficticios. Otros jugadores verán las historias publicadas; no introduzcas datos personales reales.'},
+
+  'СЛУЧАЙ':{en:'CASE',de:'FALL',fr:'AFFAIRE',pl:'SPRAWA',es:'CASO'},
+  'УЛИКИ':{en:'CLUES',de:'HINWEISE',fr:'INDICES',pl:'TROPY',es:'PISTAS'},
+  'НАМЕРЕНИ':{en:'FOUND',de:'GEFUNDEN',fr:'TROUVÉS',pl:'ZNALEZIONE',es:'ENCONTRADAS'},
+  'Игрови раздели':{en:'Game sections',de:'Spielbereiche',fr:'Sections du jeu',pl:'Sekcje gry',es:'Secciones del juego'},
+  'Допълнителни инструменти':{en:'Additional tools',de:'Zusätzliche Werkzeuge',fr:'Outils supplémentaires',pl:'Dodatkowe narzędzia',es:'Herramientas adicionales'},
+  'Начало на случая':{en:'Case introduction',de:'Fall-Einführung',fr:"Introduction de l'affaire",pl:'Wprowadzenie do sprawy',es:'Introducción del caso'},
+  'Огледай сцената. Използвай отбелязаните места, за да откриеш следи.':{en:'Inspect the scene. Explore marked points to uncover clues.',de:'Untersuche den Tatort. Erkunde markierte Stellen, um Hinweise zu finden.',fr:'Examinez la scène. Explorez les points marqués pour découvrir des indices.',pl:'Zbadaj miejsce zdarzenia. Sprawdź oznaczone punkty, aby znaleźć tropy.',es:'Examina la escena. Explora los puntos marcados para descubrir pistas.'},
+  'Изследвай':{en:'Inspect',de:'Untersuchen',fr:'Examiner',pl:'Zbadaj',es:'Examinar'},
+  'Детайлен оглед':{en:'Detailed inspection',de:'Detailuntersuchung',fr:'Inspection détaillée',pl:'Szczegółowe oględziny',es:'Inspección detallada'},
+  'Открито':{en:'Collected',de:'Gefunden',fr:'Découvert',pl:'Znaleziono',es:'Descubierto'},
+  'Събери улика':{en:'Collect evidence',de:'Beweis sichern',fr:'Recueillir la preuve',pl:'Zbierz dowód',es:'Recoger prueba'},
+  'Интерактивен инвентар':{en:'Interactive inventory',de:'Interaktives Inventar',fr:'Inventaire interactif',pl:'Interaktywny ekwipunek',es:'Inventario interactivo'},
   'Активна':{en:'Active',de:'Aktiv',fr:'Active',pl:'Aktywna',es:'Activa'}
 };
 
