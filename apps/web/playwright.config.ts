@@ -25,7 +25,7 @@ export default defineConfig({
       url: 'http://127.0.0.1:5173',
       timeout: 60000,
       reuseExistingServer: !process.env.CI,
-      env: { VITE_API_URL: 'http://127.0.0.1:3001' }
+      env: { VITE_API_URL: 'http://127.0.0.1:3001', VITE_DEFAULT_LANGUAGE: 'bg' }
     }
   ]
 });
