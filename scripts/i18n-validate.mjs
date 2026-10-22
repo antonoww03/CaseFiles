@@ -43,7 +43,7 @@ function walk(dir){
   for(const name of readdirSync(dir)){
     const path=join(dir,name);
     if(statSync(path).isDirectory()){walk(path);continue;}
-    if(/\\.(ts|tsx)$/.test(name)&&!name.endsWith('.d.ts'))files.push(path);
+    if(/\.(ts|tsx)$/.test(name)&&!name.endsWith('.d.ts'))files.push(path);
   }
 }
 walk(sourceRoot);
@@ -79,9 +79,9 @@ for(const path of files){
 const missingKeys=[...referenced].filter(([key])=>!entries.has(key)).map(([key,uses])=>({key,uses:uses.slice(0,3)}));
 const total={catalogEntries:entries.size,filesScanned:files.length,staticKeysReferenced:referenced.size,staticMissing:missingKeys.length,incompleteCatalog:incompleteCatalog.length,dynamicTranslationCalls:dynamic.length};
 console.log('CASEFILES i18n source audit: '+JSON.stringify(total));
-if(missingKeys.length)console.log('Missing static translation keys:\\n'+JSON.stringify(missingKeys.slice(0,150),null,2));
-if(incompleteCatalog.length)console.log('Catalog entries with missing languages:\\n'+JSON.stringify(incompleteCatalog.slice(0,80),null,2));
-if(dynamic.length)console.log('Dynamic lookups requiring runtime or source review:\\n'+JSON.stringify(dynamic.slice(0,80),null,2));
+if(missingKeys.length)console.log('Missing static translation keys:\n'+JSON.stringify(missingKeys.slice(0,150),null,2));
+if(incompleteCatalog.length)console.log('Catalog entries with missing languages:\n'+JSON.stringify(incompleteCatalog.slice(0,80),null,2));
+if(dynamic.length)console.log('Dynamic lookups requiring runtime or source review:\n'+JSON.stringify(dynamic.slice(0,80),null,2));
 if(strict&&(missingKeys.length||incompleteCatalog.length)){
   console.error('Localization is NOT COMPLETE: fix missing static translations before release.');
   process.exitCode=1;
