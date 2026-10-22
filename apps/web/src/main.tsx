@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  Activity, Camera, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, Users, type LucideIcon
+  Activity, Camera, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, type LucideIcon
 } from 'lucide-react';
 import './style.css';
 import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
@@ -12,7 +12,6 @@ import { ImmersiveInvestigation } from './ImmersiveInvestigation';
 const LivingInvestigation=React.lazy(()=>import('./LivingInvestigation').then(m=>({default:m.LivingInvestigation})));
 const CinematicCenter=React.lazy(()=>import('./CinematicCenter').then(m=>({default:m.CinematicCenter})));
 const Experience09=React.lazy(()=>import('./Experience09').then(m=>({default:m.Experience09})));
-const CommunityHub=React.lazy(()=>import('./CommunityHub').then(m=>({default:m.CommunityHub})));
 import { autosaveKey, saveLocalSnapshot, readLocalSnapshot, recoverLocalSnapshot } from './autosave';
 import { Home10, FullGame10 } from './Release10';
 
@@ -21,13 +20,12 @@ type Evidence = { id: string; title: string; type: string; detail: string; icon:
 type CaseInfo = { title: string; location: string; date: string; briefing: string; people: Person[] };
 type Chat = { role: string; text: string };
 type Deduction = { id: string; title: string; explanation: string; evidenceIds: readonly [string, string] };
-type View = 'home10' | 'play10' | 'community' | 'game09' | 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living' | 'cinematic';
+type View = 'home10' | 'play10' | 'game09' | 'briefing' | 'scene' | 'lab' | 'evidence' | 'board' | 'timeline' | 'interview' | 'accusation' | 'notebook' | 'dossiers' | 'alibis' | 'report' | 'advanced' | 'immersive' | 'living' | 'cinematic';
 type Mode = 'checking' | 'ai-configured' | 'ai-live' | 'scripted-demo';
 type Tab = { id: View; name: string; hint: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
   { id: 'play10', name: 'Играй CASEFILES 1.0', hint: 'Единно разследване', icon: Crosshair },
-  { id: 'community', name: 'Екипна игра и нови случаи', hint: 'Кооп, генератор, редактор', icon: Users },
   { id: 'briefing', name: 'Досие', hint: 'Обща информация', icon: FolderOpen },
   { id: 'game09', name: 'Играй CASEFILES 0.9', hint: 'Единен игрови режим', icon: Crosshair },
   { id: 'scene', name: 'Местопрестъпление', hint: 'Апартамент 407', icon: ScanSearch },
@@ -330,8 +328,7 @@ function App() {
     </button>;
   })}</div>;
 
-  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')} onCommunity={()=>go('community')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
-  if(view==='community')return <div className="cf-community-page"><button className="r10-return" type="button" onClick={()=>go('home10')}>← Главно меню</button><React.Suspense fallback={<div className="empty-state">Зареждане на общността...</div>}><CommunityHub/></React.Suspense></div>;
+  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
   if(view==='play10')return <FullGame10 session={session} caseId={case10} found={found} onFound={setFound} onHome={()=>go('home10')} onLegacy={dest=>go(dest as View)}/>;
   
   return <div className="app-shell">

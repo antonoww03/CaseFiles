@@ -88,65 +88,9 @@ try {
   const cases=await request('/cases');
   assert.equal(cases.status,200);
   assert.equal(cases.json.length,2);
-  // Co-op / procedural / community-editor / persistent-profile HTTP smoke.
-  const communityStatus=await request('/community/status');
-  assert.equal(communityStatus.status,200);
-  assert.equal(communityStatus.json.coop,true);
-  const detective=await request('/community/profile','POST',{name:'Тест детектив'});
-  assert.equal(detective.status,201);
-  const detectiveId=detective.json.id;
-  const coop=await request('/community/rooms','POST',{kind:'case-002',name:'Следовател А'});
-  assert.equal(coop.status,201);
-  assert.equal(coop.json.room.clues[3].available,false);
-  assert.equal(coop.json.room.suspects[1].alibi,null);
-  assert.equal(JSON.stringify(coop.json.room).includes('solution'),false);
-  const roomCode=coop.json.room.id,roomMember=coop.json.memberToken;
-  const join=await request('/community/rooms/'+roomCode+'/join','POST',{name:'Следовател Б'});
-  assert.equal(join.status,200);
-  assert.equal(join.json.room.players.length,2);
-  const memberRequest=async(body,headersMember=roomMember,profile=detectiveId)=>{
-    const response=await fetch(origin+'/api/community/rooms/'+roomCode+'/action',{
-      method:'POST',headers:{'Content-Type':'application/json','x-room-member':headersMember,'x-case-profile':profile},
-      body:JSON.stringify(body),signal:AbortSignal.timeout(5000)
-    });
-    return {status:response.status,json:await response.json()};
-  };
-  assert.equal((await memberRequest({action:'discover',id:'C4'})).status,403);
-  assert.equal((await memberRequest({action:'discover',id:'C1'},'made-up-member')).status,403);
-  for(const id of ['C1','C2','C3','C4','C6'])assert.equal((await memberRequest({action:'discover',id})).status,200);
-  const shared=await request('/community/rooms/'+roomCode);
-  assert.equal(shared.status,200);
-  assert.equal(shared.json.found.length,5);
-  assert.equal(shared.json.players.length,2);
-  assert.equal((await memberRequest({action:'interview',id:'boris'})).status,200);
-  assert.match((await request('/community/rooms/'+roomCode)).json.suspects.find(s=>s.id==='boris').alibi,/напуснал/);
-  assert.equal((await memberRequest({action:'accuse',id:'boris',evidenceIds:['C2','C3','C4','C7']})).status,403);
-  const solvedCoop=await memberRequest({action:'accuse',id:'boris',evidenceIds:['C2','C3','C4','C6']});
-  assert.equal(solvedCoop.status,200);
-  assert.equal(solvedCoop.json.room.verdict,'solved');
-  assert.equal(solvedCoop.json.awarded,true);
-  assert.equal((await request('/community/profile/'+detectiveId)).json.xp,100);
-  const proceduralRoom=await request('/community/rooms','POST',{kind:'random',name:'Изследовател'});
-  assert.equal(proceduralRoom.status,201);
-  assert.equal(proceduralRoom.json.room.clues.length,6);
-  assert.equal(proceduralRoom.json.room.kind,'random');
-  const authored={
-    id:'custom-smoke-demo',title:'Нощен архив',setting:'Измислен градски архив',
-    briefing:'По време на нощната смяна изчезва важен договор, а трима служители дават противоречиви показания.',
-    suspects:[
-      {id:'ani',name:'Ани Петрова',alibi:'Бях в приемната по време на нощната смяна.'},
-      {id:'bobi',name:'Борис Иванов',alibi:'Бях в сервизното помещение през цялото време.'},
-      {id:'dara',name:'Дара Георгиева',alibi:'Проверявах записите в охраната през нощта.'}
-    ],
-    clues:[1,2,3,4,5].map(i=>({id:'C'+i,title:'Запис '+i,description:'Фиктивен архивен документ номер '+i+' за хронологията.',location:'Архив'})),
-    solution:{suspectId:'bobi',clueIds:['C1','C2','C3'],explanation:'Съчетанието от три оригинални документа противоречи на обявеното алиби на Борис Иванов.'}
-  };
-  const publish=await request('/community/stories','POST',{author:'Тест автор',story:authored});
-  assert.equal(publish.status,201);
-  assert.equal((await request('/community/stories')).json.some(s=>s.id===publish.json.id),true);
-  const publishedRoom=await request('/community/rooms','POST',{kind:'community',storyId:publish.json.id,name:'Читател'});
-  assert.equal(publishedRoom.status,201);
-  assert.equal(publishedRoom.json.room.title,'Нощен архив');
+  // Multiplayer endpoints are deliberately absent in solo-only mode.
+  assert.equal((await request('/community/status')).status,404);
+  assert.equal((await request('/community/rooms')).status,404);
 
   const case2First=await request('/living/case/case-002','GET',undefined,token);
   assert.equal(case2First.status,200);
