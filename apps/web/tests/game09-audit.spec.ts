@@ -49,6 +49,7 @@ test('CASEFILES 0.9 scene controls expose state, dependency, and navigation resu
   const inspection = page.getByRole('dialog', { name: 'Оглед на Изтривалка' });
   await expect(inspection.getByText('ЛИЦЕВА СТРАНА')).toBeVisible();
   await inspection.getByRole('button', { name: 'Завърти' }).click();
+  await expect(inspection.locator('.g9-inspection-object > div')).toHaveAttribute('style', /rotate\(45deg\)/);
   await inspection.getByRole('button', { name: 'Обърни' }).click();
   await expect(inspection.getByText('ОБРАТНА СТРАНА')).toBeVisible();
   await inspection.getByRole('heading', { name: 'Изтривалка' }).click();
