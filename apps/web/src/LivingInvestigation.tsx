@@ -50,7 +50,8 @@ async function request<T>(session:string,path:string,method='GET',body?:unknown)
  const data=await resp.json();if(!resp.ok)throw new Error(data.error||'Грешка при заявка.');
  return data as T;
 }
-const formatTime=(value:string)=>new Date(value).toLocaleString('bg-BG',{dateStyle:'short',timeStyle:'short'});
+const dateLocales:Record<string,string>={en:'en-US',bg:'bg-BG',de:'de-DE',fr:'fr-FR',pl:'pl-PL',es:'es-ES'};
+const formatTime=(value:string,language:string)=>new Date(value).toLocaleString(dateLocales[language]||'en-US',{dateStyle:'short',timeStyle:'short'});
 export function LivingInvestigation({session,found}:{session:string;found:string[]}) {
  const {t}=useLanguage();
  const [section,setSection]=useState<Section>('warrants');
@@ -63,7 +64,12 @@ export function LivingInvestigation({session,found}:{session:string;found:string
  const [route,setRoute]=useState<'financial'|'temporal'>('financial');
  const [notice,setNotice]=useState('');
  const [busy,setBusy]=useState(false);
- const [template,setTemplate]=useState(demoTemplate);
+ const [template,setTemplate]=useState(()=>({
+   ...demoTemplate,title:t(demoTemplate.title),setting:t(demoTemplate.setting),briefing:t(demoTemplate.briefing),
+   suspects:demoTemplate.suspects.map(person=>({...person,name:t(person.name),alibi:t(person.alibi)})),
+   clues:demoTemplate.clues.map(clue=>({...clue,title:t(clue.title),description:t(clue.description),location:t(clue.location)})),
+   solution:{...demoTemplate.solution,explanation:t(demoTemplate.solution.explanation)}
+  }));
  useEffect(()=>{void request<Catalog>('','/cases').then(data=>{if(data.length)setCatalog(data);}).catch(()=>{});},[]);
  async function refresh(){
   if(!session)return;
@@ -112,7 +118,7 @@ export function LivingInvestigation({session,found}:{session:string;found:string
    <Header icon={FolderLock} title="Разрешения за обиск" detail="Исканията се разглеждат по доказателства и репутация. Това са игрови правила, не реална правна процедура."/>
    <div className="liv-grid">{living.warrants.map(w=><article className="liv-card" key={w.id}><div className="liv-label">{w.approved?'РАЗРЕШЕНО':w.eligible?'ГОТОВО ЗА ПОДАВАНЕ':'НЯМА ДОСТАТЪЧНО ОСНОВАНИЯ'}</div><h3>{w.title}</h3><p>{w.reason}</p><small>{w.place} · Улики: {w.needs.join(', ')}</small><button type="button" className="primary" disabled={busy||!w.eligible||w.approved} onClick={()=>void act('warrant',{id:w.id})}>{w.approved?<><Check size={15}/>{t("Разрешено")}</>:<>{t("Поискай заповед")}<ArrowRight size={15}/></>}</button></article>)}</div>
    <Header icon={Archive} title="Верига на доказателствата" detail="Кога е записана уликата в CASEFILES, откъде идва и кой я е обработил. Исторически събирания преди този ъпдейт може да липсват."/>
-   <div className="liv-table-wrap"><table><thead><tr><th>{t("Улика")}</th><th>{t("Събиране")}</th><th>{t("Източник")}</th><th>{t("Статус")}</th></tr></thead><tbody>{living.chain.map(c=><tr key={c.id}><td><strong>{c.id}</strong><small>{c.location}</small></td><td>{formatTime(c.at)}</td><td>{c.source}</td><td><span className={c.lawful?'liv-ok':'liv-bad'}>{c.lawful?'С протокол':'Оспоримо'}</span></td></tr>)}</tbody></table>{living.chain.length===0&&<div className="liv-empty">{t("Все още няма новозаписани доказателства.")}</div>}</div>
+   <div className="liv-table-wrap"><table><thead><tr><th>{t("Улика")}</th><th>{t("Събиране")}</th><th>{t("Източник")}</th><th>{t("Статус")}</th></tr></thead><tbody>{living.chain.map(c=><tr key={c.id}><td><strong>{c.id}</strong><small>{c.location}</small></td><td>{formatTime(c.at,language)}</td><td>{c.source}</td><td><span className={c.lawful?'liv-ok':'liv-bad'}>{t(c.lawful?'С протокол':'Оспоримо')}</span></td></tr>)}</tbody></table>{living.chain.length===0&&<div className="liv-empty">{t("Все още няма новозаписани доказателства.")}</div>}</div>
    <Header icon={ShieldCheck} title="Допустимост на материалите" detail="В съдебната фаза се проверява както произходът, така и наличието на игрово разрешение за защитени документи."/>
    <p className="liv-muted">{t("Финансовата чернова E09 изисква разрешение за служебния архив. Данните за пропуска E10 изискват разрешение за сервизния вход. Материали без проследим произход не се приемат автоматично.")}</p>
   </div>}
