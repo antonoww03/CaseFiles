@@ -477,6 +477,7 @@ const dictionary: Record<string, Partial<Record<Language,string>>> = {
   "Регистър":{en:"Register",de:"Register",fr:"Registre",pl:"Rejestr",es:"Registro"},
   "Експертиза":{en:"Expert report",de:"Gutachten",fr:"Expertise",pl:"Ekspertyza",es:"Peritaje"},
   "Протокол":{en:"Report",de:"Protokoll",fr:"Rapport",pl:"Protokół",es:"Informe"},
+
   'Активна':{en:'Active',de:'Aktiv',fr:'Active',pl:'Aktywna',es:'Activa'}
 };
 
