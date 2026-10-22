@@ -31,7 +31,7 @@ const sampleEditor=():Editor=>({
 export function CommunityHub(){
    const {t}=useLanguage();
   const [view,setView]=useState<View>('cases');
-  const [nickname,setNickname]=useState('Детектив');
+  const [nickname,setNickname]=useState('Detective');
   const [stories,setStories]=useState<StoryBrief[]>([]);
   const [room,setRoom]=useState<Room|null>(null);
   const [roomCode,setRoomCode]=useState('');
@@ -41,13 +41,22 @@ export function CommunityHub(){
   const [joinCode,setJoinCode]=useState('');
   const [selectedSuspect,setSelectedSuspect]=useState('');
   const [selectedClues,setSelectedClues]=useState<string[]>([]);
-  const [editor,setEditor]=useState<Editor>(sampleEditor);
+  const [editor,setEditor]=useState<Editor>(()=>{
+    const source=sampleEditor();
+    return {
+      ...source,
+      title:t(source.title),setting:t(source.setting),briefing:t(source.briefing),
+      suspects:source.suspects.map(person=>({...person,name:t(person.name),alibi:t(person.alibi)})),
+      clues:source.clues.map(clue=>({...clue,title:t(clue.title),description:t(clue.description),location:t(clue.location)})),
+      solution:{...source.solution,explanation:t(source.solution.explanation)}
+    };
+  });
   const [status,setStatus]=useState<'memory'|'postgres'|''>('');
   const [notice,setNotice]=useState('');
   const [busy,setBusy]=useState(false);
 
   async function loadStories(){try{setStories(await request<StoryBrief[]>('/stories'));}catch(e){setNotice(String(e));}}
-  async function loadRoom(id:string){try{const found=await request<Room>('/rooms/'+encodeURIComponent(id));setRoom(found);setSelectedSuspect(prev=>prev||found.suspects[0]?.id||'');}catch(e){setNotice(e instanceof Error?e.message:String(e));}}
+  async function loadRoom(id:string){try{const found=await request<Room>('/rooms/'+encodeURIComponent(id));setRoom(found);setSelectedSuspect(prev=>prev||found.suspects[0]?.id||'');}catch(e){setNotice(t(e instanceof Error?e.message:String(e)));}}
   async function loadProfile(id:string){try{setProfile(await request<Profile>('/profile/'+encodeURIComponent(id)));}catch{setProfile(null);}}
   useEffect(()=>{
     void loadStories();
@@ -70,7 +79,7 @@ export function CommunityHub(){
     setSelectedSuspect(data.room.suspects[0]?.id||'');
     localStorage.setItem('cf-community-room',data.room.id);
     localStorage.setItem('cf-community-member',data.memberToken);
-    setView('room');setNotice('Свързан си със стая '+data.room.id+'.');
+    setView('room');setNotice(t('Свързан си със стая')+' '+data.room.id+'.');
   }
   async function newRoom(kind:'case-002'|'random'|'community',storyId?:string){
     await perform(()=>request<{memberToken:string;room:Room}>('/rooms','POST',{kind,storyId,name:nickname,...(profileId?{profileId}:{})}),enterRoom);
@@ -81,13 +90,13 @@ export function CommunityHub(){
   async function roomAction(action:'discover'|'interview'|'accuse',id:string){
     if(!room)return;
     await perform(()=>request<{room:Room;message:string;awarded:boolean}>('/rooms/'+room.id+'/action','POST',{action,id,...(action==='accuse'?{evidenceIds:selectedClues}:{})},{'x-room-member':memberToken,...(profileId?{'x-case-profile':profileId}:{})}),r=>{
-      setRoom(r.room);setNotice(r.message+(r.awarded?' +100 XP към профила!':''));
+      setRoom(r.room);setNotice(t(r.message)+(r.awarded?t(' +100 XP към профила!'):''));
       if(profileId)void loadProfile(profileId);
     });
   }
   async function createProfile(){
     await perform(()=>request<{id:string}>('/profile','POST',{name:nickname}),r=>{
-      setProfileId(r.id);localStorage.setItem('cf-community-profile',r.id);void loadProfile(r.id);setNotice('Профилът е създаден.');
+      setProfileId(r.id);localStorage.setItem('cf-community-profile',r.id);void loadProfile(r.id);setNotice(t('Профилът е създаден.'));
     });
   }
   function replaceClue(index:number,field:keyof Editor['clues'][number],value:string){
@@ -99,7 +108,7 @@ export function CommunityHub(){
   async function publish(){
     const story={id:'custom-community-'+Math.random().toString(36).slice(2,10),...editor};
     await perform(()=>request<{id:string;title:string}>('/stories','POST',{author:nickname,story}),r=>{
-      setNotice('Публикуван случай „'+r.title+'“. Достъпен е за всички в библиотеката.');
+      setNotice(t('Публикуван случай')+' „'+r.title+'“. '+t('Достъпен е за всички в библиотеката.'));
       setView('cases');void loadStories();
     });
   }
