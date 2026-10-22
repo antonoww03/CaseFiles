@@ -62,3 +62,30 @@ describe('interview engine', () => {
     expect(result).toBeNull();
   });
 });
+
+
+describe('interview locale isolation',()=>{
+ it('renders deterministic replies in each supported language without changing evidence logic',()=>{
+  const locales=['en','de','fr','pl','es'] as const;
+  const bulgarian=scriptedReply('martin','Why the invoices?',['E04']);
+  expect(bulgarian).toContain('уговорка');
+  for(const lang of locales){
+   const localized=scriptedReply('martin','Why the invoices?',['E04'],lang);
+   expect(localized).not.toEqual(bulgarian);
+   expect(localized).not.toMatch(/[А-Яа-я]/);
+   expect(localized.length).toBeGreaterThan(30);
+  }
+  expect(scriptedReply('elena','Phone call?',['E03'],'en')).toContain('phone');
+  expect(scriptedReply('petar','Did you hear anything?',[],'fr')).toContain('entendu');
+ });
+ it('instructs the AI to respond in the requested locale',async()=>{
+  vi.stubEnv('OPENAI_API_KEY','test-secret-for-mock');
+  const fetchMock=vi.fn(async()=>({ok:true,json:async()=>({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({reply:'Je ne sais pas.'})}]}]})}));
+  vi.stubGlobal('fetch',fetchMock);
+  await aiReply({personId:'petar',question:'Que savez-vous ?',disclosedEvidenceIds:[],history:[],language:'fr'});
+  const request=fetchMock.mock.calls[0] as unknown as [string,{body:string}];
+  const payload=JSON.parse(request[1].body);
+  expect(payload.instructions).toContain('Reply ONLY in French');
+  expect(payload.instructions).toContain('Never translate identifiers');
+ });
+});
