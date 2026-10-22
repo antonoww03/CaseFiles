@@ -73,6 +73,11 @@ test('Case 002 interview becomes actionable after two clues and reveals the sele
   await suspect.selectOption('raya');
   await expect(suspect).toHaveValue('raya');
 
+  // The dependency gate above left three checked items; reset to the original
+  // zero-selection state before reusing the threshold assertions below.
+  await evidence('C2').uncheck();
+  await evidence('C3').uncheck();
+  await evidence('C4').uncheck();
   await expect(accuse).toBeDisabled();
   await evidence('C2').check();
   await evidence('C3').check();
