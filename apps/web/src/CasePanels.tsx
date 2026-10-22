@@ -97,7 +97,7 @@ export function DossiersPanel({ suspects, found, checks, onInterview }: {
   checks: AlibiCheck[];
   onInterview: (id: string) => void;
 }) {
-  const {t,language}=useLanguage();
+  const {t}=useLanguage();
   return <div className="v03-dossiers">{suspects.map((person, index) => {
     const known = checks.filter(c => c.personId === person.id && c.verified);
     return <article key={person.id} className="v03-dossier">
@@ -118,7 +118,7 @@ export function AlibiPanel({ checks, suspects, loading, onVerify }: {
   checks: AlibiCheck[]; suspects: SuspectDossier[]; loading: boolean;
   onVerify: (id: string) => Promise<void>;
 }) {
-  const {t,language}=useLanguage();
+  const {t}=useLanguage();
   return <div className="v03-column">
     <div className="v03-topline"><div className="v03-lead"><ShieldAlert size={22} /><div><strong>{t('Проверка на показанията')}</strong><span>{t('Съпоставяй алибита с конкретни доказателства. Съмнение не означава доказана вина.')}</span></div></div><span className="v03-counter">{checks.filter(c => c.verified).length} / {checks.length} {t('ПРОВЕРЕНИ')}</span></div>
     {checks.map(c => {
@@ -134,7 +134,7 @@ export function AlibiPanel({ checks, suspects, loading, onVerify }: {
 }
 
 export function ScoreReport({ score, status }: { score: DetectiveScore; status: string }) {
-  const {t,language}=useLanguage();
+  const {t}=useLanguage();
   return <div className="v03-score">
     <div className="v03-score-head"><span className="v03-medal"><Sparkles size={30} /></span><div><span className="v03-mono">{t('ДОКЛАД ЗА РАЗСЛЕДВАНЕТО')}</span><h3>{t(score.rank)}</h3><p>{t(status === 'solved' ? 'Случаят е разрешен.' : 'Разследването изисква още работа.')}</p></div><div className="v03-score-total"><strong>{score.total}</strong><span>/ 100</span></div></div>
     <div className="v03-score-bars">{score.categories.map(c => <div className="v03-score-row" key={c.name}><div><span>{t(c.name)}</span><strong>{c.earned} / {c.max}</strong></div><div className="v03-score-track"><span style={{ width: (100 * c.earned / c.max) + '%' }} /></div></div>)}</div>
