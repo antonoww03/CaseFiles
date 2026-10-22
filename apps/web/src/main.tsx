@@ -354,7 +354,7 @@ function App() {
       </div>
 
       <div className="nav-group-label">{t('РАЗСЛЕДВАНЕ')} <span>01 — 16</span></div>
-      <nav className="main-nav" aria-label="Навигация по разследването">
+      <nav className="main-nav" aria-label={t("Навигация по разследването")}>
         {tabs.map(t => {
           const Icon = t.icon;
           return <button type="button" key={t.id} aria-current={view === t.id ? 'page' : undefined} className={'nav-link ' + (view === t.id ? 'active' : '')} onClick={() => go(t.id)}>
@@ -378,7 +378,7 @@ function App() {
     <div className="workspace">
       <header className="topbar">
         <div className="topbar-start">
-          <button type="button" className="mobile-menu" aria-label="Отвори навигацията" aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(!sidebarOpen)}><Menu size={20} /></button>
+          <button type="button" className="mobile-menu" aria-label={t("Отвори навигацията")} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(!sidebarOpen)}><Menu size={20} /></button>
           <div className="breadcrumbs"><span>CASEFILES</span><ChevronRight size={14} /><span>{t("СЛУЧАЙ #001")}</span><ChevronRight size={14} / ><strong>{t(activeTab.name)}</strong></div>
         </div>
         <div className="topbar-end">
@@ -392,7 +392,7 @@ function App() {
       <div className="workspace-body">
         <main className="main-panel" id="case-main">
           <div className="panel-meta"><div className="panel-path"><ActiveIcon size={15} /> {t(activeTab.name).toLocaleUpperCase('en')}</div><div className="panel-meta-right"><span className="panel-meta-dot" /> CASE FILE / 001</div></div>
-          {error && <div className="error" role="alert"><Info size={18} /><span>{t(error)}</span><button type="button" aria-label="Затвори съобщението" onClick={() => setError('')}>×</button></div>}
+          {error && <div className="error" role="alert"><Info size={18} /><span>{t(error)}</span><button type="button" aria-label={t("Затвори съобщението")} onClick={() => setError('')}>×</button></div>}
 
           <div className="screen" key={view}>
             {view === 'briefing' && <>
@@ -453,18 +453,18 @@ function App() {
             </>}
 
             {view === 'evidence' && <>
-              <SectionHeader kicker="АРХИВ / СЪБРАНИ МАТЕРИАЛИ" title="Доказателства" description="Всяка открита следа се документира тук. Преглеждай, филтрирай и подготвяй материали за разпит." extra={<span className="tag"><Files size={13} /> {found.length} / {allEvidence.length} УЛИКИ</span>} />
-              <div className="evidence-controls"><label className="search-field"><Search size={17} /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Търси в откритите улики..." aria-label="Търси улики" /></label><select value={filterType} onChange={e => setFilterType(e.target.value)} aria-label="Филтрирай по вид">{evidenceTypes.map(t => <option value={t} key={t}>{t}</option>)}</select></div>
+              <SectionHeader kicker="АРХИВ / СЪБРАНИ МАТЕРИАЛИ" title="Доказателства" description="Всяка открита следа се документира тук. Преглеждай, филтрирай и подготвяй материали за разпит." extra={<span className="tag"><Files size={13} /> {found.length} / {allEvidence.length} {t('УЛИКИ')}</span>} />
+              <div className="evidence-controls"><label className="search-field"><Search size={17} /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t("Търси в откритите улики...")} aria-label={t("Търси улики")} /></label><select value={filterType} onChange={e => setFilterType(e.target.value)} aria-label={t("Филтрирай по вид")}>{evidenceTypes.map(type => <option value={type} key={type}>{t(type)}</option>)}</select></div>
               {filteredEvidence.length ? evidenceCards(filteredEvidence.map(e => e.id)) : <EmptyState icon={FileSearch} title={found.length ? 'Няма съвпадения' : 'Все още няма доказателства'} description={found.length ? 'Опитай с друг термин или премахни филтъра.' : 'Посети местопрестъплението или криминалистичното бюро и открий първите следи.'} action={!found.length ? <button className="secondary" type="button" onClick={() => go('scene')}>{t("Към местопрестъплението")}<ArrowRight size={15} /></button> : undefined} />}
             </>}
 
             {view === 'board' && <>
-              <SectionHeader kicker="АНАЛИТИЧЕН МОДУЛ / ДОКАЗАТЕЛСТВА" title="Визуална дъска" description="Плъзни карта върху друга или избери две улики последователно. Провери логическата връзка със сървъра." extra={<span className="tag"><Network size={13} /> {deductions.length} ЗАКЛЮЧЕНИЯ</span>} />
+              <SectionHeader kicker="АНАЛИТИЧЕН МОДУЛ / ДОКАЗАТЕЛСТВА" title="Визуална дъска" description="Плъзни карта върху друга или избери две улики последователно. Провери логическата връзка със сървъра." extra={<span className="tag"><Network size={13} /> {deductions.length} {t('ЗАКЛЮЧЕНИЯ')}</span>} />
               <VisualEvidenceBoard clues={allEvidence.filter(e=>found.includes(e.id))} deductions={deductions} first={linkA} second={linkB} notice={linkNotice} loading={busy} onChoose={pickBoard} onPair={(a,b)=>{setLinkA(a);setLinkB(b);setLinkNotice('');}} onVerify={connect}/>
             </>}
 
             {view === 'notebook' && <>
-              <SectionHeader kicker="ЛИЧНИ ЗАПИСКИ / CASE #001" title="Детективски бележник" description="Организирай собствените си хипотези и въпроси. Бележките остават в игровата сесия." extra={<span className="tag"><BookOpen size={13}/> {notes.length} БЕЛЕЖКИ</span>} />
+              <SectionHeader kicker="ЛИЧНИ ЗАПИСКИ / CASE #001" title="Детективски бележник" description="Организирай собствените си хипотези и въпроси. Бележките остават в игровата сесия." extra={<span className="tag"><BookOpen size={13}/> {notes.length} {t('БЕЛЕЖКИ')}</span>} />
               <NotebookPanel notes={notes} enabled={!!session} saving={busy} onSave={saveNote} onDelete={deleteNote}/>
             </>}
             {view === 'dossiers' && <>
@@ -472,7 +472,7 @@ function App() {
               <DossiersPanel suspects={suspects} found={found} checks={alibiChecks} onInterview={id=>{setActivePerson(id);go('interview');}} />
             </>}
             {view === 'alibis' && <>
-              <SectionHeader kicker="АНАЛИЗ НА ПОКАЗАНИЯ / ПРОТИВОРЕЧИЯ" title="Алибита и противоречия" description="Сравни твърденията с уликите, но не бъркай подозрението с доказана вина." extra={<span className="tag"><ShieldQuestion size={13}/> {alibiChecks.filter(c=>c.verified).length} ПРОВЕРКИ</span>} />
+              <SectionHeader kicker="АНАЛИЗ НА ПОКАЗАНИЯ / ПРОТИВОРЕЧИЯ" title="Алибита и противоречия" description="Сравни твърденията с уликите, но не бъркай подозрението с доказана вина." extra={<span className="tag"><ShieldQuestion size={13}/> {alibiChecks.filter(c=>c.verified).length} {t('ПРОВЕРКИ')}</span>} />
               <AlibiPanel checks={alibiChecks} suspects={suspects} loading={busy} onVerify={verifyAlibi}/>
             </>}
             {view === 'timeline' && <>
@@ -514,7 +514,7 @@ function App() {
               <div className="accusation-notice"><ShieldQuestion size={23} /><div><strong>{t("Преди да продължиш")}</strong><p>{t("Изборът на правилен заподозрян не е достатъчен. Изискват се събрани доказателства, установени връзки, мотив и хронология.")}</p></div></div>
               <div className="formpanel accusation-form"><div className="form-section"><div className="form-section-heading"><span>01</span><div><h3>{t("Кого обвиняваш?")}</h3><p>{t("Избери един от лицата по случая")}</p></div></div><label htmlFor="suspect" className="field-label">{t("ЗАПОДОЗРЯН")}</label><select id="suspect" value={suspect} onChange={e => setSuspect(e.target.value)}>{info?.people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
                 <div className="form-section"><div className="form-section-heading"><span>02</span><div><h3>{t("С какво го доказваш?")}</h3><p>{t("Избери минимум три доказателства")}</p></div></div><div className="checks">{allEvidence.filter(e => found.includes(e.id)).map(e => <label key={e.id} className={'check ' + (checked.includes(e.id) ? 'checked' : '')}><input type="checkbox" checked={checked.includes(e.id)} onChange={x => setChecked(prev => x.target.checked ? [...prev, e.id] : prev.filter(id => id !== e.id))} /><span className="check-square"><Check size={13} /></span><span><strong>{e.id}</strong>{e.title}</span></label>)}</div>{!found.length && <p className="form-help">{t("Няма събрани доказателства. Започни с огледа.")}</p>}<div className="selection-count">{checked.length} ОТ МИНИМУМ 3 ИЗБРАНИ</div></div>
-                <div className="form-section"><div className="form-section-heading"><span>03</span><div><h3>{t("Каква е твоята версия?")}</h3><p>{t("Обясни мотив и последователност")}</p></div></div><label htmlFor="motive" className="field-label">{t("ПРЕДПОЛАГАЕМ МОТИВ")}</label><textarea id="motive" value={motive} onChange={e => setMotive(e.target.value)} placeholder="Опиши защо заподозреният би извършил престъплението..." maxLength={1200} /><label htmlFor="sequence" className="field-label">{t("ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ")}</label><textarea id="sequence" value={sequence} onChange={e => setSequence(e.target.value)} placeholder="Посочи последователността на събитията и как доказателствата ги подкрепят..." maxLength={1200} /></div>
+                <div className="form-section"><div className="form-section-heading"><span>03</span><div><h3>{t("Каква е твоята версия?")}</h3><p>{t("Обясни мотив и последователност")}</p></div></div><label htmlFor="motive" className="field-label">{t("ПРЕДПОЛАГАЕМ МОТИВ")}</label><textarea id="motive" value={motive} onChange={e => setMotive(e.target.value)} placeholder={t("Опиши защо заподозреният би извършил престъплението...")} maxLength={1200} /><label htmlFor="sequence" className="field-label">{t("ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ")}</label><textarea id="sequence" value={sequence} onChange={e => setSequence(e.target.value)} placeholder={t("Посочи последователността на събитията и как доказателствата ги подкрепят...")} maxLength={1200} /></div>
                 <div className="accusation-bottom"><div><LockKeyhole size={15} />{t("ЗАКЛЮЧЕНИЕТО СЕ ОЦЕНЯВА ПО ДОКАЗАТЕЛСТВАТА")}</div><button className="primary" disabled={!session || busy || checked.length < 3 || motive.trim().length < 12 || sequence.trim().length < 12} onClick={() => void accuse()} type="button">{t("Предай заключението")}<ArrowRight size={16} /></button></div>
                 {verdict && <div className={'verdict ' + verdict.status} role="status"><div className="verdict-symbol">{verdict.status === 'solved' ? <CheckCheck size={24} /> : <Info size={24} />}</div><div><strong>{verdict.title}</strong><p>{t(verdict.explanation)}</p></div></div>}
                 {verdict?.score && <ScoreReport score={verdict.score} status={verdict.status}/>}
