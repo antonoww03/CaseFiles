@@ -4,7 +4,7 @@ import {
   Activity, Camera, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, Users, type LucideIcon
 } from 'lucide-react';
 import './style.css';
-import {LanguageProvider, useLanguage, LanguageSelector} from './i18n';
+import {LanguageProvider, useLanguage, LanguageSelector, resolveLanguage, LANGUAGE_STORAGE_KEY} from './i18n';
 import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
 import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
 import { ForensicWorkbench, FinalReport, HintStation, type FinalReportData } from './ForensicPanels';
