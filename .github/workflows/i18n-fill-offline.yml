@@ -1,0 +1,40 @@
+name: CASEFILES offline translation draft
+on:
+  push:
+    branches: [feature/six-language-localization]
+    paths:
+      - scripts/i18n-fill-offline.py
+      - .github/workflows/i18n-fill-offline.yml
+permissions:
+  contents: write
+concurrency:
+  group: casefiles-offline-i18n-draft
+  cancel-in-progress: true
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - run: npm install --no-audit --no-fund
+      - run: python -m pip install argostranslate unidecode
+      - run: node scripts/i18n-export-missing.mjs /tmp/casefiles-i18n-missing.json
+      - run: python scripts/i18n-fill-offline.py /tmp/casefiles-i18n-missing.json
+      - run: npm run i18n:validate
+      - name: Commit draft translation only to the feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/src/i18n.tsx docs/I18N_MACHINE_TRANSLATION_REVIEW.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Draft offline API translations for human QA [skip ci]"
+            git push origin HEAD:feature/six-language-localization
+          fi
