@@ -350,7 +350,7 @@ function App() {
       <div className="sidebar-case">
         <div className="sidebar-case-top"><span>{t('АКТИВНО ДОСИЕ')}</span><span className="sidebar-case-dot" /></div>
         <strong>{t('Последното обаждане')}</strong>
-        <div className="sidebar-case-meta"><MapPin size={12} /> СОФИЯ <span className="meta-separator">/</span> #001</div>
+        <div className="sidebar-case-meta"><MapPin size={12} />{t("СОФИЯ")}<span className="meta-separator">/</span> #001</div>
       </div>
 
       <div className="nav-group-label">{t('РАЗСЛЕДВАНЕ')} <span>01 — 16</span></div>
@@ -379,11 +379,11 @@ function App() {
       <header className="topbar">
         <div className="topbar-start">
           <button type="button" className="mobile-menu" aria-label="Отвори навигацията" aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(!sidebarOpen)}><Menu size={20} /></button>
-          <div className="breadcrumbs"><span>CASEFILES</span><ChevronRight size={14} /><span>СЛУЧАЙ #001</span><ChevronRight size={14} / ><strong>{t(activeTab.name)}</strong></div>
+          <div className="breadcrumbs"><span>CASEFILES</span><ChevronRight size={14} /><span>{t("СЛУЧАЙ #001")}</span><ChevronRight size={14} / ><strong>{t(activeTab.name)}</strong></div>
         </div>
         <div className="topbar-end">
            <LanguageSelector/>
-          <span className="system-status"><span className="status-light" /> СИСТЕМА ОНЛАЙН</span>
+          <span className="system-status"><span className="status-light" />{t("СИСТЕМА ОНЛАЙН")}</span>
           <span className="topbar-divider" />
           <span className="case-chip"><LockKeyhole size={13} /> {t('ПОВЕРИТЕЛНО')}</span>
         </div>
@@ -396,66 +396,66 @@ function App() {
 
           <div className="screen" key={view}>
             {view === 'briefing' && <>
-              <SectionHeader kicker="ПОЛЕВО ДОСИЕ / 001" title="Последното обаждане" description="Всеки детайл има значение. Нищо не е точно такова, каквото изглежда." extra={<span className="tag"><CircleDot size={12} /> АКТИВЕН СЛУЧАЙ</span>} />
+              <SectionHeader kicker="ПОЛЕВО ДОСИЕ / 001" title="Последното обаждане" description="Всеки детайл има значение. Нищо не е точно такова, каквото изглежда." extra={<span className="tag"><CircleDot size={12} />{t("АКТИВЕН СЛУЧАЙ")}</span>} />
               <div className="hero">
                 <div className="hero-grid" />
                 <div className="hero-visual"><div className="hero-outline hero-outline-one" /><div className="hero-outline hero-outline-two" /><div className="hero-door"><span>407</span></div><span className="hero-beam" /></div>
                 <div className="hero-content">
-                  <div className="hero-overline"><span className="hero-line-marker" /> СЛУЧАЙ 001 · КРИМИНАЛЕН ОТДЕЛ</div>
-                  <h2>Един апартамент.<br />Трима заподозрени.<br /><em>Една истина.</em></h2>
-                  <p>София, 14 октомври 2026 г. Млад мъж е намерен мъртъв зад заключена врата.</p>
+                  <div className="hero-overline"><span className="hero-line-marker" />{t("СЛУЧАЙ 001 · КРИМИНАЛЕН ОТДЕЛ")}</div>
+                  <h2>{t("Един апартамент.")}<br />{t("Трима заподозрени.")}<br /><em>{t("Една истина.")}</em></h2>
+                  <p>{t("София, 14 октомври 2026 г. Млад мъж е намерен мъртъв зад заключена врата.")}</p>
                   <button type="button" className="primary hero-cta" disabled={busy || !info} onClick={() => session ? go('scene') : void start()}>{session ? 'Продължи разследването' : 'Започни разследването'} <ArrowRight size={17} /></button>
                 </div>
-                <div className="hero-footer"><span><Crosshair size={13} /> АПАРТАМЕНТ 407</span><span>02:37 / НАЧАЛО НА ОГЛЕДА</span></div>
+                <div className="hero-footer"><span><Crosshair size={13} />{t("АПАРТАМЕНТ 407")}</span><span>{t("02:37 / НАЧАЛО НА ОГЛЕДА")}</span></div>
               </div>
 
               <div className="stats-row">
-                <div className="stat-card"><span className="stat-icon"><Files size={19} /></span><span className="stat-number">{String(found.length).padStart(2, '0')}<small> / 12</small></span><span className="stat-label">Открити улики</span></div>
-                <div className="stat-card"><span className="stat-icon"><UserRound size={19} /></span><span className="stat-number">03</span><span className="stat-label">Лица за разпит</span></div>
-                <div className="stat-card"><span className="stat-icon"><Link2 size={19} /></span><span className="stat-number">{String(deductions.length).padStart(2, '0')}</span><span className="stat-label">Разкрити връзки</span></div>
+                <div className="stat-card"><span className="stat-icon"><Files size={19} /></span><span className="stat-number">{String(found.length).padStart(2, '0')}<small> / 12</small></span><span className="stat-label">{t("Открити улики")}</span></div>
+                <div className="stat-card"><span className="stat-icon"><UserRound size={19} /></span><span className="stat-number">03</span><span className="stat-label">{t("Лица за разпит")}</span></div>
+                <div className="stat-card"><span className="stat-icon"><Link2 size={19} /></span><span className="stat-number">{String(deductions.length).padStart(2, '0')}</span><span className="stat-label">{t("Разкрити връзки")}</span></div>
               </div>
               <div className="content-split">
-                <section className="surface-card narrative-card"><div className="card-header"><span className="section-number">01</span><h3>Първоначален доклад</h3></div><p>{info?.briefing || 'Зареждане на първоначалния доклад...'}</p><div className="document-sign"><ShieldCheck size={16} /> ИНФОРМАЦИЯ ОТ ПЪРВОНАЧАЛНИЯ ОГЛЕД</div></section>
-                <section className="surface-card objectives-card"><div className="card-header"><span className="section-number">02</span><h3>План на разследването</h3></div>
-                  <div className="objective"><span className="objective-index">01</span><div><strong>Разгледай местопрестъплението</strong><small>Потърси следи и прегледай материалите</small></div><ChevronRight size={16} /></div>
-                  <div className="objective"><span className="objective-index">02</span><div><strong>Изгради своята версия</strong><small>Свързвай улики и проверявай алибита</small></div><ChevronRight size={16} /></div>
-                  <div className="objective"><span className="objective-index">03</span><div><strong>Предай заключението</strong><small>Обоснови обвинението си с доказателства</small></div><ChevronRight size={16} /></div>
+                <section className="surface-card narrative-card"><div className="card-header"><span className="section-number">01</span><h3>{t("Първоначален доклад")}</h3></div><p>{info?.briefing || 'Зареждане на първоначалния доклад...'}</p><div className="document-sign"><ShieldCheck size={16} />{t("ИНФОРМАЦИЯ ОТ ПЪРВОНАЧАЛНИЯ ОГЛЕД")}</div></section>
+                <section className="surface-card objectives-card"><div className="card-header"><span className="section-number">02</span><h3>{t("План на разследването")}</h3></div>
+                  <div className="objective"><span className="objective-index">01</span><div><strong>{t("Разгледай местопрестъплението")}</strong><small>{t("Потърси следи и прегледай материалите")}</small></div><ChevronRight size={16} /></div>
+                  <div className="objective"><span className="objective-index">02</span><div><strong>{t("Изгради своята версия")}</strong><small>{t("Свързвай улики и проверявай алибита")}</small></div><ChevronRight size={16} /></div>
+                  <div className="objective"><span className="objective-index">03</span><div><strong>{t("Предай заключението")}</strong><small>{t("Обоснови обвинението си с доказателства")}</small></div><ChevronRight size={16} /></div>
                 </section>
               </div>
             </>}
 
             {view === 'scene' && <>
-              <SectionHeader kicker="ЛОКАЦИЯ 01 / МЕСТОПРЕСТЪПЛЕНИЕ" title="Апартамент 407" description="Разгледай всекидневната, работния кът и антрето. Намери петте ключови материала от огледа." extra={<span className="tag"><MapPin size={13} /> 3 ЗОНИ ЗА ОГЛЕД</span>} />
+              <SectionHeader kicker="ЛОКАЦИЯ 01 / МЕСТОПРЕСТЪПЛЕНИЕ" title="Апартамент 407" description="Разгледай всекидневната, работния кът и антрето. Намери петте ключови материала от огледа." extra={<span className="tag"><MapPin size={13} />{t("3 ЗОНИ ЗА ОГЛЕД")}</span>} />
               <ExpandedScene found={found} clues={allEvidence} loading={busy} onDiscover={discover} onView={setSelected} />
             </>}
 
             {view === 'immersive' && <>
-              <SectionHeader kicker="CASEFILES 0.6 / IMMERSIVE INVESTIGATION" title="Интерактивно разследване" description="Потърси скрити предмети, комбинирай инвентара, отключи сейфа, провеждай разклонени разговори и проучвай полицейските архиви." extra={<span className="tag"><LockKeyhole size={13}/> СЛЕДСТВЕНИ ИНСТРУМЕНТИ</span>} />
+              <SectionHeader kicker="CASEFILES 0.6 / IMMERSIVE INVESTIGATION" title="Интерактивно разследване" description="Потърси скрити предмети, комбинирай инвентара, отключи сейфа, провеждай разклонени разговори и проучвай полицейските архиви." extra={<span className="tag"><LockKeyhole size={13}/>{t("СЛЕДСТВЕНИ ИНСТРУМЕНТИ")}</span>} />
               <ImmersiveInvestigation session={session} found={found}/>
             </>}
             {view === 'living' && <>
               <SectionHeader kicker="CASEFILES 0.7 / LIVING INVESTIGATION" title="Живо разследване" description="Разрешения за обиск, проверка на доказателства, експертизи, събития и последствия, финансови следи, съдебен процес и нови криминални случаи." extra={<span className="tag"><Scale size={13}/> CASE #001 + #002</span>} />
-              <React.Suspense fallback={<div className="empty-state">Зареждане на разследването...</div>}><LivingInvestigation session={session} found={found}/></React.Suspense>
+              <React.Suspense fallback={<div className="empty-state">{t("Зареждане на разследването...")}</div>}><LivingInvestigation session={session} found={found}/></React.Suspense>
             </>}
             {view === 'game09' && <>
               <SectionHeader kicker="CASEFILES 0.9 / THE CINEMATIC EXPERIENCE" title="Единен игрови режим" description="Един общ интерфейс: стаи и интерактивни предмети, телефон, разпити, визуални миниигри, карта, мисии и последствия." extra={<span className="tag"><Crosshair size={13}/> CASEFILES 0.9</span>}/>
-              <React.Suspense fallback={<div className="empty-state">Зареждане на игровия свят...</div>}><Experience09 session={session} found={found}/></React.Suspense>
+              <React.Suspense fallback={<div className="empty-state">{t("Зареждане на игровия свят...")}</div>}><Experience09 session={session} found={found}/></React.Suspense>
             </>}
             {view === 'cinematic' && <>
               <SectionHeader kicker="CASEFILES 0.8 / QUALITY & IMMERSION" title="Кинематографичен свят" description="2.5D оглед, динамични портрети, звукова атмосфера, цифрови доказателства, сюжетни глави и профил на детектива." extra={<span className="tag"><Camera size={13}/> NEW 0.8</span>}/>
-              <React.Suspense fallback={<div className="empty-state">Зареждане на кинематографичния свят...</div>}><CinematicCenter session={session} found={found}/></React.Suspense>
+              <React.Suspense fallback={<div className="empty-state">{t("Зареждане на кинематографичния свят...")}</div>}><CinematicCenter session={session} found={found}/></React.Suspense>
             </>}
             {view === 'lab' && <>
               <SectionHeader kicker="ЛАБОРАТОРИЯ / АНАЛИЗИ" title="Криминалистика" description="Превъртай записа кадър по кадър и изследвай страници от документи. Само потвърдените наблюдения отключват нови улики." extra={<span className="tag"><FlaskConical size={13}/> FORENSIC UPDATE 0.4</span>}/>
               <ForensicWorkbench session={session} onFound={ids=>{setFound(ids);refreshClues(session);}}/>
-              <div className="subsection-title"><div><h2>Други налични експертизи</h2><p>Прегледай допълнителните материали от лабораторията.</p></div></div>
+              <div className="subsection-title"><div><h2>{t("Други налични експертизи")}</h2><p>{t("Прегледай допълнителните материали от лабораторията.")}</p></div></div>
               {evidenceCards(['E05','E02'])}
             </>}
 
             {view === 'evidence' && <>
               <SectionHeader kicker="АРХИВ / СЪБРАНИ МАТЕРИАЛИ" title="Доказателства" description="Всяка открита следа се документира тук. Преглеждай, филтрирай и подготвяй материали за разпит." extra={<span className="tag"><Files size={13} /> {found.length} / {allEvidence.length} УЛИКИ</span>} />
               <div className="evidence-controls"><label className="search-field"><Search size={17} /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Търси в откритите улики..." aria-label="Търси улики" /></label><select value={filterType} onChange={e => setFilterType(e.target.value)} aria-label="Филтрирай по вид">{evidenceTypes.map(t => <option value={t} key={t}>{t}</option>)}</select></div>
-              {filteredEvidence.length ? evidenceCards(filteredEvidence.map(e => e.id)) : <EmptyState icon={FileSearch} title={found.length ? 'Няма съвпадения' : 'Все още няма доказателства'} description={found.length ? 'Опитай с друг термин или премахни филтъра.' : 'Посети местопрестъплението или криминалистичното бюро и открий първите следи.'} action={!found.length ? <button className="secondary" type="button" onClick={() => go('scene')}>Към местопрестъплението <ArrowRight size={15} /></button> : undefined} />}
+              {filteredEvidence.length ? evidenceCards(filteredEvidence.map(e => e.id)) : <EmptyState icon={FileSearch} title={found.length ? 'Няма съвпадения' : 'Все още няма доказателства'} description={found.length ? 'Опитай с друг термин или премахни филтъра.' : 'Посети местопрестъплението или криминалистичното бюро и открий първите следи.'} action={!found.length ? <button className="secondary" type="button" onClick={() => go('scene')}>{t("Към местопрестъплението")}<ArrowRight size={15} /></button> : undefined} />}
             </>}
 
             {view === 'board' && <>
@@ -468,7 +468,7 @@ function App() {
               <NotebookPanel notes={notes} enabled={!!session} saving={busy} onSave={saveNote} onDelete={deleteNote}/>
             </>}
             {view === 'dossiers' && <>
-              <SectionHeader kicker="ОПЕРАТИВНИ ДОСИЕТА / ЛИЦА" title="Заподозрени" description="Преглеждай известните данни, сравнявай алибитата и преминавай директно към разпит." extra={<span className="tag"><UserRound size={13}/> 3 ДОСИЕТА</span>} />
+              <SectionHeader kicker="ОПЕРАТИВНИ ДОСИЕТА / ЛИЦА" title="Заподозрени" description="Преглеждай известните данни, сравнявай алибитата и преминавай директно към разпит." extra={<span className="tag"><UserRound size={13}/>{t("3 ДОСИЕТА")}</span>} />
               <DossiersPanel suspects={suspects} found={found} checks={alibiChecks} onInterview={id=>{setActivePerson(id);go('interview');}} />
             </>}
             {view === 'alibis' && <>
@@ -477,7 +477,7 @@ function App() {
             </>}
             {view === 'timeline' && <>
               <SectionHeader kicker="ХРОНОЛОГИЯ / РЕКОНСТРУКЦИЯ" title="Последователност на събитията" description="Подреди нощта на престъплението. Показват се само събития, подкрепени от открити доказателства." extra={<span className="tag"><Clock3 size={13} /> {visibleTimeline.length} / {timeline.length} СЪБИТИЯ</span>} />
-              <div className="timeline-head"><span><Clock3 size={17} /> НОЩТА НА 14 ОКТОМВРИ 2026</span><span>РЕКОНСТРУКЦИЯ / 001</span></div>
+              <div className="timeline-head"><span><Clock3 size={17} />{t("НОЩТА НА 14 ОКТОМВРИ 2026")}</span><span>{t("РЕКОНСТРУКЦИЯ / 001")}</span></div>
               {visibleTimeline.length ? <div className="timeline">{visibleTimeline.map(([time, label, id], index) => <div className="time-item" key={id}><div className="time-left"><span className="time-step">{String(index + 1).padStart(2, '0')}</span><span className="time-value">{time}</span></div><div className="time-event"><span className="time-source">{id} / ПОТВЪРДЕНО ОТ УЛИКА</span><h3>{label}</h3></div><div className="time-confirm"><Check size={16} /></div></div>)}</div> : <EmptyState icon={Clock3} title="Все още няма потвърдени събития" description="Установи времеви точки чрез оглед или експертиза." />}
             </>}
 
@@ -485,17 +485,17 @@ function App() {
               <SectionHeader kicker="ОПЕРАТИВЕН РАЗПИТ / СТАЯ 03" title="Стая за разпити" description="Задавай въпроси и предявявай намерените доказателства. Реакциите могат да разкрият противоречия." extra={<span className="tag"><MessageSquareText size={13} /> {info?.people.length || 3} ЛИЦА</span>} />
               <div className="people">{info?.people.map((p, i) => <button key={p.id} type="button" className={'person ' + (activePerson === p.id ? 'selected' : '')} onClick={() => setActivePerson(p.id)}><span className={'avatar portrait-' + i}>{p.initial}</span><span className="person-copy"><strong>{p.name}</strong><small>{p.role}</small></span>{activePerson === p.id && <span className="person-active-dot" />}</button>)}</div>
               <div className="interview">
-                <div className="interview-head"><div className="interview-ident"><span className="avatar large">{person?.initial || '·'}</span><div><div className="interview-subtitle">РАЗПИТ / АКТИВЕН ПРОТОКОЛ</div><h3>{person?.name}</h3><p>{person?.role} · СЛУЧАЙ 001</p></div></div><div className="recording-badge"><span /> ЗАПИС НА РАЗГОВОР</div></div>
-                <div className="chat" role="log" aria-label="Разговор със заподозрения" aria-live="polite"><div className="transcript-label"><span>НАЧАЛО НА РАЗПИТА</span></div><div className="bubble"><div className="bubble-label"><UserRound size={13} /> {person?.name}</div><p>{person?.opening}</p></div>{(messages[activePerson] || []).map((m, i) => <div key={i} className={'bubble ' + (m.role === 'player' ? 'player' : '')}><div className="bubble-label">{m.role === 'player' ? <><ShieldCheck size={13} /> ДЕТЕКТИВ</> : <><UserRound size={13} /> {person?.name}</>}</div><p>{m.text}</p></div>)}{busy && <div className="typing-indicator"><span /><span /><span /> Подготвя се отговор...</div>}<div ref={chatEndRef} /></div>
-                <div className="interview-compose"><label htmlFor="present"><FileCheck2 size={15} /> ПРЕДЯВЕНО ДОКАЗАТЕЛСТВО <span>НЕЗАДЪЛЖИТЕЛНО</span></label><select id="present" value={present} onChange={e => setPresent(e.target.value)}><option value="">Без приложена улика</option>{allEvidence.filter(e => found.includes(e.id)).map(e => <option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><div className="f04-interview-strategy">
-                  <div className="f04-pressure-head"><strong>СТРАТЕГИЯ НА РАЗПИТА</strong><span>НАПРЕЖЕНИЕ: {pressure[activePerson]||20} / 100</span></div>
+                <div className="interview-head"><div className="interview-ident"><span className="avatar large">{person?.initial || '·'}</span><div><div className="interview-subtitle">{t("РАЗПИТ / АКТИВЕН ПРОТОКОЛ")}</div><h3>{person?.name}</h3><p>{person?.role} · СЛУЧАЙ 001</p></div></div><div className="recording-badge"><span />{t("ЗАПИС НА РАЗГОВОР")}</div></div>
+                <div className="chat" role="log" aria-label="Разговор със заподозрения" aria-live="polite"><div className="transcript-label"><span>{t("НАЧАЛО НА РАЗПИТА")}</span></div><div className="bubble"><div className="bubble-label"><UserRound size={13} /> {person?.name}</div><p>{person?.opening}</p></div>{(messages[activePerson] || []).map((m, i) => <div key={i} className={'bubble ' + (m.role === 'player' ? 'player' : '')}><div className="bubble-label">{m.role === 'player' ? <><ShieldCheck size={13} />{t("ДЕТЕКТИВ")}</> : <><UserRound size={13} /> {person?.name}</>}</div><p>{m.text}</p></div>)}{busy && <div className="typing-indicator"><span /><span /><span />{t("Подготвя се отговор...")}</div>}<div ref={chatEndRef} /></div>
+                <div className="interview-compose"><label htmlFor="present"><FileCheck2 size={15} />{t("ПРЕДЯВЕНО ДОКАЗАТЕЛСТВО")}<span>{t("НЕЗАДЪЛЖИТЕЛНО")}</span></label><select id="present" value={present} onChange={e => setPresent(e.target.value)}><option value="">{t("Без приложена улика")}</option>{allEvidence.filter(e => found.includes(e.id)).map(e => <option key={e.id} value={e.id}>{e.id} · {e.title}</option>)}</select><div className="f04-interview-strategy">
+                  <div className="f04-pressure-head"><strong>{t("СТРАТЕГИЯ НА РАЗПИТА")}</strong><span>НАПРЕЖЕНИЕ: {pressure[activePerson]||20} / 100</span></div>
                   <div className="f04-pressure-track"><span style={{width:(pressure[activePerson]||20)+'%'}}/></div>
                   <div className="f04-interview-modes">
                     {([['neutral','Неутрален'],['empathy','Емпатия'],['challenge','Конфронтация']] as const).map(([id,label])=><button key={id} type="button" className={interviewStyle===id?'active':''} onClick={()=>setInterviewStyle(id)}>{label}</button>)}
                   </div>
-                  <label className="f04-script-toggle"><input type="checkbox" checked={scriptedOnly} onChange={e=>setScriptedOnly(e.target.checked)}/> Сценарен режим без AI заявки</label>
+                  <label className="f04-script-toggle"><input type="checkbox" checked={scriptedOnly} onChange={e=>setScriptedOnly(e.target.checked)}/>{t("Сценарен режим без AI заявки")}</label>
                 </div>
-                <form className="composer" onSubmit={e => { e.preventDefault(); void send(); }}><input maxLength={600} value={question} onChange={e => setQuestion(e.target.value)} placeholder="Въведи въпроса си към заподозрения..." aria-label="Въпрос към заподозрения" /><button className="primary send-btn" disabled={!session || busy || !question.trim()} type="submit"><Send size={16} /> Изпрати</button></form><div className="composer-foot"><span><LockKeyhole size={12} /> Разговорът е част от досието</span><span>{question.length} / 600</span></div></div>
+                <form className="composer" onSubmit={e => { e.preventDefault(); void send(); }}><input maxLength={600} value={question} onChange={e => setQuestion(e.target.value)} placeholder="Въведи въпроса си към заподозрения..." aria-label="Въпрос към заподозрения" /><button className="primary send-btn" disabled={!session || busy || !question.trim()} type="submit"><Send size={16} />{t("Изпрати")}</button></form><div className="composer-foot"><span><LockKeyhole size={12} />{t("Разговорът е част от досието")}</span><span>{question.length} / 600</span></div></div>
               </div>
               <div className="interview-disclaimer"><Info size={15} /> {aiMode === 'ai-live' ? 'Последният отговор беше генериран от AI.' : aiMode === 'ai-configured' ? 'AI ключ е конфигуриран, но реален отговор не е потвърден. При грешка се използва демонстрационен диалог.' : 'В момента се използват демонстрационни реплики.'}</div>
             </>}
@@ -510,15 +510,15 @@ function App() {
             </>}
 
             {view === 'accusation' && <>
-              <SectionHeader kicker="ФИНАЛЕН ЕТАП / ЗАКЛЮЧЕНИЕ" title="Предаване на обвинението" description="Тук интуицията не е достатъчна. Свържи фактите, докажи възможността и защити версията си." extra={<span className="tag tag-alert"><Scale size={13} /> ФИНАЛНО РЕШЕНИЕ</span>} />
-              <div className="accusation-notice"><ShieldQuestion size={23} /><div><strong>Преди да продължиш</strong><p>Изборът на правилен заподозрян не е достатъчен. Изискват се събрани доказателства, установени връзки, мотив и хронология.</p></div></div>
-              <div className="formpanel accusation-form"><div className="form-section"><div className="form-section-heading"><span>01</span><div><h3>Кого обвиняваш?</h3><p>Избери един от лицата по случая</p></div></div><label htmlFor="suspect" className="field-label">ЗАПОДОЗРЯН</label><select id="suspect" value={suspect} onChange={e => setSuspect(e.target.value)}>{info?.people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-                <div className="form-section"><div className="form-section-heading"><span>02</span><div><h3>С какво го доказваш?</h3><p>Избери минимум три доказателства</p></div></div><div className="checks">{allEvidence.filter(e => found.includes(e.id)).map(e => <label key={e.id} className={'check ' + (checked.includes(e.id) ? 'checked' : '')}><input type="checkbox" checked={checked.includes(e.id)} onChange={x => setChecked(prev => x.target.checked ? [...prev, e.id] : prev.filter(id => id !== e.id))} /><span className="check-square"><Check size={13} /></span><span><strong>{e.id}</strong>{e.title}</span></label>)}</div>{!found.length && <p className="form-help">Няма събрани доказателства. Започни с огледа.</p>}<div className="selection-count">{checked.length} ОТ МИНИМУМ 3 ИЗБРАНИ</div></div>
-                <div className="form-section"><div className="form-section-heading"><span>03</span><div><h3>Каква е твоята версия?</h3><p>Обясни мотив и последователност</p></div></div><label htmlFor="motive" className="field-label">ПРЕДПОЛАГАЕМ МОТИВ</label><textarea id="motive" value={motive} onChange={e => setMotive(e.target.value)} placeholder="Опиши защо заподозреният би извършил престъплението..." maxLength={1200} /><label htmlFor="sequence" className="field-label">ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ</label><textarea id="sequence" value={sequence} onChange={e => setSequence(e.target.value)} placeholder="Посочи последователността на събитията и как доказателствата ги подкрепят..." maxLength={1200} /></div>
-                <div className="accusation-bottom"><div><LockKeyhole size={15} /> ЗАКЛЮЧЕНИЕТО СЕ ОЦЕНЯВА ПО ДОКАЗАТЕЛСТВАТА</div><button className="primary" disabled={!session || busy || checked.length < 3 || motive.trim().length < 12 || sequence.trim().length < 12} onClick={() => void accuse()} type="button">Предай заключението <ArrowRight size={16} /></button></div>
+              <SectionHeader kicker="ФИНАЛЕН ЕТАП / ЗАКЛЮЧЕНИЕ" title="Предаване на обвинението" description="Тук интуицията не е достатъчна. Свържи фактите, докажи възможността и защити версията си." extra={<span className="tag tag-alert"><Scale size={13} />{t("ФИНАЛНО РЕШЕНИЕ")}</span>} />
+              <div className="accusation-notice"><ShieldQuestion size={23} /><div><strong>{t("Преди да продължиш")}</strong><p>{t("Изборът на правилен заподозрян не е достатъчен. Изискват се събрани доказателства, установени връзки, мотив и хронология.")}</p></div></div>
+              <div className="formpanel accusation-form"><div className="form-section"><div className="form-section-heading"><span>01</span><div><h3>{t("Кого обвиняваш?")}</h3><p>{t("Избери един от лицата по случая")}</p></div></div><label htmlFor="suspect" className="field-label">{t("ЗАПОДОЗРЯН")}</label><select id="suspect" value={suspect} onChange={e => setSuspect(e.target.value)}>{info?.people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                <div className="form-section"><div className="form-section-heading"><span>02</span><div><h3>{t("С какво го доказваш?")}</h3><p>{t("Избери минимум три доказателства")}</p></div></div><div className="checks">{allEvidence.filter(e => found.includes(e.id)).map(e => <label key={e.id} className={'check ' + (checked.includes(e.id) ? 'checked' : '')}><input type="checkbox" checked={checked.includes(e.id)} onChange={x => setChecked(prev => x.target.checked ? [...prev, e.id] : prev.filter(id => id !== e.id))} /><span className="check-square"><Check size={13} /></span><span><strong>{e.id}</strong>{e.title}</span></label>)}</div>{!found.length && <p className="form-help">{t("Няма събрани доказателства. Започни с огледа.")}</p>}<div className="selection-count">{checked.length} ОТ МИНИМУМ 3 ИЗБРАНИ</div></div>
+                <div className="form-section"><div className="form-section-heading"><span>03</span><div><h3>{t("Каква е твоята версия?")}</h3><p>{t("Обясни мотив и последователност")}</p></div></div><label htmlFor="motive" className="field-label">{t("ПРЕДПОЛАГАЕМ МОТИВ")}</label><textarea id="motive" value={motive} onChange={e => setMotive(e.target.value)} placeholder="Опиши защо заподозреният би извършил престъплението..." maxLength={1200} /><label htmlFor="sequence" className="field-label">{t("ХРОНОЛОГИЯ И ВЪЗМОЖНОСТ")}</label><textarea id="sequence" value={sequence} onChange={e => setSequence(e.target.value)} placeholder="Посочи последователността на събитията и как доказателствата ги подкрепят..." maxLength={1200} /></div>
+                <div className="accusation-bottom"><div><LockKeyhole size={15} />{t("ЗАКЛЮЧЕНИЕТО СЕ ОЦЕНЯВА ПО ДОКАЗАТЕЛСТВАТА")}</div><button className="primary" disabled={!session || busy || checked.length < 3 || motive.trim().length < 12 || sequence.trim().length < 12} onClick={() => void accuse()} type="button">{t("Предай заключението")}<ArrowRight size={16} /></button></div>
                 {verdict && <div className={'verdict ' + verdict.status} role="status"><div className="verdict-symbol">{verdict.status === 'solved' ? <CheckCheck size={24} /> : <Info size={24} />}</div><div><strong>{verdict.title}</strong><p>{verdict.explanation}</p></div></div>}
                 {verdict?.score && <ScoreReport score={verdict.score} status={verdict.status}/>}
-                {finalReport && <button type="button" className="primary" onClick={()=>go('report')}>Прегледай финалния доклад <ArrowRight size={16}/></button>}
+                {finalReport && <button type="button" className="primary" onClick={()=>go('report')}>{t("Прегледай финалния доклад")}<ArrowRight size={16}/></button>}
               </div>
             </>}
           </div>
@@ -526,28 +526,28 @@ function App() {
         </main>
 
         <aside className="inspector">
-          <div className="inspector-head"><div className="eyebrow"><span className="eyebrow-line" /> КОНТЕКСТЕН ПАНЕЛ</div><div className="inspector-title-row"><h2>Детайли по случая</h2><span className="panel-round-icon"><BookOpen size={17} /></span></div><p>Оперативна информация в реално време</p></div>
+          <div className="inspector-head"><div className="eyebrow"><span className="eyebrow-line" />{t("КОНТЕКСТЕН ПАНЕЛ")}</div><div className="inspector-title-row"><h2>{t("Детайли по случая")}</h2><span className="panel-round-icon"><BookOpen size={17} /></span></div><p>{t("Оперативна информация в реално време")}</p></div>
           <div className="inspector-divider" />
           {selected ? <>
             <div className="inspector-document"><div className="document-corners" /><FileSearch size={57} strokeWidth={1} /><span>{selected.id}</span></div>
-            <div className="inspector-tag"><CircleDot size={12} /> ИЗБРАНО ДОКАЗАТЕЛСТВО</div>
+            <div className="inspector-tag"><CircleDot size={12} />{t("ИЗБРАНО ДОКАЗАТЕЛСТВО")}</div>
             <h3 className="inspector-evidence-title">{selected.title}</h3>
             <div className="inspector-evidence-type">{selected.type} <span> / {selected.id}</span></div>
             <p className="inspector-detail">{found.includes(selected.id) ? selected.detail : 'Този материал още не е разгледан.'}</p>
-            <div className="inspector-data"><span>СТАТУС</span><strong><span className="mini-dot" /> {found.includes(selected.id) ? 'ОТКРИТО' : 'НЕПРОВЕРЕНО'}</strong></div>
-            <button className="secondary inspector-action" type="button" onClick={() => { go('interview'); setPresent(selected.id); }} disabled={!found.includes(selected.id)}><MessageSquareText size={15} /> Предяви при разпит <ArrowUpRight size={15} /></button>
-            <button className="text-action" type="button" onClick={() => setSelected(null)}>Изчисти избора <ChevronRight size={14} /></button>
+            <div className="inspector-data"><span>{t("СТАТУС")}</span><strong><span className="mini-dot" /> {found.includes(selected.id) ? 'ОТКРИТО' : 'НЕПРОВЕРЕНО'}</strong></div>
+            <button className="secondary inspector-action" type="button" onClick={() => { go('interview'); setPresent(selected.id); }} disabled={!found.includes(selected.id)}><MessageSquareText size={15} />{t("Предяви при разпит")}<ArrowUpRight size={15} /></button>
+            <button className="text-action" type="button" onClick={() => setSelected(null)}>{t("Изчисти избора")}<ChevronRight size={14} /></button>
           </> : <>
             <div className="inspector-illustration"><Crosshair size={58} strokeWidth={1} /><span className="inspector-coordinate inspector-coordinate-top">47° / 001</span><span className="inspector-coordinate inspector-coordinate-bottom">CASE FILE ACTIVE</span></div>
-            <div className="inspector-tag"><CircleDot size={12} /> ПОЛЕВО ДОСИЕ</div>
-            <h3 className="inspector-evidence-title">Разследване #001</h3>
-            <p className="inspector-detail">Избери доказателство, за да разгледаш информацията, статуса и възможните действия с него.</p>
+            <div className="inspector-tag"><CircleDot size={12} />{t("ПОЛЕВО ДОСИЕ")}</div>
+            <h3 className="inspector-evidence-title">{t("Разследване #001")}</h3>
+            <p className="inspector-detail">{t("Избери доказателство, за да разгледаш информацията, статуса и възможните действия с него.")}</p>
           </>}
           <div className="inspector-divider" />
-          <div className="inspector-section-label">СЪСТОЯНИЕ НА РАЗСЛЕДВАНЕТО</div>
-          <div className="inspector-metrics"><div><span><Files size={15} /> Доказателства</span><strong>{found.length}<small>/{allEvidence.length}</small></strong></div><div><span><Link2 size={15} /> Връзки</span><strong>{deductions.length}</strong></div><div><span><Activity size={15} /> Сесия</span><strong className={session ? 'state-green' : 'state-muted'}>{session ? 'Активна' : 'Няма'}</strong></div></div>
-          <div className="inspector-progress"><div className="inspector-progress-top"><span>ПРОГРЕС</span><strong>{progress}%</strong></div><div className="progress-track"><span style={{ width: progress + '%' }} /></div></div>
-          <div className="inspector-bottom"><HintStation session={session}/><div className="inspector-hint"><CircleHelp size={17} /><p>Най-добрите заключения идват от две независими улики.</p></div><div className="inspector-ai"><TerminalSquare size={14} /><span>{statusText}</span></div></div>
+          <div className="inspector-section-label">{t("СЪСТОЯНИЕ НА РАЗСЛЕДВАНЕТО")}</div>
+          <div className="inspector-metrics"><div><span><Files size={15} />{t("Доказателства")}</span><strong>{found.length}<small>/{allEvidence.length}</small></strong></div><div><span><Link2 size={15} />{t("Връзки")}</span><strong>{deductions.length}</strong></div><div><span><Activity size={15} />{t("Сесия")}</span><strong className={session ? 'state-green' : 'state-muted'}>{session ? 'Активна' : 'Няма'}</strong></div></div>
+          <div className="inspector-progress"><div className="inspector-progress-top"><span>{t("ПРОГРЕС")}</span><strong>{progress}%</strong></div><div className="progress-track"><span style={{ width: progress + '%' }} /></div></div>
+          <div className="inspector-bottom"><HintStation session={session}/><div className="inspector-hint"><CircleHelp size={17} /><p>{t("Най-добрите заключения идват от две независими улики.")}</p></div><div className="inspector-ai"><TerminalSquare size={14} /><span>{statusText}</span></div></div>
         </aside>
       </div>
     </div>
