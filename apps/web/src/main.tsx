@@ -4,6 +4,7 @@ import {
   Activity, Camera, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCheck, ChevronRight, CircleDot, CircleHelp, Clock3, Crosshair, FileCheck2, FileSearch, Files, Fingerprint, FlaskConical, FolderOpen, Gavel, Info, Link2, LockKeyhole, MapPin, Menu, MessageSquareText, Microscope, Network, Scale, ScanSearch, Search, Send, ShieldCheck, ShieldQuestion, TerminalSquare, UserRound, Users, type LucideIcon
 } from 'lucide-react';
 import './style.css';
+import {LanguageProvider, useLanguage, LanguageSelector} from './i18n';
 import { NotebookPanel, DossiersPanel, AlibiPanel, ScoreReport, type InvestigatorNote, type NoteInput, type SuspectDossier, type AlibiCheck, type DetectiveScore } from './CasePanels';
 import { ExpandedScene, VisualEvidenceBoard } from './InvestigationTools';
 import { ForensicWorkbench, FinalReport, HintStation, type FinalReportData } from './ForensicPanels';
@@ -98,6 +99,8 @@ function EmptyState({ icon: Icon, title, description, action }: { icon: LucideIc
 }
 
 function App() {
+  const {t:translateNav}=useLanguage();
+  const t=translateNav;
   const [view, setView] = useState<View>('home10');
   const [case10,setCase10]=useState<'case-001'|'case-002'>(()=>localStorage.getItem('cf10-selected-case')==='case-002'?'case-002':'case-001');
   const [info, setInfo] = useState<CaseInfo | null>(null);
@@ -331,30 +334,30 @@ function App() {
   })}</div>;
 
   if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')} onCommunity={()=>go('community')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
-  if(view==='community')return <div className="cf-community-page"><button className="r10-return" type="button" onClick={()=>go('home10')}>← Главно меню</button><React.Suspense fallback={<div className="empty-state">Зареждане на общността...</div>}><CommunityHub/></React.Suspense></div>;
+  if(view==='community')return <div className="cf-community-page"><button className="r10-return" type="button" onClick={()=>go('home10')}>← {t('Главно меню')}</button><React.Suspense fallback={<div className="empty-state">{t('Зареждане на общността...')}</div>}><CommunityHub/></React.Suspense></div>;
   if(view==='play10')return <FullGame10 session={session} caseId={case10} found={found} onFound={setFound} onHome={()=>go('home10')} onLegacy={dest=>go(dest as View)}/>;
   
   return <div className="app-shell">
     <aside className={'sidebar ' + (sidebarOpen ? 'sidebar-open' : '')}>
-      <button className="r10-return" type="button" onClick={()=>go('home10')}><ArrowRight size={15}/> Главно меню 1.0</button>
+      <button className="r10-return" type="button" onClick={()=>go('home10')}><ArrowRight size={15}/> {t('Главно меню 1.0')}</button>
       <div className="sidebar-brand">
         <div className="brand-symbol"><Fingerprint size={25} strokeWidth={1.4} /></div>
         <div className="brand-text"><strong>CASE<span>FILES</span></strong><small>THE TRUTH IS HIDDEN</small></div>
       </div>
 
       <div className="sidebar-case">
-        <div className="sidebar-case-top"><span>АКТИВНО ДОСИЕ</span><span className="sidebar-case-dot" /></div>
-        <strong>Последното<br />обаждане</strong>
+        <div className="sidebar-case-top"><span>{t('АКТИВНО ДОСИЕ')}</span><span className="sidebar-case-dot" /></div>
+        <strong>{t('Последното обаждане')}</strong>
         <div className="sidebar-case-meta"><MapPin size={12} /> СОФИЯ <span className="meta-separator">/</span> #001</div>
       </div>
 
-      <div className="nav-group-label">РАЗСЛЕДВАНЕ <span>01 — 16</span></div>
+      <div className="nav-group-label">{t('РАЗСЛЕДВАНЕ')} <span>01 — 16</span></div>
       <nav className="main-nav" aria-label="Навигация по разследването">
         {tabs.map(t => {
           const Icon = t.icon;
           return <button type="button" key={t.id} aria-current={view === t.id ? 'page' : undefined} className={'nav-link ' + (view === t.id ? 'active' : '')} onClick={() => go(t.id)}>
             <span className="nav-icon"><Icon size={18} strokeWidth={1.7} /></span>
-            <span className="nav-copy"><strong>{t.name}</strong><small>{t.hint}</small></span>
+            <span className="nav-copy"><strong>{translateNav(t.name)}</strong><small>{translateNav(t.hint)}</small></span>
             {t.id === 'evidence' && found.length > 0 ? <span className="nav-count">{found.length}</span> : view === t.id ? <ChevronRight size={15} className="nav-chevron" /> : null}
           </button>;
         })}
@@ -362,7 +365,7 @@ function App() {
 
       <div className="sidebar-bottom">
         <div className="sidebar-progress">
-          <div className="progress-heading"><span>НАПРЕДЪК ПО СЛУЧАЯ</span><strong>{progress}%</strong></div>
+          <div className="progress-heading"><span>{t('НАПРЕДЪК ПО СЛУЧАЯ')}</span><strong>{progress}%</strong></div>
           <div className="progress-track"><span style={{ width: progress + '%' }} /></div>
           <div className="progress-desc">{found.length} от {allEvidence.length} доказателства</div>
         </div>
@@ -374,18 +377,19 @@ function App() {
       <header className="topbar">
         <div className="topbar-start">
           <button type="button" className="mobile-menu" aria-label="Отвори навигацията" aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(!sidebarOpen)}><Menu size={20} /></button>
-          <div className="breadcrumbs"><span>CASEFILES</span><ChevronRight size={14} /><span>СЛУЧАЙ #001</span><ChevronRight size={14} /><strong>{activeTab.name}</strong></div>
+          <div className="breadcrumbs"><span>CASEFILES</span><ChevronRight size={14} /><span>СЛУЧАЙ #001</span><ChevronRight size={14} / ><strong>{t(activeTab.name)}</strong></div>
         </div>
         <div className="topbar-end">
+           <LanguageSelector/>
           <span className="system-status"><span className="status-light" /> СИСТЕМА ОНЛАЙН</span>
           <span className="topbar-divider" />
-          <span className="case-chip"><LockKeyhole size={13} /> ПОВЕРИТЕЛНО</span>
+          <span className="case-chip"><LockKeyhole size={13} /> {t('ПОВЕРИТЕЛНО')}</span>
         </div>
       </header>
 
       <div className="workspace-body">
         <main className="main-panel" id="case-main">
-          <div className="panel-meta"><div className="panel-path"><ActiveIcon size={15} /> {activeTab.name.toLocaleUpperCase('bg')}</div><div className="panel-meta-right"><span className="panel-meta-dot" /> CASE FILE / 001</div></div>
+          <div className="panel-meta"><div className="panel-path"><ActiveIcon size={15} /> {t(activeTab.name).toLocaleUpperCase('en')}</div><div className="panel-meta-right"><span className="panel-meta-dot" /> CASE FILE / 001</div></div>
           {error && <div className="error" role="alert"><Info size={18} /><span>{error}</span><button type="button" aria-label="Затвори съобщението" onClick={() => setError('')}>×</button></div>}
 
           <div className="screen" key={view}>
@@ -548,4 +552,4 @@ function App() {
   </div>;
 }
 
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
+createRoot(document.getElementById('root')!).render(<React.StrictMode><LanguageProvider><App /></LanguageProvider></React.StrictMode>);
