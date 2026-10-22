@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, Check, ClipboardCopy, Compass, Crown, FilePlus2, Fingerprint, FolderOpen, RefreshCcw, Send, ShieldCheck, Users } from 'lucide-react';
 import './community.css';
-import {useLanguage} from './i18n';
+import {useLanguage,LanguageSelector} from './i18n';
 
 type StoryBrief={id:string;title:string;setting:string;briefing:string;author:string;clues:number};
 type Clue={id:string;title:string;description:string|null;location:string;found:boolean;available:boolean};
@@ -55,14 +55,14 @@ export function CommunityHub(){
   const [notice,setNotice]=useState('');
   const [busy,setBusy]=useState(false);
 
-  async function loadStories(){try{setStories(await request<StoryBrief[]>('/stories'));}catch(e){setNotice(String(e));}}
+  async function loadStories(){try{setStories(await request<StoryBrief[]>('/stories'));}catch(e){setNotice(t(String(e)));}}
   async function loadRoom(id:string){try{const found=await request<Room>('/rooms/'+encodeURIComponent(id));setRoom(found);setSelectedSuspect(prev=>prev||found.suspects[0]?.id||'');}catch(e){setNotice(t(e instanceof Error?e.message:String(e)));}}
   async function loadProfile(id:string){try{setProfile(await request<Profile>('/profile/'+encodeURIComponent(id)));}catch{setProfile(null);}}
   useEffect(()=>{
     void loadStories();
     void request<{storage:'memory'|'postgres'}>('/status').then(s=>setStatus(s.storage)).catch(()=>{});
     const code=localStorage.getItem('cf-community-room'),member=localStorage.getItem('cf-community-member');
-    if(code&&member){setRoomCode(code);setMemberToken(member);void loadRoom(code);}
+    if(code&&member){setRoomCode(code);setMemberToken(member);setView('room');void loadRoom(code);}
     const id=localStorage.getItem('cf-community-profile');if(id)void loadProfile(id);
   },[]);
   useEffect(()=>{
@@ -72,7 +72,7 @@ export function CommunityHub(){
   },[roomCode,memberToken]);
   async function perform<T>(fn:()=>Promise<T>,onDone:(v:T)=>void){
     setBusy(true);setNotice('');
-    try{onDone(await fn());}catch(e){setNotice(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
+    try{onDone(await fn());}catch(e){setNotice(t(e instanceof Error?e.message:String(e)));}finally{setBusy(false);}
   }
   function enterRoom(data:{memberToken:string;room:Room}){
     setRoom(data.room);setRoomCode(data.room.id);setMemberToken(data.memberToken);setSelectedClues([]);
@@ -114,7 +114,7 @@ export function CommunityHub(){
   }
   
   return <div className="cf-community">
-    <div className="community-head"><div><span className="community-kicker">CASEFILES / SHARED INVESTIGATIONS</span><h2>{t('Общност на детективите')}</h2><p>{t('Разследвай с приятели, генерирай нов случай, публикувай собствена мистерия и трупай XP.')}</p></div><div className="community-storage"><span className={'community-led '+(status==='postgres'?'live':'')}/>{t(status==='postgres'?'PostgreSQL · постоянно':status==='memory'?'Памет на сървъра · временно':'Проверка на съхранението')}</div></div>
+    <div className="community-head"><div><span className="community-kicker">CASEFILES / SHARED INVESTIGATIONS</span><h2>{t('Общност на детективите')}</h2><p>{t('Разследвай с приятели, генерирай нов случай, публикувай собствена мистерия и трупай XP.')}</p></div><div className="community-head-actions"><LanguageSelector/><div className="community-storage"><span className={'community-led '+(status==='postgres'?'live':'')}/>{t(status==='postgres'?'PostgreSQL · постоянно':status==='memory'?'Памет на сървъра · временно' :'Проверка на съхранението')}</div></div></div>
     <nav className="community-tabs" aria-label={t('Общност')}>
       {([['cases','Случаи',FolderOpen],['room','Екипно разследване',Users],['editor','Редактор',FilePlus2],['profile','Профил',Crown]] as const).map(([id,label,Icon])=><button type="button" key={id} className={view===id?'selected':''} onClick={()=>setView(id)}><Icon size={17}/>{t(label)}</button>)}
     </nav>
