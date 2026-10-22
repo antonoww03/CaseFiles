@@ -58,3 +58,34 @@ test('language switch during an active case preserves evidence progress and loca
  await page.getByRole('button',{name:'Continuer'}).click();
  await expect(page.locator('.r10-header-right').getByText('1 INDICES')).toBeVisible();
 });
+
+
+test('Co-op players with different locales see translated built-in story but share one evidence state',async({page,browser})=>{
+ await page.goto('/');
+ await page.locator('.cf-language-selector select').first().selectOption('bg');
+ await page.getByRole('button',{name:/Екипна игра \/ нови случаи/}).click();
+ await page.getByRole('button',{name:'Генерирай нов случай'}).click();
+ const roomTitle=await page.locator('.community-room-title h3').innerText();
+ expect(['Изчезналата експозиция','Сянка в архива','Последният протокол','Тайният инвентар']).toContain(roomTitle);
+ const roomCode=(await page.locator('.community-room-title small').innerText()).split(':')[1]?.trim()||'';
+ expect(roomCode).toMatch(/^[A-F0-9]{10}$/);
+ const guest=await browser.newContext();
+ try{
+  const other=await guest.newPage();
+  await other.goto('/');
+  await other.locator('.cf-language-selector select').first().selectOption('en');
+  await other.getByRole('button',{name:/Co-op \/ new cases/}).click();
+  await other.locator('.community-layout input[maxlength="32"]').first().fill('Guest Investigator');
+  await other.locator('input[maxlength="10"]').fill(roomCode);
+  await other.getByRole('button',{name:'Join investigation'}).click();
+  await expect(other.locator('.community-room-title h3')).toHaveText(/The Missing Exhibit|Shadow in the Archive|The Final Report|The Secret Inventory/);
+  await expect(other.locator('.community-room-title h3')).not.toHaveText(roomTitle);
+  await other.locator('.community-clues button').first().click();
+  await expect.poll(async()=>{
+   await page.locator('.community-team button').click();
+   return page.locator('.community-clues article.discovered').count();
+  },{timeout:15000}).toBe(1);
+  await expect(other.locator('html')).toHaveAttribute('lang','en');
+  await expect(page.locator('html')).toHaveAttribute('lang','bg');
+ }finally{await guest.close();}
+});
