@@ -1,0 +1,90 @@
+import { expect, test } from '@playwright/test';
+
+test('CASEFILES 0.9 scene controls expose state, dependency, and navigation results', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: /Класически инструменти/ }).click();
+  await page.getByRole('button', { name: /Започни разследването/ }).click();
+  await page.getByRole('button', { name: /Играй CASEFILES 0.9/ }).click();
+  await expect(page.getByRole('heading', { name: 'Антре' })).toBeVisible();
+
+  const mute = page.getByRole('button', { name: 'Превключи звука' });
+  const iconClass = () => mute.locator('svg').getAttribute('class');
+  const soundOn = await iconClass();
+  await mute.click();
+  await expect.poll(iconClass).not.toBe(soundOn);
+  await mute.click();
+  await expect.poll(iconClass).toBe(soundOn);
+
+  const zoom = page.locator('.g9-stage-foot strong');
+  await expect(zoom).toHaveText('100%');
+  await page.getByRole('button', { name: 'Отдалечи' }).click();
+  await expect(zoom).toHaveText('90%');
+  await page.getByRole('button', { name: 'Приближи' }).click();
+  await expect(zoom).toHaveText('100%');
+  for (let n = 0; n < 4; n++) await page.getByRole('button', { name: 'Отдалечи' }).click();
+  await expect(zoom).toHaveText('85%');
+  for (let n = 0; n < 10; n++) await page.getByRole('button', { name: 'Приближи' }).click();
+  await expect(zoom).toHaveText('145%');
+
+  const vision = page.getByRole('button', { name: 'Detective Vision' });
+  await vision.click();
+  await expect(vision).toHaveClass(/active/);
+  const visionDoormat = page.locator('.g9-vision').getByRole('button', { name: /Изтривалка/ });
+  await expect(visionDoormat).toBeEnabled();
+  await visionDoormat.click();
+  await expect(page.getByRole('status')).toContainText('Детективското зрение подчерта: Изтривалка');
+  await expect(visionDoormat).toBeDisabled();
+  await page.getByRole('button', { name: 'Затвори известието' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await vision.click();
+  await expect(page.locator('.g9-vision')).toHaveCount(0);
+
+  const inventoryToggle = page.getByRole('button', { name: /Инвентар/ });
+  await inventoryToggle.click();
+  await expect(page.locator('.g9-inventory')).toContainText('Намери предмет при огледа на стаята.');
+  await inventoryToggle.click();
+  await page.getByRole('button', { name: 'Огледай Изтривалка' }).click();
+  const inspection = page.getByRole('dialog', { name: 'Оглед на Изтривалка' });
+  await expect(inspection.getByText('ЛИЦЕВА СТРАНА')).toBeVisible();
+  await inspection.getByRole('button', { name: 'Завърти' }).click();
+  await inspection.getByRole('button', { name: 'Обърни' }).click();
+  await expect(inspection.getByText('ОБРАТНА СТРАНА')).toBeVisible();
+  await inspection.getByRole('heading', { name: 'Изтривалка' }).click();
+  await expect(inspection).toBeVisible();
+  await page.locator('.g9-modal-backdrop').click({ position: { x: 2, y: 2 } });
+  await expect(inspection).toHaveCount(0);
+  await page.getByRole('button', { name: 'Огледай Изтривалка' }).click();
+  await expect(page.getByRole('dialog', { name: 'Оглед на Изтривалка' })).toBeVisible();
+  await inspection.getByRole('button', { name: 'Затвори' }).click();
+  await expect(inspection).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Огледай Изтривалка' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Изследвай/ }).click();
+  await expect(page.getByRole('status')).toContainText('Месингов ключ');
+  await inventoryToggle.click();
+  const key = page.locator('.g9-inventory').getByRole('button', { name: /Месингов ключ/ });
+  await expect(key).toBeVisible();
+  await key.click();
+  await expect(key).toHaveClass(/active/);
+  await key.click();
+  await expect(key).not.toHaveClass(/active/);
+  await inventoryToggle.click();
+
+  await page.getByRole('button', { name: /Към Всекидневна/ }).click();
+  await expect(page.getByRole('heading', { name: 'Всекидневна' })).toBeVisible();
+  await page.locator('.g9-phone-object').click();
+  await expect(page.getByRole('heading', { name: 'Телефонът на Никола' })).toBeVisible();
+  const phone = page.locator('.g9-phone-layout');
+  const app = phone.getByRole('button', { name: 'Обаждания' });
+  await app.click();
+  await expect(app).toHaveClass(/active/);
+  await expect(phone.locator('.g9-phone-data')).toContainText('Избери достъпен SMS, запис или снимка');
+  await phone.getByRole('button', { name: 'Предяви при разпит' }).click();
+  await expect(page.getByRole('heading', { name: 'Разпити с последствия' })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Бърза игрова навигация' }).getByRole('button', { name: 'Мисии' }).click();
+  await expect(page.getByRole('heading', { name: 'Следствени цели' })).toBeVisible();
+  await expect(page.locator('.g9-missions')).toContainText('Сюжетните моменти ще се появят');
+  expect(errors).toEqual([]);
+});
