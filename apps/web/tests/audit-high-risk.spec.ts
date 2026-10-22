@@ -58,10 +58,16 @@ test('Case 002 interview becomes actionable after two clues and reveals the sele
 
   const accuse = page.getByRole('button', { name: 'Подай окончателно обвинение' });
   await expect(accuse).toBeDisabled();
-  for (const clue of ['C2', 'C3', 'C4', 'C6']) {
-    await page.getByRole('checkbox', { name: new RegExp(`^${clue} —`) }).check();
-  }
+  const evidence = (clue: string) => page.getByRole('checkbox', { name: new RegExp(`^${clue} —`) });
+  await evidence('C2').check();
+  await evidence('C3').check();
+  await expect(accuse).toBeDisabled();
+  await evidence('C4').check();
   await expect(accuse).toBeEnabled();
+  await evidence('C6').check();
+  await evidence('C4').uncheck();
+  await expect(accuse).toBeEnabled();
+  await evidence('C4').check();
   await accuse.click();
   await expect(page.getByRole('status')).toContainText('Обвинението е оспорено');
 

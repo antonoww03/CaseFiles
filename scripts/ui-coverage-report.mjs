@@ -69,6 +69,8 @@ const verifiedRuntime = runtime.filter(item => item.result.startsWith('Verified'
 const blockedRuntime = runtime.filter(item => item.result.startsWith('Blocked')).length;
 const failingRuntime = runtime.filter(item => /^(Failed|Failure|Defect confirmed:)/i.test(item.result)).length;
 const knownDefectRecords = runtime.filter(item => /^Confirmed defect/i.test(item.result)).length;
+const interactionCount = runtime.reduce((sum, item) => sum + (Number(item.interaction_count) || 0), 0);
+const checkedStates = [...new Set(runtime.flatMap(item => String(item.states_tested ?? '').split('|').map(state => state.trim()).filter(Boolean)))].sort();
 const testNames = [...new Set(inventory.map(item => item.related_spec).filter(Boolean))];
 const lines = [
   '# CASEFILES UI coverage report',
@@ -94,7 +96,11 @@ const lines = [
   `|---:|---:|---:|---:|---:|`,
   `| ${runtime.length} | ${verifiedRuntime} | ${blockedRuntime} | ${failingRuntime} | ${knownDefectRecords} |`,
   '',
-  'Exact controls, preconditions, observed outcomes, and incomplete attempts are recorded in the runtime test log.',
+  `| Counted runtime interactions | Distinct checked states |`,
+  `|---:|---|`,
+  `| ${interactionCount} | ${checkedStates.length ? checkedStates.join(', ') : 'Not recorded for older groups'} |`,
+  '',
+  'Exact controls, preconditions, observed outcomes, state transitions, and incomplete attempts are recorded in the runtime test log. The matrix retains the exact test and proof text for each mapped declaration.',
   '',
   '## Evidence limitations',
   '',
