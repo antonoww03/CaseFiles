@@ -1,4 +1,7 @@
 import {test,expect} from '@playwright/test';
+test.beforeEach(async({page})=>{
+ await page.addInitScript(()=>window.localStorage.setItem('casefiles-language','bg'));
+});
 test('real production opens first case, collects evidence and shows Detective Universe',async({page})=>{
  const errors:string[]=[];
  page.on('pageerror',e=>errors.push(e.message));
