@@ -13,7 +13,9 @@
     "test": "npm run test -w apps/api",
     "i18n:audit": "node scripts/i18n-audit.mjs",
     "i18n:validate": "node scripts/i18n-validate.mjs",
-    "i18n:strict": "node scripts/i18n-validate.mjs --strict"
+    "i18n:strict": "node scripts/i18n-validate.mjs --strict",
+    "i18n:api": "node scripts/i18n-api-coverage.mjs",
+    "i18n:api:strict": "node scripts/i18n-api-coverage.mjs --strict"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
