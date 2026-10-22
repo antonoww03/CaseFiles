@@ -40,4 +40,4 @@ jobs:
       - run: npm run typecheck -w apps/web
       - run: node --check scripts/ui-coverage-report.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -w apps/web -- --grep "Case 002 interview suspect selection follows clue gates and returns the selected alibi"
+      - run: npm run test:e2e -w apps/web -- --grep "Case 002 interview becomes actionable after two clues and reveals the selected alibi"

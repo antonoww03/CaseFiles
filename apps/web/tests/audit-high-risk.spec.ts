@@ -33,16 +33,33 @@ test('Case 002 interview becomes actionable after two clues and reveals the sele
   await collect('Служебен асансьор', 'Изследвай Служебен асансьор'); // C5
   await collect('Реставрационно ателие', 'Изследвай Реставрационно ателие'); // C6
 
+  // Four clues and three selected evidence items are insufficient until two
+  // independent archive puzzles are server-confirmed as solved.
+  await nav.getByRole('button', { name: 'Финал' }).click();
+  const accuse = page.getByRole('button', { name: 'Подай окончателно обвинение' });
+  const evidence = (clue: string) => page.getByRole('checkbox', { name: new RegExp(`^${clue} —`) });
+  await evidence('C2').check();
+  await evidence('C3').check();
+  await evidence('C4').check();
+  await expect(accuse).toBeDisabled();
+
   await nav.getByRole('button', { name: 'Криминалистика' }).click();
   const lock = page.locator('.r10-puzzle').filter({ hasText: 'Сервизният код' });
   await lock.getByRole('textbox', { name: 'Отговор за Сервизният код' }).fill('2339');
   await lock.getByRole('button', { name: 'Провери' }).click();
   await expect(lock.getByText('✓ Потвърден анализ')).toBeVisible();
+  await nav.getByRole('button', { name: 'Финал' }).click();
+  await expect(accuse).toBeDisabled();
 
+  await nav.getByRole('button', { name: 'Криминалистика' }).click();
   const film = page.locator('.r10-puzzle').filter({ hasText: 'Два кадъра' });
   await film.getByRole('textbox', { name: 'Отговор за Два кадъра' }).fill('2347-2352');
   await film.getByRole('button', { name: 'Провери' }).click();
   await expect(film.getByText('✓ Потвърден анализ')).toBeVisible();
+  await nav.getByRole('button', { name: 'Финал' }).click();
+  await expect(accuse).toBeEnabled();
+
+  await nav.getByRole('button', { name: 'Криминалистика' }).click();
 
   const ledger = page.locator('.r10-puzzle').filter({ hasText: 'Следата на договора' });
   await ledger.getByRole('combobox', { name: 'Отговор за Следата на договора' }).selectOption('boris');
@@ -56,9 +73,7 @@ test('Case 002 interview becomes actionable after two clues and reveals the sele
   await suspect.selectOption('raya');
   await expect(suspect).toHaveValue('raya');
 
-  const accuse = page.getByRole('button', { name: 'Подай окончателно обвинение' });
   await expect(accuse).toBeDisabled();
-  const evidence = (clue: string) => page.getByRole('checkbox', { name: new RegExp(`^${clue} —`) });
   await evidence('C2').check();
   await evidence('C3').check();
   await expect(accuse).toBeDisabled();
@@ -68,6 +83,7 @@ test('Case 002 interview becomes actionable after two clues and reveals the sele
   await evidence('C4').uncheck();
   await expect(accuse).toBeEnabled();
   await evidence('C4').check();
+  await expect(accuse).toBeEnabled();
   await accuse.click();
   await expect(page.getByRole('status')).toContainText('Обвинението е оспорено');
 
