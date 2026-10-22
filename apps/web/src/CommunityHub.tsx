@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, Check, ClipboardCopy, Compass, Crown, FilePlus2, Fingerprint, FolderOpen, RefreshCcw, Send, ShieldCheck, Users } from 'lucide-react';
 import './community.css';
+import {useLanguage} from './i18n';
 
 type StoryBrief={id:string;title:string;setting:string;briefing:string;author:string;clues:number};
 type Clue={id:string;title:string;description:string|null;location:string;found:boolean;available:boolean};
@@ -28,6 +29,7 @@ const sampleEditor=():Editor=>({
 });
 
 export function CommunityHub(){
+   const {t}=useLanguage();
   const [view,setView]=useState<View>('cases');
   const [nickname,setNickname]=useState('Детектив');
   const [stories,setStories]=useState<StoryBrief[]>([]);
@@ -103,53 +105,53 @@ export function CommunityHub(){
   }
   
   return <div className="cf-community">
-    <div className="community-head"><div><span className="community-kicker">CASEFILES / SHARED INVESTIGATIONS</span><h2>Общност на детективите</h2><p>Разследвай с приятели, генерирай нов случай, публикувай собствена мистерия и трупай XP.</p></div><div className="community-storage"><span className={'community-led '+(status==='postgres'?'live':'')}/>{status==='postgres'?'PostgreSQL · постоянно':status==='memory'?'Памет на сървъра · временно':'Проверка на съхранението'}</div></div>
-    <nav className="community-tabs" aria-label="Общност">
-      {([['cases','Случаи',FolderOpen],['room','Екипно разследване',Users],['editor','Редактор',FilePlus2],['profile','Профил',Crown]] as const).map(([id,label,Icon])=><button type="button" key={id} className={view===id?'selected':''} onClick={()=>setView(id)}><Icon size={17}/>{label}</button>)}
+    <div className="community-head"><div><span className="community-kicker">CASEFILES / SHARED INVESTIGATIONS</span><h2>{t('Общност на детективите')}</h2><p>{t('Разследвай с приятели, генерирай нов случай, публикувай собствена мистерия и трупай XP.')}</p></div><div className="community-storage"><span className={'community-led '+(status==='postgres'?'live':'')}/>{status==='postgres'?'PostgreSQL · постоянно':status==='memory'?'Памет на сървъра · временно':'Проверка на съхранението'}</div></div>
+    <nav className="community-tabs" aria-label={t('Общност')}>
+      {([['cases','Случаи',FolderOpen],['room','Екипно разследване',Users],['editor','Редактор',FilePlus2],['profile','Профил',Crown]] as const).map(([id,label,Icon])=><button type="button" key={id} className={view===id?'selected':''} onClick={()=>setView(id)}><Icon size={17}/>{t(label)}</button>)}
     </nav>
-    {notice&&<div className="community-notice" role="status">{notice}<button aria-label="Затвори" onClick={()=>setNotice('')}>×</button></div>}
+    {notice&&<div className="community-notice" role="status">{notice}<button aria-label={t('Затвори')} onClick={()=>setNotice('')}>×</button></div>}
     {view==='cases'&&<div className="community-layout">
-      <section className="community-card"><h3><Fingerprint size={20}/> Започни разследване</h3>
-        <label>Име на детектива <input maxLength={32} value={nickname} onChange={e=>setNickname(e.target.value)} /></label>
+      <section className="community-card"><h3><Fingerprint size={20}/> {t('Започни разследване')}</h3>
+        <label>{t('Име на детектива')} <input maxLength={32} value={nickname} onChange={e=>setNickname(e.target.value)} /></label>
         <div className="community-actions">
-          <button disabled={busy} onClick={()=>void newRoom('case-002')}><FolderOpen size={18}/> Case #002 — Изчезналият архив</button>
-          <button disabled={busy} onClick={()=>void newRoom('random')}><Compass size={18}/> Генерирай нов случай</button>
+          <button disabled={busy} onClick={()=>void newRoom('case-002')}><FolderOpen size={18}/> Case #002 — {t('Изчезналият архив')}</button>
+          <button disabled={busy} onClick={()=>void newRoom('random')}><Compass size={18}/> {t('Генерирай нов случай')}</button>
         </div>
-        <p className="community-muted">Стаята има код за покана и поддържа до шестима детективи. Прогресът по уликите е общ.</p>
+        <p className="community-muted">{t('Стаята има код за покана и поддържа до шестима детективи. Прогресът по уликите е общ.')}</p>
       </section>
-      <section className="community-card"><h3><Users size={20}/> Присъедини се към приятели</h3>
-        <label>Код на стая <input value={joinCode} maxLength={10} placeholder="НАПР. A1B2C3D4E5" onChange={e=>setJoinCode(e.target.value.toUpperCase())}/></label>
-        <button disabled={busy||joinCode.trim().length!==10} onClick={()=>void joinRoom()}>Влез в разследването <Send size={16}/></button>
+      <section className="community-card"><h3><Users size={20}/> {t('Присъедини се към приятели')}</h3>
+        <label>{t('Код на стая')} <input value={joinCode} maxLength={10} placeholder={t('НАПР. A1B2C3D4E5')} onChange={e=>setJoinCode(e.target.value.toUpperCase())}/></label>
+        <button disabled={busy||joinCode.trim().length!==10} onClick={()=>void joinRoom()}>{t('Влез в разследването')} <Send size={16}/></button>
       </section>
-      <section className="community-card community-wide"><h3><BookOpen size={20}/> Истории от общността</h3>
-        {stories.length===0?<p className="community-muted">Още няма публикувани истории. Създай първата от раздел „Редактор“.</p>:<div className="community-stories">{stories.map(s=><article key={s.id}><strong>{s.title}</strong><small>{s.setting} · Автор: {s.author} · {s.clues} улики</small><p>{s.briefing}</p><button disabled={busy} onClick={()=>void newRoom('community',s.id)}>Разследвай историята</button></article>)}</div>}
+      <section className="community-card community-wide"><h3><BookOpen size={20}/> {t('Истории от общността')}</h3>
+        {stories.length===0?<p className="community-muted">{t('Още няма публикувани истории. Създай първата от раздел „Редактор“.')}</p>:<div className="community-stories">{stories.map(s=><article key={s.id}><strong>{s.title}</strong><small>{s.setting} · {t('Автор:')} {s.author} · {s.clues} {t('улики')}</small><p>{s.briefing}</p><button disabled={busy} onClick={()=>void newRoom('community',s.id)}>{t('Разследвай историята')}</button></article>)}</div>}
       </section>
     </div>}
-    {view==='room'&&(!room||!memberToken?<div className="community-card"><h3>Нямаш активна стая</h3><p>Създай стая или въведи код за покана.</p><button onClick={()=>setView('cases')}>Избери случай</button></div>:
+    {view==='room'&&(!room||!memberToken?<div className="community-card"><h3>{t('Нямаш активна стая')}</h3><p>{t('Създай стая или въведи код за покана.')}</p><button onClick={()=>setView('cases')}>{t('Избери случай')}</button></div>:
       <div className="community-layout">
-        <section className="community-card community-wide"><div className="community-room-title"><div><small>КОД НА СТАЯТА: {room.id}</small><h3>{room.title}</h3><p>{room.setting} · {room.briefing}</p></div><button onClick={()=>void navigator.clipboard?.writeText(room.id)}><ClipboardCopy size={17}/> Копирай код</button></div>
-          <div className="community-team"><Users size={18}/> {room.players.map((p,i)=><span key={i}>{p.name}</span>)} <button aria-label="Обнови" onClick={()=>void loadRoom(room.id)}><RefreshCcw size={15}/></button></div>
+        <section className="community-card community-wide"><div className="community-room-title"><div><small>{t('КОД НА СТАЯТА:')} {room.id}</small><h3>{room.title}</h3><p>{room.setting} · {room.briefing}</p></div><button onClick={()=>void navigator.clipboard?.writeText(room.id)}><ClipboardCopy size={17}/> {t('Копирай код')}</button></div>
+          <div className="community-team"><Users size={18}/> {room.players.map((p,i)=><span key={i}>{p.name}</span>)} <button aria-label={t('Обнови')} onClick={()=>void loadRoom(room.id)}><RefreshCcw size={15}/></button></div>
         </section>
-        <section className="community-card community-wide"><h3><Compass size={20}/> Общи доказателства — {room.found.length}/{room.clues.length}</h3>
-          <div className="community-clues">{room.clues.map(c=><article key={c.id} className={c.found?'discovered':''}><small>{c.id} · {c.location}</small><strong>{c.title}</strong><p>{c.description||'Все още няма достъп до съдържанието.'}</p><button disabled={busy||c.found||!c.available||!!room.verdict&&room.verdict==='solved'} onClick={()=>void roomAction('discover',c.id)}>{c.found?<><Check size={15}/> В досието</>:c.available?'Разгледай':'Изисква 2 начални улики'}</button></article>)}</div>
+        <section className="community-card community-wide"><h3><Compass size={20}/> {t('Общи доказателства')} — {room.found.length}/{room.clues.length}</h3>
+          <div className="community-clues">{room.clues.map(c=><article key={c.id} className={c.found?'discovered':''}><small>{c.id} · {c.location}</small><strong>{c.title}</strong><p>{c.description||t('Все още няма достъп до съдържанието.')}</p><button disabled={busy||c.found||!c.available||!!room.verdict&&room.verdict==='solved'} onClick={()=>void roomAction('discover',c.id)}>{c.found?<><Check size={15}/> {t('В досието')}</>:c.available?t('Разгледай'):t('Изисква 2 начални улики')}</button></article>)}</div>
         </section>
-        <section className="community-card"><h3>Разпити</h3>{room.suspects.map(s=><div className="community-suspect" key={s.id}><strong>{s.name}</strong><p>{room.interviews.includes(s.id)?s.alibi:'Разпитай след две открити улики.'}</p><button disabled={busy||room.found.length<2||room.verdict==='solved'} onClick={()=>void roomAction('interview',s.id)}>Разпитай</button></div>)}</section>
-        <section className="community-card"><h3><ShieldCheck size={20}/> Финално обвинение</h3>
-          <label>Заподозрян <select value={selectedSuspect} onChange={e=>setSelectedSuspect(e.target.value)}>{room.suspects.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-          <p className="community-muted">Избери най-малко три ключови улики, за да защитиш обвинението.</p>
+        <section className="community-card"><h3>{t('Разпити')}</h3>{room.suspects.map(s=><div className="community-suspect" key={s.id}><strong>{s.name}</strong><p>{room.interviews.includes(s.id)?s.alibi:t('Разпитай след две открити улики.')}</p><button disabled={busy||room.found.length<2||room.verdict==='solved'} onClick={()=>void roomAction('interview',s.id)}>{t('Разпитай')}</button></div>)}</section>
+        <section className="community-card"><h3><ShieldCheck size={20}/> {t('Финално обвинение')}</h3>
+          <label>{t('Заподозрян')} <select value={selectedSuspect} onChange={e=>setSelectedSuspect(e.target.value)}>{room.suspects.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+          <p className="community-muted">{t('Избери най-малко три ключови улики, за да защитиш обвинението.')}</p>
           <div className="community-evidence-checks">{room.clues.filter(c=>c.found).map(c=><label key={c.id}><input type="checkbox" checked={selectedClues.includes(c.id)} onChange={e=>setSelectedClues(xs=>e.target.checked?[...xs,c.id]:xs.filter(x=>x!==c.id))}/>{c.id} — {c.title}</label>)}</div>
-          <button disabled={busy||selectedClues.length<3||room.verdict==='solved'} onClick={()=>void roomAction('accuse',selectedSuspect)}>Предай обвинението</button>
-          {room.verdict&&<div className="community-outcome"><strong>{room.verdict==='solved'?'СЛУЧАЯТ Е РАЗКРИТ':room.verdict==='incorrect'?'ОБВИНЕНИЕТО Е ОТХВЪРЛЕНО':'НЕДОСТАТЪЧНИ ДОКАЗАТЕЛСТВА'}</strong><p>{room.ending||'Разгледай още улики и провери версията си.'}</p>{room.solvedBy&&<small>Разкрит от: {room.solvedBy}</small>}</div>}
+          <button disabled={busy||selectedClues.length<3||room.verdict==='solved'} onClick={()=>void roomAction('accuse',selectedSuspect)}>{t('Предай обвинението')}</button>
+          {room.verdict&&<div className="community-outcome"><strong>{room.verdict==='solved'?t('СЛУЧАЯТ Е РАЗКРИТ'):room.verdict==='incorrect'?t('ОБВИНЕНИЕТО Е ОТХВЪРЛЕНО'):t('НЕДОСТАТЪЧНИ ДОКАЗАТЕЛСТВА')}</strong><p>{room.ending||t('Разгледай още улики и провери версията си.')}</p>{room.solvedBy&&<small>{t('Разкрит от:')} {room.solvedBy}</small>}</div>}
         </section>
       </div>)}
-    {view==='profile'&&<section className="community-card"><h3><Crown size={20}/> Постоянен детективски профил</h3>{profile?<><strong className="community-xp">{profile.name} · Ниво {profile.level}</strong><p>{profile.xp} XP · {profile.completedCases} разрешени разследвания</p><div className="community-team">{profile.achievements.length?profile.achievements.map(a=><span key={a}>{a}</span>):'Първото ти постижение предстои.'}</div><p className="community-muted">Профилът се пази чрез таен идентификатор в този браузър. Създадените точки се съхраняват на сървъра, когато PostgreSQL е активиран.</p></>:<><p>Създай профил, за да получаваш XP за разрешените екипни случаи.</p><label>Псевдоним <input maxLength={32} value={nickname} onChange={e=>setNickname(e.target.value)}/></label><button disabled={busy} onClick={()=>void createProfile()}>Създай профил</button></>}</section>}
-    {view==='editor'&&<section className="community-card community-editor"><h3><FilePlus2 size={20}/> Създай и публикувай своя история</h3><p className="community-muted">Само измислени случаи. Публикуваните сценарии са достъпни за други играчи — не въвеждай истински лични данни.</p>
-      {([['title','Заглавие'],['setting','Място'],['briefing','Начална история']] as const).map(([field,label])=><label key={field}>{label}{field==='briefing'?<textarea value={editor[field]} maxLength={1200} onChange={e=>setEditor(p=>({...p,[field]:e.target.value}))}/>:<input value={editor[field]} maxLength={field==='title'?80:140} onChange={e=>setEditor(p=>({...p,[field]:e.target.value}))}/>}</label>)}
-      <h4>Трима заподозрени</h4><div className="community-editor-grid">{editor.suspects.map((s,i)=><fieldset key={s.id}><legend>Лице {i+1}</legend><label>Име<input value={s.name} onChange={e=>replaceSuspect(i,'name',e.target.value)}/></label><label>Алиби<textarea value={s.alibi} onChange={e=>replaceSuspect(i,'alibi',e.target.value)}/></label></fieldset>)}</div>
-      <h4>Пет доказателства</h4><div className="community-editor-grid">{editor.clues.map((c,i)=><fieldset key={c.id}><legend>{c.id}</legend><label>Заглавие<input value={c.title} onChange={e=>replaceClue(i,'title',e.target.value)}/></label><label>Място<input value={c.location} onChange={e=>replaceClue(i,'location',e.target.value)}/></label><label>Какво разкрива<textarea value={c.description} onChange={e=>replaceClue(i,'description',e.target.value)}/></label></fieldset>)}</div>
-      <h4>Авторско решение (скрито до развръзката)</h4><label>Извършител<select value={editor.solution.suspectId} onChange={e=>setEditor(p=>({...p,solution:{...p.solution,suspectId:e.target.value}}))}>{editor.suspects.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+    {view==='profile'&&<section className="community-card"><h3><Crown size={20}/> {t('Постоянен детективски профил')}</h3>{profile?<><strong className="community-xp">{profile.name} · {t('Ниво')} {profile.level}</strong><p>{profile.xp} XP · {profile.completedCases} {t('разрешени разследвания')}</p><div className="community-team">{profile.achievements.length?profile.achievements.map(a=><span key={a}>{a}</span>):t('Първото ти постижение предстои.')}</div><p className="community-muted">Профилът се пази чрез таен идентификатор в този браузър. Създадените точки се съхраняват на сървъра, когато PostgreSQL е активиран.</p></>:<><p>Създай профил, за да получаваш XP за разрешените екипни случаи.</p><label>{t('Псевдоним')} <input maxLength={32} value={nickname} onChange={e=>setNickname(e.target.value)}/></label><button disabled={busy} onClick={()=>void createProfile()}>{t('Създай профил')}</button></>}</section>}
+    {view==='editor'&&<section className="community-card community-editor"><h3><FilePlus2 size={20}/> {t('Създай и публикувай своя история')}</h3><p className="community-muted">{t('Само измислени случаи. Публикуваните сценарии са достъпни за други играчи — не въвеждай истински лични данни.')}</p>
+      {([['title','Заглавие'],['setting','Място'],['briefing','Начална история']] as const).map(([field,label])=><label key={field}>{t(label)}{field==='briefing'?<textarea value={editor[field]} maxLength={1200} onChange={e=>setEditor(p=>({...p,[field]:e.target.value}))}/>:<input value={editor[field]} maxLength={field==='title'?80:140} onChange={e=>setEditor(p=>({...p,[field]:e.target.value}))}/>}</label>)}
+      <h4>{t('Трима заподозрени')}</h4><div className="community-editor-grid">{editor.suspects.map((s,i)=><fieldset key={s.id}><legend>{t('Лице')} {i+1}</legend><label>{t('Име')}<input value={s.name} onChange={e=>replaceSuspect(i,'name',e.target.value)}/></label><label>{t('Алиби')}<textarea value={s.alibi} onChange={e=>replaceSuspect(i,'alibi',e.target.value)}/></label></fieldset>)}</div>
+      <h4>{t('Пет доказателства')}</h4><div className="community-editor-grid">{editor.clues.map((c,i)=><fieldset key={c.id}><legend>{c.id}</legend><label>{t('Заглавие')}<input value={c.title} onChange={e=>replaceClue(i,'title',e.target.value)}/></label><label>{t('Място')}<input value={c.location} onChange={e=>replaceClue(i,'location',e.target.value)}/></label><label>{t('Какво разкрива')}<textarea value={c.description} onChange={e=>replaceClue(i,'description',e.target.value)}/></label></fieldset>)}</div>
+      <h4>{t('Авторско решение (скрито до развръзката)')}</h4><label>{t('Извършител')}<select value={editor.solution.suspectId} onChange={e=>setEditor(p=>({...p,solution:{...p.solution,suspectId:e.target.value}}))}>{editor.suspects.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
       <p className="community-muted">Ключови улики за доказване на решението (избери поне 3):</p><div className="community-evidence-checks">{editor.clues.map(c=><label key={c.id}><input type="checkbox" checked={editor.solution.clueIds.includes(c.id)} onChange={e=>setEditor(p=>({...p,solution:{...p.solution,clueIds:e.target.checked?[...p.solution.clueIds,c.id]:p.solution.clueIds.filter(id=>id!==c.id)}}))}/>{c.id}</label>)}</div>
-      <label>Развръзка<textarea maxLength={900} value={editor.solution.explanation} onChange={e=>setEditor(p=>({...p,solution:{...p.solution,explanation:e.target.value}}))}/></label>
+      <label>{t('Развръзка')}<textarea maxLength={900} value={editor.solution.explanation} onChange={e=>setEditor(p=>({...p,solution:{...p.solution,explanation:e.target.value}}))}/></label>
       <button disabled={busy||editor.solution.clueIds.length<3} onClick={()=>void publish()}><Send size={16}/> Публикувай в общността</button>
     </section>}
   </div>;
