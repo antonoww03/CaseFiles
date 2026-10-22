@@ -23,8 +23,11 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -w apps/web
+      # Do not create disposable production sessions on every draft PR update.
       - run: node scripts/production-smoke.mjs
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       - run: npm run test:e2e:prod -w apps/web
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
   ui-audit:
     if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[ui-audit]') }}
