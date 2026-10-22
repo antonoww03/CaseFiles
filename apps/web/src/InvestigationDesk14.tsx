@@ -1,6 +1,7 @@
 import { useEffect,useState } from 'react';
 import { ArrowRight,BookOpen,CheckCircle2,FileCheck2,FolderOpen,Gavel,Newspaper,ShieldAlert,ShieldCheck,Users } from 'lucide-react';
 import './desk14.css';
+import {useLanguage} from './i18n';
 
 type CaseId='case-001'|'case-002';
 type Profile={id:string;name:string;role:string;knownEvidence:string[];ready:boolean;confirmed:boolean;conclusion:string|null;missingCount:number};
@@ -27,6 +28,7 @@ async function deskRequest<T>(session:string,caseId:CaseId,body?:unknown):Promis
 export function InvestigationDesk14({session,caseId,found,onStage,onLegacy}:{
  session:string;caseId:CaseId;found:string[];onStage:(stage:string)=>void;onLegacy:(section:string)=>void;
 }){
+ const {t,language}=useLanguage();
  const [data,setData]=useState<View|null>(null);
  const [busy,setBusy]=useState(false);
  const [feedback,setFeedback]=useState('');
@@ -49,42 +51,42 @@ export function InvestigationDesk14({session,caseId,found,onStage,onLegacy}:{
  }
  return <section className="d14">
   <header className="d14-hero">
-   <span>CASEFILES / СЛЕДСТВЕН АНАЛИЗ / ПУБЛИЧЕН ОТЗВУК</span>
-   <h1>Профили, преса и архив</h1>
-   <p>Публикувай само проверени обстоятелства. Всяко твърдение е обвързано с доказателства, а публичните решения се запазват в досието.</p>
+   <span>{t('CASEFILES / СЛЕДСТВЕН АНАЛИЗ / ПУБЛИЧЕН ОТЗВУК')}</span>
+   <h1>{t('Профили, преса и архив')}</h1>
+   <p>{t('Публикувай само проверени обстоятелства. Всяко твърдение е обвързано с доказателства, а публичните решения се запазват в досието.')}</p>
   </header>
-  {error&&<p className="d14-error" role="alert">{error}</p>}
-  {feedback&&<p className="d14-feedback" role="status">{feedback}</p>}
-  {!data?<p className="d14-loading">Зареждане на следственото бюро…</p>:<>
-   <div className="d14-stats"><span><BookOpen size={17}/> {data.evidenceCount} улики</span><span><ShieldCheck size={17}/> Репутация {data.reputation}/100</span><span><Gavel size={17}/> {data.solved?'Случаят е разрешен':'Активно разследване'}</span></div>
-   <div className="d14-header"><Users size={21}/><h2>Психологически и доказателствени профили</h2></div>
-   <p className="d14-intro">Това са игрови аналитични хипотези, не клинични диагнози или предварителни присъди. За проверен профил са нужни две независими следи.</p>
+  {error&&<p className="d14-error" role="alert">{t(error)}</p>}
+  {feedback&&<p className="d14-feedback" role="status">{t(feedback)}</p>}
+  {!data?<p className="d14-loading">{t('Зареждане на следственото бюро…')}</p>:<>
+   <div className="d14-stats"><span><BookOpen size={17}/> {data.evidenceCount} {t('улики')}</span><span><ShieldCheck size={17}/> {t('Репутация')} {data.reputation}/100</span><span><Gavel size={17}/> {t(data.solved?'Случаят е разрешен':'Активно разследване')}</span></div>
+   <div className="d14-header"><Users size={21}/><h2>{t('Психологически и доказателствени профили')}</h2></div>
+   <p className="d14-intro">{t('Това са игрови аналитични хипотези, не клинични диагнози или предварителни присъди. За проверен профил са нужни две независими следи.')}</p>
    <div className="d14-grid">{data.profiles.map(p=><article key={p.id} className="d14-card">
-    <div className="d14-card-top"><strong>{p.name}</strong>{p.confirmed?<span className="d14-success"><CheckCircle2 size={14}/> Потвърден</span>:<span>{p.role}</span>}</div>
-    <p>{p.conclusion||'Нямаш достатъчно доказателства, за да формулираш защитим извод за този човек.'}</p>
-    <div className="d14-clues">{p.knownEvidence.map(id=><span key={id}>{id}</span>)}{p.missingCount>0&&<span className="d14-missing">Неоткрити: {p.missingCount}</span>}</div>
-    <button type="button" disabled={busy||!p.ready||p.confirmed} onClick={()=>void doAction({kind:'profile',personId:p.id,evidenceId:p.knownEvidence[0]})}><FileCheck2 size={16}/>{p.confirmed?'Проверен профил':p.ready?'Потвърди с уликите':'Събери още доказателства'}</button>
+    <div className="d14-card-top"><strong>{t(p.name)}</strong>{p.confirmed?<span className="d14-success"><CheckCircle2 size={14}/> {t('Потвърден')}</span>:<span>{t(p.role)}</span>}</div>
+    <p>{t(p.conclusion||'Нямаш достатъчно доказателства, за да формулираш защитим извод за този човек.')}</p>
+    <div className="d14-clues">{p.knownEvidence.map(id=><span key={id}>{id}</span>)}{p.missingCount>0&&<span className="d14-missing">{t('Неоткрити:')} {p.missingCount}</span>}</div>
+    <button type="button" disabled={busy||!p.ready||p.confirmed} onClick={()=>void doAction({kind:'profile',personId:p.id,evidenceId:p.knownEvidence[0]})}><FileCheck2 size={16}/>{t(p.confirmed?'Проверен профил':p.ready?'Потвърди с уликите':'Събери още доказателства')}</button>
    </article>)}</div>
-   <div className="d14-header"><Newspaper size={21}/><h2>Медиен отзвук</h2></div>
-   <div className="d14-grid">{data.news.map(n=><article className="d14-card d14-news" key={n.id}><small>ИЗМИСЛЕНА НОВИНАРСКА ПУБЛИКАЦИЯ</small><h3>{n.title}</h3><p>{n.body}</p></article>)}</div>
+   <div className="d14-header"><Newspaper size={21}/><h2>{t('Медиен отзвук')}</h2></div>
+   <div className="d14-grid">{data.news.map(n=><article className="d14-card d14-news" key={n.id}><small>{t('ИЗМИСЛЕНА НОВИНАРСКА ПУБЛИКАЦИЯ')}</small><h3>{t(n.title)}</h3><p>{t(n.body)}</p></article>)}</div>
    <article className="d14-editor">
-    <div><span>РЕДАКЦИОНЕН ИЗБОР</span><h3>{data.edition?'Публикуван материал':'Как ще представиш резултата?'}</h3><p>Стилът на съобщението влияе на репутацията. Изборът е окончателен за този случай.</p></div>
-    {data.edition?<div className="d14-published"><CheckCircle2 size={22}/><div><h3>{data.edition.title}</h3><p>{data.edition.body}</p><small>{data.edition.publishedAt?new Date(data.edition.publishedAt).toLocaleString('bg-BG'):''}</small></div></div>:<>
-     <label htmlFor="d14-editor-style">Редакционна политика</label>
+    <div><span>{t('РЕДАКЦИОНЕН ИЗБОР')}</span><h3>{t(data.edition?'Публикуван материал':'Как ще представиш резултата?')}</h3><p>{t('Стилът на съобщението влияе на репутацията. Изборът е окончателен за този случай.')}</p></div>
+    {data.edition?<div className="d14-published"><CheckCircle2 size={22}/><div><h3>{t(data.edition.title)}</h3><p>{t(data.edition.body)}</p><small>{data.edition.publishedAt?new Date(data.edition.publishedAt).toLocaleString(language):''}</small></div></div>:<>
+     <label htmlFor="d14-editor-style">{t('Редакционна политика')}</label>
      <select id="d14-editor-style" value={chosen} onChange={e=>setChosen(e.target.value)}>
-      {data.editorialOptions.map(x=><option value={x.id} key={x.id}>{x.title} ({x.effect>0?'+':''}{x.effect} репутация)</option>)}
+      {data.editorialOptions.map(x=><option value={x.id} key={x.id}>{t(x.title)} ({x.effect>0?'+':''}{x.effect} {t('репутация')})</option>)}
      </select>
-     <button type="button" className="d14-publish" disabled={busy||!data.editorialAvailable} onClick={()=>void doAction({kind:'publish',style:chosen})}><Newspaper size={16}/> {data.solved?'Публикувай заключението':'Достъпно след успешно разследване'}</button>
+     <button type="button" className="d14-publish" disabled={busy||!data.editorialAvailable} onClick={()=>void doAction({kind:'publish',style:chosen})}><Newspaper size={16}/> {t(data.solved?'Публикувай заключението':'Достъпно след успешно разследване')}</button>
     </>}
    </article>
-   {data.activity.length>0&&<><div className="d14-header"><ShieldAlert size={21}/><h2>Нови събития</h2></div><div className="d14-activity">{data.activity.map(a=><p key={a.id}>{a.text}</p>)}</div></>}
-   <div className="d14-header"><FolderOpen size={21}/><h2>Архив на разследванията</h2></div>
-   <div className="d14-grid">{data.archive.map(a=><article key={a.id} className="d14-card"><strong>{a.title}</strong><p>{a.solved?'Разрешено':'Незавършено'} · {a.evidence} улики · {a.attempts} опита</p><small>{a.id}</small></article>)}</div>
+   {data.activity.length>0&&<><div className="d14-header"><ShieldAlert size={21}/><h2>{t('Нови събития')}</h2></div><div className="d14-activity">{data.activity.map(a=><p key={a.id}>{t(a.text)}</p>)}</div></>}
+   <div className="d14-header"><FolderOpen size={21}/><h2>{t('Архив на разследванията')}</h2></div>
+   <div className="d14-grid">{data.archive.map(a=><article key={a.id} className="d14-card"><strong>{t(a.title)}</strong><p>{t(a.solved?'Разрешено':'Незавършено')} · {a.evidence} {t('улики')} · {a.attempts} {t('опита')}</p><small>{a.id}</small></article>)}</div>
    <div className="d14-actions">
-    <button type="button" onClick={()=>onStage('detective')}>Проверка на противоречия <ArrowRight size={15}/></button>
-    <button type="button" onClick={()=>onLegacy('living')}>Съдебен процес и редактор на случаи <ArrowRight size={15}/></button>
-    <button type="button" onClick={()=>onStage('ending')}>Финално заключение <ArrowRight size={15}/></button>
-    {data.replayUnlocked&&<button type="button" onClick={()=>onLegacy('game09')}>New Game+ и преиграване <ArrowRight size={15}/></button>}
+    <button type="button" onClick={()=>onStage('detective')}>{t('Проверка на противоречия')} <ArrowRight size={15}/></button>
+    <button type="button" onClick={()=>onLegacy('living')}>{t('Съдебен процес и редактор на случаи')} <ArrowRight size={15}/></button>
+    <button type="button" onClick={()=>onStage('ending')}>{t('Финално заключение')} <ArrowRight size={15}/></button>
+    {data.replayUnlocked&&<button type="button" onClick={()=>onLegacy('game09')}>{t('New Game+ и преиграване')} <ArrowRight size={15}/></button>}
    </div>
   </>}
  </section>;
