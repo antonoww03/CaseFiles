@@ -62,7 +62,7 @@ test('CASEFILES 0.9 scene controls expose state, dependency, and navigation resu
 
   await page.getByRole('button', { name: 'Огледай Изтривалка' }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Изследвай/ }).click();
-  await expect(page.getByRole('status')).toContainText('Месингов ключ');
+  await expect(page.getByRole('status')).toHaveText('Добавен предмет в инвентара.');
   await inventoryToggle.click();
   const key = page.locator('.g9-inventory').getByRole('button', { name: /Месингов ключ/ });
   await expect(key).toBeVisible();
