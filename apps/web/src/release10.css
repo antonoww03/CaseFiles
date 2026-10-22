@@ -19,3 +19,11 @@
  .r10-topbar-controls>button{font-size:0;gap:0;padding:8px}
  .r10-topbar-controls>button svg{width:18px;height:18px}
 }
+
+.r10-navigation-language{display:flex;align-items:center;margin-left:auto;padding:0 8px}
+.r10-navigation-language .cf-language-selector{font-size:10px}
+.r10-navigation-language select{max-width:110px;padding:7px}
+@media(max-width:680px){
+ .r10-navigation-language{grid-column:1/-1;justify-content:center;margin-left:0;padding:8px}
+ .r10-navigation-language select{max-width:180px}
+}
