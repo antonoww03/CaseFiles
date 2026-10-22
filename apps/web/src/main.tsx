@@ -335,7 +335,7 @@ function App() {
     </button>;
   })}</div>;
 
-  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')} onCommunity={()=>go('community')}/>{error&&<div className="r10-app-error" role="alert">{error}</div>}</>;
+  if(view==='home10')return <><Home10 session={session} busy={busy} onStart={id=>{setCase10(id);localStorage.setItem('cf10-selected-case',id);void start('play10');}} onContinue={()=>go('play10')} onLegacy={()=>go('briefing')} onCommunity={()=>go('community')}/>{error&&<div className="r10-app-error" role="alert">{t(error)}</div>}</>;
   if(view==='community')return <div className="cf-community-page"><button className="r10-return" type="button" onClick={()=>go('home10')}>← {t('Главно меню')}</button><React.Suspense fallback={<div className="empty-state">{t('Зареждане на общността...')}</div>}><CommunityHub/></React.Suspense></div>;
   if(view==='play10')return <FullGame10 session={session} caseId={case10} found={found} onFound={setFound} onHome={()=>go('home10')} onLegacy={dest=>go(dest as View)}/>;
   
@@ -392,7 +392,7 @@ function App() {
       <div className="workspace-body">
         <main className="main-panel" id="case-main">
           <div className="panel-meta"><div className="panel-path"><ActiveIcon size={15} /> {t(activeTab.name).toLocaleUpperCase('en')}</div><div className="panel-meta-right"><span className="panel-meta-dot" /> CASE FILE / 001</div></div>
-          {error && <div className="error" role="alert"><Info size={18} /><span>{error}</span><button type="button" aria-label="Затвори съобщението" onClick={() => setError('')}>×</button></div>}
+          {error && <div className="error" role="alert"><Info size={18} /><span>{t(error)}</span><button type="button" aria-label="Затвори съобщението" onClick={() => setError('')}>×</button></div>}
 
           <div className="screen" key={view}>
             {view === 'briefing' && <>
