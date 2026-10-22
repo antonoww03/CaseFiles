@@ -4,6 +4,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+concurrency:
+  group: casefiles-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -18,13 +21,19 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - run: npm run i18n:api
+      - run: npm run i18n:validate
       - run: npm run typecheck
+      - run: node scripts/i18n-coverage.mjs
       - run: npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -w apps/web
+      # Do not create disposable production sessions on every draft PR update.
       - run: node scripts/production-smoke.mjs
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       - run: npm run test:e2e:prod -w apps/web
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
   ui-audit:
     if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[ui-audit]') }}

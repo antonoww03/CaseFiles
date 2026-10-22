@@ -6,6 +6,7 @@ import {
   Minus, Plus, ScanSearch, Search, ShieldCheck, Terminal, X
 } from 'lucide-react';
 import './immersive.css';
+import {useLanguage} from './i18n';
 import {ObjectArt,visualForObject,roomAsset} from './sceneArt';
 
 type InventoryItem={id:string;title:string;detail:string;icon:string};
@@ -50,6 +51,8 @@ function ItemIcon({icon}:{icon:string}){
   icon==='file'?<BookOpen size={20}/>:<Search size={20}/>;
 }
 export function ImmersiveInvestigation({session,found}:{session:string;found:string[]}){
+  const {t:translateSection}=useLanguage();
+  const t=translateSection;
   const [data,setData]=useState<ImmersiveData|null>(null);
   const [section,setSection]=useState<(typeof sections)[number]['id']>('scene');
   const [room,setRoom]=useState('hall');
@@ -105,83 +108,83 @@ export function ImmersiveInvestigation({session,found}:{session:string;found:str
   const currentChoices=data?.dialogues.filter(d=>d.personId===person)||[];
   function choose(id:string){setSelected(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev.slice(-1),id]);}
   return <div className="im-root">
-    <div className="im-tabs" role="group" aria-label="Избор на следствен инструмент">
+    <div className="im-tabs" role="group" aria-label={t('Избор на следствен инструмент')}>
       {sections.map(t=><button key={t.id} type="button" className={section===t.id?'active':''} onClick={()=>{setSection(t.id);setNotice('');}}>
-        <t.icon size={18}/><span>{t.name}</span>
+        <t.icon size={18}/><span>{translateSection(t.name)}</span>
       </button>)}
     </div>
-    {notice&&<div className="im-notice" role="status"><CircleDot size={17}/><span>{notice}</span><button aria-label="Затвори известието" type="button" onClick={()=>setNotice('')}><X size={16}/></button></div>}
-    {!session?<div className="im-empty"><LockKeyhole size={30}/><strong>Необходимо е активно разследване</strong><p>Отвори досието и започни нов случай, за да използваш следствените инструменти.</p></div>:!data?<div className="im-empty">Зареждане на разследването...</div>:<>
+    {notice&&<div className="im-notice" role="status"><CircleDot size={17}/><span>{t(notice)}</span><button aria-label={t('Затвори известието')} type="button" onClick={()=>setNotice('')}><X size={16}/></button></div>}
+    {!session?<div className="im-empty"><LockKeyhole size={30}/><strong>{t('Необходимо е активно разследване')}</strong><p>{t('Отвори досието и започни нов случай, за да използваш следствените инструменти.')}</p></div>:!data?<div className="im-empty">{t('Зареждане на разследването...')}</div>:<>
     {section==='scene'&&<>
-      <div className="im-intro"><div><span className="im-kicker">АПАРТАМЕНТ 407 / ИНТЕРАКТИВНА СРЕДА</span><h2>Изследвай всеки предмет</h2><p>Избери стая, натисни върху осветен обект и събери инструменти за следващите задачи.</p></div><span className="im-counter">{data.objects.filter(o=>o.inspected).length} / {data.objects.length} ОБЕКТА</span></div>
-      <div className="im-rooms" role="group" aria-label="Стая за оглед">{data.rooms.map(r=><button key={r.id} type="button" onClick={()=>{setRoom(r.id);setFocusObject(null);}} className={room===r.id?'active':''}><MapPin size={17}/><strong>{r.title}</strong><small>{r.subtitle}</small></button>)}</div>
+      <div className="im-intro"><div><span className="im-kicker">{t('АПАРТАМЕНТ 407 / ИНТЕРАКТИВНА СРЕДА')}</span><h2>{t('Изследвай всеки предмет')}</h2><p>{t('Избери стая, натисни върху осветен обект и събери инструменти за следващите задачи.')}</p></div><span className="im-counter">{data.objects.filter(o=>o.inspected).length} / {data.objects.length} {t('ОБЕКТА')}</span></div>
+      <div className="im-rooms" role="group" aria-label={t('Стая за оглед')}>{data.rooms.map(r=><button key={r.id} type="button" onClick={()=>{setRoom(r.id);setFocusObject(null);}} className={room===r.id?'active':''}><MapPin size={17}/><strong>{t(r.title)}</strong><small>{t(r.subtitle)}</small></button>)}</div>
       <div className={'im-stage room-'+room} style={{backgroundImage:'url('+roomAsset(room==='hall'?'entrance':room==='study'?'desk':'living')+')'}}>
         <div className="im-stage-grid"/><div className="im-stage-wall"/>
         <div className="im-furniture one"/><div className="im-furniture two"/><div className="im-furniture three"/><div className="im-furniture four"/>
-        <div className="im-stage-heading"><span><ScanSearch size={15}/> {currentRoom?.title.toUpperCase()}</span><span>CASE 001 / SCENE {data.rooms.findIndex(r=>r.id===room)+1}</span></div>
-        {visible.map(o=><button key={o.id} type="button" style={{left:o.x+'%',top:o.y+'%'}} className={'im-hotspot '+(o.inspected?'done':'')} onClick={()=>{setFocusObject(o);setRotation(0);}} aria-label={'Разгледай '+o.title}><ObjectArt asset={visualForObject(o.id)?.asset||'evidence'} alt={o.title}/><span>{o.inspected?<Check size={18}/>:<Plus size={18}/>}</span><small>{o.title}</small></button>)}
-        <div className="im-stage-footer"><Eye size={15}/> Избери маркер, за да отвориш подробния оглед</div>
+        <div className="im-stage-heading"><span><ScanSearch size={15}/> {t(currentRoom?.title||'').toLocaleUpperCase()}</span><span>CASE 001 / SCENE {data.rooms.findIndex(r=>r.id===room)+1}</span></div>
+        {visible.map(o=><button key={o.id} type="button" style={{left:o.x+'%',top:o.y+'%'}} className={'im-hotspot '+(o.inspected?'done':'')} onClick={()=>{setFocusObject(o);setRotation(0);}} aria-label={t('Разгледай')+' '+t(o.title)}><ObjectArt asset={visualForObject(o.id)?.asset||'evidence'} alt={t(o.title)}/><span>{o.inspected?<Check size={18}/>:<Plus size={18}/>}</span><small>{t(o.title)}</small></button>)}
+        <div className="im-stage-footer"><Eye size={15}/> {t('Избери маркер, за да отвориш подробния оглед')}</div>
       </div>
-      <div className="im-inventory-section"><div className="im-section-head"><BriefcaseBusiness size={19}/><div><h3>Инвентар на детектива</h3><p>Избери два предмета, за да провериш дали могат да се комбинират.</p></div></div>
-        <div className="im-inventory">{data.inventory.length?data.inventory.map(item=><button type="button" key={item.id} className={selected.includes(item.id)?'selected':''} onClick={()=>choose(item.id)} title={item.detail}><span><ItemIcon icon={item.icon}/></span><strong>{item.title}</strong><small>{item.detail}</small></button>):<div className="im-placeholder">Разгледай помещенията, за да събереш предмети.</div>}</div>
-        <div className="im-combine"><div><Combine size={17}/><strong>{selected.length?selected.join(' + '):'Избери два предмета'}</strong></div><button type="button" className="primary" disabled={selected.length!==2||busy} onClick={()=>void act('combine',{first:selected[0],second:selected[1]})}>Комбинирай <ArrowRight size={16}/></button></div>
+      <div className="im-inventory-section"><div className="im-section-head"><BriefcaseBusiness size={19}/><div><h3>{t('Инвентар на детектива')}</h3><p>{t('Избери два предмета, за да провериш дали могат да се комбинират.')}</p></div></div>
+        <div className="im-inventory">{data.inventory.length?data.inventory.map(item=><button type="button" key={item.id} className={selected.includes(item.id)?'selected':''} onClick={()=>choose(item.id)} title={t(item.detail)}><span><ItemIcon icon={item.icon}/></span><strong>{t(item.title)}</strong><small>{t(item.detail)}</small></button>):<div className="im-placeholder">{t('Разгледай помещенията, за да събереш предмети.')}</div>}</div>
+        <div className="im-combine"><div><Combine size={17}/><strong>{selected.length?selected.join(' + '):t('Избери два предмета')}</strong></div><button type="button" className="primary" disabled={selected.length!==2||busy} onClick={()=>void act('combine',{first:selected[0],second:selected[1]})}>{t('Комбинирай')} <ArrowRight size={16}/></button></div>
       </div>
       {focusObject&&<div className="im-modal-backdrop" role="presentation" onClick={()=>setFocusObject(null)}>
-        <div className="im-object-modal" role="dialog" aria-modal="true" aria-label={focusObject.title} onClick={e=>e.stopPropagation()}>
-          <div className="im-object-header"><span className="im-kicker">ДЕТАЙЛЕН ОГЛЕД / ОБЕКТ</span><button type="button" aria-label="Затвори огледа" onClick={()=>setFocusObject(null)}><X size={20}/></button></div>
+        <div className="im-object-modal" role="dialog" aria-modal="true" aria-label={t(focusObject.title)} onClick={e=>e.stopPropagation()}>
+          <div className="im-object-header"><span className="im-kicker">{t('ДЕТАЙЛЕН ОГЛЕД / ОБЕКТ')}</span><button type="button" aria-label={t('Затвори огледа')} onClick={()=>setFocusObject(null)}><X size={20}/></button></div>
           <div className="im-object-render"><div style={{transform:'rotate('+rotation+'deg)'}} className={'im-inspect-icon '+(focusObject.id==='drawer'?'drawer':'')}><FolderSearch size={73} strokeWidth={1.2}/></div><div className="im-reticle"/></div>
-          <h3>{focusObject.title}</h3><p>{focusObject.summary}</p>
-          <div className="im-object-actions"><button className="secondary" type="button" onClick={()=>setRotation(v=>v-45)}><ChevronLeft size={17}/> Завърти</button><button className="secondary" type="button" onClick={()=>setRotation(v=>v+45)}>Завърти <ChevronRight size={17}/></button><button type="button" className="primary" disabled={busy||focusObject.locked} onClick={()=>{void act('inspect',{objectId:focusObject.id}).then(()=>setFocusObject(null));}}><Search size={16}/> Изследвай</button></div>
-          {focusObject.locked&&<p className="im-warn"><LockKeyhole size={14}/> Необходимо е първо да откриеш съответната улика.</p>}
-          {focusObject.requiresItem&&<p className="im-hint">Изисква: {focusObject.requiresItem}</p>}
+          <h3>{t(focusObject.title)}</h3><p>{t(focusObject.summary)}</p>
+          <div className="im-object-actions"><button className="secondary" type="button" onClick={()=>setRotation(v=>v-45)}><ChevronLeft size={17}/> {t('Завърти')}</button><button className="secondary" type="button" onClick={()=>setRotation(v=>v+45)}>{t('Завърти')} <ChevronRight size={17}/></button><button type="button" className="primary" disabled={busy||focusObject.locked} onClick={()=>{void act('inspect',{objectId:focusObject.id}).then(()=>setFocusObject(null));}}><Search size={16}/> {t('Изследвай')}</button></div>
+          {focusObject.locked&&<p className="im-warn"><LockKeyhole size={14}/> {t('Необходимо е първо да откриеш съответната улика.')}</p>}
+          {focusObject.requiresItem&&<p className="im-hint">{t('Изисква:')} {focusObject.requiresItem}</p>}
         </div>
       </div>}
     </>}
     {section==='puzzle'&&<div className="im-column">
-      <div className="im-intro"><div><span className="im-kicker">МЕХАНИЧНИ УСТРОЙСТВА / ДОКАЗАТЕЛСТВА</span><h2>Сейфът на бюрото</h2><p>Открий скрития код чрез комбиниране на предмети, после настрой трите циферблата.</p></div>{data.dial.solved&&<span className="im-state"><CheckCircle2 size={16}/> ОТВОРЕН</span>}</div>
+      <div className="im-intro"><div><span className="im-kicker">{t('МЕХАНИЧНИ УСТРОЙСТВА / ДОКАЗАТЕЛСТВА')}</span><h2>{t('Сейфът на бюрото')}</h2><p>{t('Открий скрития код чрез комбиниране на предмети, после настрой трите циферблата.')}</p></div>{data.dial.solved&&<span className="im-state"><CheckCircle2 size={16}/> {t('ОТВОРЕН')}</span>}</div>
       <div className="im-puzzle-layout">
-        <div className="im-dial-frame"><div className="im-dial-top"><LockKeyhole size={26}/><span>SECURE / MODEL 407</span></div><div className="im-dials">{digits.map((digit,i)=><div key={i} className="im-dial"><button aria-label={'Увеличи цифра '+(i+1)} type="button" disabled={data.dial.solved} onClick={()=>setDigits(a=>a.map((v,j)=>i===j?(v+1)%10:v))}><Plus size={19}/></button><strong>{digit}</strong><button aria-label={'Намали цифра '+(i+1)} type="button" disabled={data.dial.solved} onClick={()=>setDigits(a=>a.map((v,j)=>i===j?(v+9)%10:v))}><Minus size={19}/></button></div>)}</div><button className="primary" type="button" disabled={!data.dial.unlocked||data.dial.solved||busy} onClick={()=>void act('puzzle',{puzzleId:'safe_dial',digits})}>{data.dial.solved?'Кутията е отворена':'Опитай комбинацията'} <KeyRound size={16}/></button></div>
-        <div className="im-puzzle-help"><span className="im-kicker">ОТКРИТИ РЕЗУЛТАТИ</span><h3>Записки по задачата</h3><p>{data.dial.hint}</p>{data.combinations.map(c=><article key={c.id}><Check size={15}/><div><strong>{c.title}</strong><p>{c.result}</p></div></article>)}{!data.combinations.length&&<div className="im-placeholder">Нямаш още съвместени предмети. Върни се при инвентара.</div>}</div>
+        <div className="im-dial-frame"><div className="im-dial-top"><LockKeyhole size={26}/><span>SECURE / MODEL 407</span></div><div className="im-dials">{digits.map((digit,i)=><div key={i} className="im-dial"><button aria-label={t('Увеличи цифра')+' '+(i+1)} type="button" disabled={data.dial.solved} onClick={()=>setDigits(a=>a.map((v,j)=>i===j?(v+1)%10:v))}><Plus size={19}/></button><strong>{digit}</strong><button aria-label={t('Намали цифра')+' '+(i+1)} type="button" disabled={data.dial.solved} onClick={()=>setDigits(a=>a.map((v,j)=>i===j?(v+9)%10:v))}><Minus size={19}/></button></div>)}</div><button className="primary" type="button" disabled={!data.dial.unlocked||data.dial.solved||busy} onClick={()=>void act('puzzle',{puzzleId:'safe_dial',digits})}>{t(data.dial.solved?'Кутията е отворена':'Опитай комбинацията')} <KeyRound size={16}/></button></div>
+        <div className="im-puzzle-help"><span className="im-kicker">{t('ОТКРИТИ РЕЗУЛТАТИ')}</span><h3>{t('Записки по задачата')}</h3><p>{t(data.dial.hint)}</p>{data.combinations.map(c=><article key={c.id}><Check size={15}/><div><strong>{t(c.title)}</strong><p>{t(c.result)}</p></div></article>)}{!data.combinations.length&&<div className="im-placeholder">{t('Нямаш още съвместени предмети. Върни се при инвентара.')}</div>}</div>
       </div>
       <div className="im-optic-grid">
         <div className="im-optic-card">
-          <div className="im-optic-head"><Eye size={18}/><strong>Оптичен анализ</strong><span>1.0–3.0×</span></div>
+          <div className="im-optic-head"><Eye size={18}/><strong>{t('Оптичен анализ')}</strong><span>1.0–3.0×</span></div>
           <div className="im-optic-view negative">
             <div className="im-photo-subject" style={{transform:'scale('+(photoZoom/100)+')'}}><span className="im-photo-line"/><span className="im-photo-folder"/></div>
             <span className="im-optic-watermark">PHOTO NEGATIVE / CASE 001</span>
           </div>
-          <label className="im-optic-control">Увеличение: {(photoZoom/100).toFixed(1)}×
+          <label className="im-optic-control">{t('Увеличение:')} {(photoZoom/100).toFixed(1)}×
             <input type="range" min="100" max="300" step="25" value={photoZoom} onChange={e=>setPhotoZoom(Number(e.target.value))}/>
           </label>
-          <p>{data.combinations.some(v=>v.id==='photo_detail') && photoZoom>=175 ? 'Вижда се папка върху бюро; снимката не идентифицира човека в помещението.' : 'Комбинирай лупата с негатива и увеличи изображението, за да изследваш детайла.'}</p>
+          <p>{data.combinations.some(v=>v.id==='photo_detail') && photoZoom>=175 ? t('Вижда се папка върху бюро; снимката не идентифицира човека в помещението.') : t('Комбинирай лупата с негатива и увеличи изображението, за да изследваш детайла.')}</p>
         </div>
         <div className="im-optic-card">
-          <div className="im-optic-head"><LampDesk size={18}/><strong>Ултравиолетов оглед</strong><span>UV / 365 NM</span></div>
+          <div className="im-optic-head"><LampDesk size={18}/><strong>{t('Ултравиолетов оглед')}</strong><span>UV / 365 NM</span></div>
           <div className="im-optic-view ultraviolet">
             <div className="im-uv-beam" style={{opacity:uvIntensity/100}}/>
             <span className="im-uv-glyph">{data.combinations.some(v=>v.id==='uv_marker') && uvIntensity>=65?'3 · 7 · 1':'···'}</span>
             <span className="im-optic-watermark">INVISIBLE INK SCAN</span>
           </div>
-          <label className="im-optic-control">Интензитет: {uvIntensity}%
+          <label className="im-optic-control">{t('Интензитет:')} {uvIntensity}%
             <input type="range" min="0" max="100" step="5" value={uvIntensity} onChange={e=>setUvIntensity(Number(e.target.value))}/>
           </label>
-          <p>{data.combinations.some(v=>v.id==='uv_marker') && uvIntensity>=65 ? 'Скритите знаци вече могат да се разчетат и приложат върху циферблатите.' : 'Комбинирай UV фенера с хартиената лента и увеличи интензитета на светлината.'}</p>
+          <p>{data.combinations.some(v=>v.id==='uv_marker') && uvIntensity>=65 ? t('Скритите знаци вече могат да се разчетат и приложат върху циферблатите.') : t('Комбинирай UV фенера с хартиената лента и увеличи интензитета на светлината.')}</p>
         </div>
       </div>
     </div>}
     {section==='dialogue'&&<div className="im-column">
-      <div className="im-intro"><div><span className="im-kicker">РАЗКЛОНЕНИ РАЗГОВОРИ / БЕЗ AI</span><h2>Изборите имат последствия</h2><p>Правилните въпроси повишават доверието. Необоснованите обвинения могат да блокират важни теми.</p></div></div>
-      <div className="im-people">{people.map(p=><button type="button" key={p.id} className={person===p.id?'active':''} onClick={()=>setPerson(p.id)}><span>{p.initials}</span><strong>{p.name}</strong></button>)}</div>
-      <div className="im-trust"><span><ShieldCheck size={17}/> Доверие на {currentPerson.name}</span><strong>{data.trust[person]??40}%</strong><div><span style={{width:(data.trust[person]??40)+'%'}}/></div></div>
-      <div className="im-choices">{currentChoices.map(ch=><button type="button" key={ch.id} disabled={!ch.available||ch.done||busy} onClick={()=>void dialogue(ch.id)}><span>{ch.done?<CheckCircle2 size={17}/>:ch.available?<MessageSquareText size={17}/>:<LockKeyhole size={17}/>}</span><strong>{ch.label}</strong><small>{ch.done?'ПРОВЕДЕН':ch.available?'ПОПИТАЙ':'НЕДОСТЪПЕН'}</small></button>)}</div>
-      <div className="im-transcript"><div className="im-section-head"><BookOpen size={18}/><div><h3>Развитие на разговора</h3><p>Последиците се запазват в игровата сесия.</p></div></div>{data.history.filter(h=>h.personId===person).map((h,i)=><article key={i}><span>ИЗБОР {i+1}</span><p>{h.reply}</p></article>)}{!data.history.some(h=>h.personId===person)&&<div className="im-placeholder">Няма проведен разговор с това лице.</div>}</div>
+      <div className="im-intro"><div><span className="im-kicker">{t('РАЗКЛОНЕНИ РАЗГОВОРИ / БЕЗ AI')}</span><h2>{t('Изборите имат последствия')}</h2><p>{t('Правилните въпроси повишават доверието. Необоснованите обвинения могат да блокират важни теми.')}</p></div></div>
+      <div className="im-people">{people.map(p=><button type="button" key={p.id} className={person===p.id?'active':''} onClick={()=>setPerson(p.id)}><span>{p.initials}</span><strong>{t(p.name)}</strong></button>)}</div>
+      <div className="im-trust"><span><ShieldCheck size={17}/> {t('Доверие на')} {t(currentPerson.name)}</span><strong>{data.trust[person]??40}%</strong><div><span style={{width:(data.trust[person]??40)+'%'}}/></div></div>
+      <div className="im-choices">{currentChoices.map(ch=><button type="button" key={ch.id} disabled={!ch.available||ch.done||busy} onClick={()=>void dialogue(ch.id)}><span>{ch.done?<CheckCircle2 size={17}/>:ch.available?<MessageSquareText size={17}/>:<LockKeyhole size={17}/>}</span><strong>{t(ch.label)}</strong><small>{t(ch.done?'ПРОВЕДЕН':ch.available?'ПОПИТАЙ':'НЕДОСТЪПЕН')}</small></button>)}</div>
+      <div className="im-transcript"><div className="im-section-head"><BookOpen size={18}/><div><h3>{t('Развитие на разговора')}</h3><p>{t('Последиците се запазват в игровата сесия.')}</p></div></div>{data.history.filter(h=>h.personId===person).map((h,i)=><article key={i}><span>{t('ИЗБОР')} {i+1}</span><p>{t(h.reply)}</p></article>)}{!data.history.some(h=>h.personId===person)&&<div className="im-placeholder">{t('Няма проведен разговор с това лице.')}</div>}</div>
     </div>}
     {section==='computer'&&<div className="im-column">
       <div className="im-terminal">
-        <div className="im-terminal-head"><span><Terminal size={19}/> МВР / ЛОКАЛНА СИМУЛАЦИЯ</span><span>ACCESS · CASE 001</span></div>
-        <div className="im-terminal-body"><div className="im-console-lines"><p><span>casefiles@detective</span>:~$ search_records</p><p>Шифрован криминален архив · достъпните записи зависят от намерените улики.</p><p>Индекси: достъп, видео, телефон, финанси, медицина.</p></div>
-        <form className="im-terminal-search" onSubmit={e=>void computer(e)}><Search size={19}/><input value={search} onChange={e=>setSearch(e.target.value)} minLength={2} maxLength={80} placeholder="Потърси: фактури, вход, камера..." aria-label="Търсене в полицейския архив"/><button className="primary" type="submit" disabled={!session||busy||search.trim().length<2}>Търси <ArrowRight size={15}/></button></form>
-        <div className="im-terminal-results">{results?.map(record=><article key={record.id}><span>{record.category} / {record.id}</span><h3>{record.title}</h3><p>{record.body}</p><small>Потвърдено с {record.requires.join(', ')}</small></article>)}{results&&results.length===0&&<div className="im-placeholder">Няма съвпадение сред отключените записи.</div>}{!results&&<div className="im-placeholder">Започни търсене. Неоткритите записи няма да бъдат показани.</div>}</div></div>
+        <div className="im-terminal-head"><span><Terminal size={19}/> {t('МВР / ЛОКАЛНА СИМУЛАЦИЯ')}</span><span>ACCESS · CASE 001</span></div>
+        <div className="im-terminal-body"><div className="im-console-lines"><p><span>casefiles@detective</span>:~$ search_records</p><p>{t('Шифрован криминален архив · достъпните записи зависят от намерените улики.')}</p><p>{t('Индекси: достъп, видео, телефон, финанси, медицина.')}</p></div>
+        <form className="im-terminal-search" onSubmit={e=>void computer(e)}><Search size={19}/><input value={search} onChange={e=>setSearch(e.target.value)} minLength={2} maxLength={80} placeholder={t('Потърси: фактури, вход, камера...')} aria-label={t('Търсене в полицейския архив')}/><button className="primary" type="submit" disabled={!session||busy||search.trim().length<2}>{t('Търси')} <ArrowRight size={15}/></button></form>
+        <div className="im-terminal-results">{results?.map(record=><article key={record.id}><span>{t(record.category)} / {record.id}</span><h3>{t(record.title)}</h3><p>{t(record.body)}</p><small>{t('Потвърдено с')} {record.requires.join(', ')}</small></article>)}{results&&results.length===0&&<div className="im-placeholder">{t('Няма съвпадение сред отключените записи.')}</div>}{!results&&<div className="im-placeholder">{t('Започни търсене. Неоткритите записи няма да бъдат показани.')}</div>}</div></div>
       </div>
     </div>}
     </>}

@@ -749,6 +749,8 @@ app.post('/api/interview', async (req, res) => {
   const parsed = messageSchema.safeParse(req.body);
   if (!parsed.success) return void res.status(400).json({ error: 'Невалиден въпрос.' });
   const { personId, message, evidenceId, interviewStyle, scriptedOnly } = parsed.data;
+  const requestedLanguage=req.header('x-case-language');
+  const interviewLanguage= requestedLanguage && ['en','bg','de','fr','pl','es'].includes(requestedLanguage) ? requestedLanguage as 'en'|'bg'|'de'|'fr'|'pl'|'es' : 'en';
   if (evidenceId && !session.found.has(evidenceId)) {
     return void res.status(403).json({ error: 'Уликата още не е открита.' });
   }
@@ -767,7 +769,7 @@ app.post('/api/interview', async (req, res) => {
       session.aiCalls++;
       reply = await aiReply({
         personId, question: message, presentedEvidenceId: evidenceId,
-        disclosedEvidenceIds: disclosed, history
+        disclosedEvidenceIds: disclosed, history, language:interviewLanguage
       });
     }
     const mode = reply ? 'ai-live' : 'scripted-demo';

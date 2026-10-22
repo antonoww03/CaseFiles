@@ -6,3 +6,24 @@
 .r10-return{display:flex;align-items:center;gap:9px;width:calc(100% - 26px);margin:13px;color:#ebc89a;background:#28343b;border:1px solid #776850;border-radius:8px;padding:12px;font-size:11px}.r10-return:hover{background:#3a3b32}.r10-app-error{position:fixed;bottom:18px;right:18px;padding:12px;background:#6e332e;border:1px solid #d49c8d;color:white;z-index:100;border-radius:8px}
 
 .r10-link-desk{display:grid;gap:15px;padding:21px;background:#202e33;border:1px solid #a08052;border-radius:10px}.r10-link-desk>div:first-child span{font:10px 'Space Mono',monospace;color:#e0bc83}.r10-link-desk h3{font-size:18px;margin:7px 0}.r10-link-desk p{color:#b1c0bb;font-size:11px;line-height:1.7;margin:0}.r10-link-pickers{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.r10-link-pickers select{background:#182830;color:#eee7db;border:1px solid #716550;border-radius:7px;padding:12px;min-width:150px;flex:1;font-size:11px}.r10-known-links{display:flex;gap:8px;flex-wrap:wrap}.r10-known-links>span{display:flex;gap:7px;align-items:center;color:#baddc2;border:1px solid #4d7458;border-radius:6px;background:#253c30;padding:9px;font-size:11px}.r10-dossier .f04-root{min-width:0}@media(max-width:680px){.r10-link-pickers{flex-direction:column;align-items:stretch}.r10-link-pickers select,.r10-link-pickers button{width:100%}}
+
+/* Language preference: keep controls readable in a 320px viewport. */
+.r10-topbar-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.cf-language-selector{display:flex;align-items:center;gap:7px;color:#ebd4ae;font-size:11px;white-space:nowrap}
+.cf-language-selector select{min-width:0;max-width:135px;background:#17242c;color:#f7e6c8;border:1px solid #8b7656;border-radius:7px;padding:8px;font-size:12px;cursor:pointer}
+.cf-language-selector select:focus-visible{outline:2px solid #f0c886;outline-offset:2px}
+@media(max-width:680px){
+ .r10-topbar-controls{gap:5px}
+ .r10-topbar .cf-language-selector span{display:none}
+ .r10-topbar .cf-language-selector select{max-width:104px;width:104px;padding:7px 3px;font-size:11px}
+ .r10-topbar-controls>button{font-size:0;gap:0;padding:8px}
+ .r10-topbar-controls>button svg{width:18px;height:18px}
+}
+
+.r10-navigation-language{display:flex;align-items:center;margin-left:auto;padding:0 8px}
+.r10-navigation-language .cf-language-selector{font-size:10px}
+.r10-navigation-language select{max-width:110px;padding:7px}
+@media(max-width:680px){
+ .r10-navigation-language{grid-column:1/-1;justify-content:center;margin-left:0;padding:8px}
+ .r10-navigation-language select{max-width:180px}
+}
