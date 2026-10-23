@@ -39,14 +39,16 @@ test('real production can start archive mystery and enforce locked forensic miss
  await expect(page.locator('.u17-card').filter({hasText:'Провери нощните протоколи'}).getByRole('button',{name:/Възложи задача/})).toBeDisabled();
  expect(errors).toEqual([]);
 });
-test('real production community lobby, procedural room and responsive controls work',async({page})=>{
+test('real production is solo-only, exposes both cases and fits a mobile viewport',async({page})=>{
  const errors:string[]=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');
- await page.getByRole('button',{name:/Екипна игра \/ нови случаи/}).click();
- await expect(page.getByRole('heading',{name:'Общност на детективите'})).toBeVisible();
- await page.getByRole('button',{name:/Генерирай нов случай/}).click();
- await expect(page.getByRole('heading',{name:/Изчезналата експозиция|Сянка в архива|Последният протокол|Тайният инвентар/})).toBeVisible();
+ await expect(page.getByRole('heading',{name:/Истината е/})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Екипна игра|Екипно разследване|Присъедини се към приятели/})).toHaveCount(0);
+ await page.getByRole('button',{name:/Избери случай/}).click();
+ const picker=page.getByRole('group',{name:'Избор на случай'});
+ await expect(picker.getByRole('button',{name:/CASE 001|Последното обаждане/})).toBeVisible();
+ await expect(picker.getByRole('button',{name:/CASE 002|Изчезналият архив/})).toBeVisible();
  if((await page.viewportSize())?.width===390){
   const viewport=await page.evaluate(()=>({width:window.innerWidth,scroll:document.documentElement.scrollWidth}));
   expect(viewport.scroll).toBeLessThanOrEqual(viewport.width+4);
